@@ -11,7 +11,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.compose.runtime.mutableStateOf
 import com.onandor.peripheryapp.kbm.data.BtDevice
 import com.onandor.peripheryapp.kbm.data.toBtDevice
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,6 +69,16 @@ class BluetoothController(private val context: Context) : IBluetoothController {
                         onDeviceFound(device)
                     }
                 }
+                BluetoothDevice.ACTION_NAME_CHANGED -> {
+                    val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    } else {
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    }
+                    if (device != null) {
+                        onDeviceNameChanged(device)
+                    }
+                }
             }
         }
     }
@@ -83,7 +92,10 @@ class BluetoothController(private val context: Context) : IBluetoothController {
         if (!permissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
-        context.registerReceiver(foundBtDeviceReceiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
+        val filter = IntentFilter()
+        filter.addAction(BluetoothDevice.ACTION_FOUND)
+        filter.addAction(BluetoothDevice.ACTION_NAME_CHANGED)
+        context.registerReceiver(foundBtDeviceReceiver, filter)
         updatePairedDevices()
         bluetoothAdapter?.startDiscovery()
     }
@@ -93,6 +105,7 @@ class BluetoothController(private val context: Context) : IBluetoothController {
             return
         }
         bluetoothAdapter?.cancelDiscovery()
+        _scannedDevices.update { emptyList() }
     }
 
     override fun updatePairedDevices() {
@@ -115,6 +128,17 @@ class BluetoothController(private val context: Context) : IBluetoothController {
         _scannedDevices.update { devices ->
             if (newDevice in devices ) devices
             else devices + newDevice
+        }
+    }
+
+    private fun onDeviceNameChanged(device: BluetoothDevice) {
+        val changedDevice = device.toBtDevice()
+        _scannedDevices.update { devices ->
+            if (changedDevice in devices) {
+                devices.filterNot { it.address == changedDevice.address } + changedDevice
+            } else {
+                devices + changedDevice
+            }
         }
     }
 

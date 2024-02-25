@@ -42,6 +42,7 @@ fun PairedBtDevicesScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
+    var appSettingsOpen: Boolean = remember { false }
     val _canUseBluetooth: MutableStateFlow<Boolean> = MutableStateFlow(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
@@ -51,7 +52,12 @@ fun PairedBtDevicesScreen(
         }
     )
     val canUseBluetooth by _canUseBluetooth.collectAsState()
-    var appSettingsOpen: Boolean = remember { false }
+
+    val _canUseLocation = MutableStateFlow(
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED
+    )
+    val canUseLocation by _canUseLocation.collectAsState()
 
     val enableBluetoothLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -60,7 +66,6 @@ fun PairedBtDevicesScreen(
             viewmodel.updatePairedDevices()
         }
     }
-
     val permissionsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -70,6 +75,9 @@ fun PairedBtDevicesScreen(
             } else {
                 true
             }
+        }
+        _canUseBluetooth.update {
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
         }
     }
 
@@ -110,15 +118,17 @@ fun PairedBtDevicesScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            if (!canUseBluetooth) {
-                Text(text = "Bluetooth permission is denied. Grant it in order to access the functionalities.")
+            if (!canUseBluetooth || !canUseLocation) {
+                Text(text = "Bluetooth and/or location permissions are denied. Grant them in " +
+                        "order to access the functionalities.")
                 Button(
                     onClick = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             permissionsLauncher.launch(
                                 arrayOf(
                                     Manifest.permission.BLUETOOTH_SCAN,
-                                    Manifest.permission.BLUETOOTH_CONNECT
+                                    Manifest.permission.BLUETOOTH_CONNECT,
+                                    Manifest.permission.ACCESS_FINE_LOCATION
                                 )
                             )
                         }
