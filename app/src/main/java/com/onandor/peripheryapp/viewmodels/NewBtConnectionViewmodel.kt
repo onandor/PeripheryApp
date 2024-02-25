@@ -15,6 +15,7 @@ import javax.inject.Inject
 data class NewBtConnectionUiState(
     val scannedDevices: List<BtDevice> = emptyList(),
     val pairedDevices: List<BtDevice> = emptyList(),
+    val isBluetoothEnabled: Boolean = false,
     val searchForDevicesDialogShown: Boolean = false
 )
 
@@ -27,11 +28,13 @@ class NewBtConnectionViewmodel @Inject constructor(
     val uiState = combine(
         bluetoothController.scannedDevices,
         bluetoothController.pairedDevices,
+        bluetoothController.isBluetoothEnabled,
         _uiState
-    ) { scannedDevices, pairedDevices, uiState ->
+    ) { scannedDevices, pairedDevices, isBluetoothEnabled, uiState ->
         uiState.copy(
             scannedDevices = scannedDevices,
-            pairedDevices = pairedDevices
+            pairedDevices = pairedDevices,
+            isBluetoothEnabled = isBluetoothEnabled
         )
     }.stateIn(
         scope = viewModelScope,
@@ -55,5 +58,9 @@ class NewBtConnectionViewmodel @Inject constructor(
             )
         }
         bluetoothController.stopDiscovery()
+    }
+
+    fun updatePairedDevices() {
+        bluetoothController.updatePairedDevices()
     }
 }

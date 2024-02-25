@@ -1,5 +1,10 @@
 package com.onandor.peripheryapp.ui.screens
 
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +32,14 @@ import com.onandor.peripheryapp.viewmodels.NewBtConnectionViewmodel
 fun NewBtConnectionScreen(
     viewmodel: NewBtConnectionViewmodel = hiltViewModel()
 ) {
+    val enableBluetoothLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewmodel.updatePairedDevices()
+        }
+    }
+
     val uiState by viewmodel.uiState.collectAsStateWithLifecycle()
 
     Scaffold { innerPadding ->
@@ -35,11 +48,22 @@ fun NewBtConnectionScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            Button(onClick = viewmodel::showSearchForDevicesDialog) {
-                Text(text = "Search for devices")
-            }
-            Button(onClick = { /*TODO*/ }) {
-                Text("Turn on discoverability")
+            if (!uiState.isBluetoothEnabled) {
+                Text("Bluetooth is disabled. Enable it to access the functionalities.")
+                Button(
+                    onClick = {
+                        enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                    }
+                ) {
+                    Text(text = "Enable Bluetooth")
+                }
+            } else {
+                Button(onClick = viewmodel::showSearchForDevicesDialog) {
+                    Text(text = "Search for devices")
+                }
+                Button(onClick = { /*TODO*/ }) {
+                    Text("Turn on discoverability")
+                }
             }
         }
     }
