@@ -3,8 +3,10 @@ package com.onandor.peripheryapp.ui.screens
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,9 +20,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,6 +45,20 @@ fun NewBtConnectionScreen(
     }
 
     val uiState by viewmodel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(uiState.isConnected) {
+        if (uiState.isConnected) {
+            Toast.makeText(context, "Connected", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            viewmodel.errorMessageShown()
+        }
+    }
 
     Scaffold { innerPadding ->
         Column(
@@ -70,6 +88,7 @@ fun NewBtConnectionScreen(
 
     if (uiState.searchForDevicesDialogShown) {
         SearchForDevicesDialog(
+            onDeviceClick = viewmodel::connectToDevice,
             onDismissRequest = viewmodel::dismissSearchForDevicesDialog,
             scannedDevices = uiState.scannedDevices
         )
@@ -78,6 +97,7 @@ fun NewBtConnectionScreen(
 
 @Composable
 private fun SearchForDevicesDialog(
+    onDeviceClick: (BtDevice) -> Unit,
     onDismissRequest: () -> Unit,
     scannedDevices: List<BtDevice>
 ) {
@@ -94,7 +114,13 @@ private fun SearchForDevicesDialog(
                 LazyColumn {
                     scannedDevices.forEach { device ->
                         item { 
-                            Text(text = device.name ?: device.address)
+                            Text(
+                                text = device.name ?: device.address,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                                    .clickable { onDeviceClick(device) }
+                            )
                         }
                     }
                 }

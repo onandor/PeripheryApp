@@ -4,7 +4,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothServerSocket
+import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -13,12 +17,24 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.onandor.peripheryapp.kbm.data.BtDevice
 import com.onandor.peripheryapp.kbm.data.toBtDevice
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.io.IOException
+import java.util.UUID
 
-@SuppressLint("MissingPermission")
+@SuppressLint("MissingPermission", "UnspecifiedRegisterReceiverFlag")
 class BluetoothController(private val context: Context) : IBluetoothController {
 
     private val bluetoothManager by lazy {
@@ -27,6 +43,7 @@ class BluetoothController(private val context: Context) : IBluetoothController {
     private val bluetoothAdapter by lazy {
         bluetoothManager?.adapter
     }
+    private var bluetoothHidDevice: BluetoothHidDevice? = null
 
     private val _scannedDevices = MutableStateFlow<List<BtDevice>>(emptyList())
     override val scannedDevices: StateFlow<List<BtDevice>> = _scannedDevices.asStateFlow()
@@ -37,10 +54,19 @@ class BluetoothController(private val context: Context) : IBluetoothController {
     private val _isBluetoothEnabled = MutableStateFlow(bluetoothAdapter?.isEnabled ?: false)
     override val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled.asStateFlow()
 
+    private val _isConnected = MutableStateFlow(false)
+    override val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
+
+    private val _errors = MutableSharedFlow<String>()
+    override val errors: SharedFlow<String> = _errors.asSharedFlow()
+
+    private var serverSocket: BluetoothServerSocket? = null
+    private var clientSocket: BluetoothSocket? = null
+
     private val bluetoothStateReceiver = object : BroadcastReceiver() {
 
         override fun onReceive(context: Context?, intent: Intent?) {
-            when(intent?.action) {
+            when (intent?.action) {
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
                     when(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
                         BluetoothAdapter.STATE_OFF -> {
@@ -58,33 +84,102 @@ class BluetoothController(private val context: Context) : IBluetoothController {
     private val foundBtDeviceReceiver = object : BroadcastReceiver() {
 
         override fun onReceive(context: Context?, intent: Intent?) {
-            when(intent?.action) {
+            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+            } else {
+                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            }
+            when (intent?.action) {
                 BluetoothDevice.ACTION_FOUND -> {
-                    val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-                    } else {
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    }
                     if (device != null) {
-                        onDeviceFound(device)
+                        val newDevice = device.toBtDevice()
+                        _scannedDevices.update { devices ->
+                            if (newDevice in devices ) devices
+                            else devices + newDevice
+                        }
                     }
                 }
                 BluetoothDevice.ACTION_NAME_CHANGED -> {
-                    val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-                    } else {
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    }
                     if (device != null) {
-                        onDeviceNameChanged(device)
+                        val changedDevice = device.toBtDevice()
+                        _scannedDevices.update { devices ->
+                            if (changedDevice in devices) {
+                                devices.filterNot { it.address == changedDevice.address } + changedDevice
+                            } else {
+                                devices + changedDevice
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
+    private val btConnectionStateReceiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+            } else {
+                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            }
+            if (device == null) {
+                return
+            }
+
+            var connected: Boolean? = null
+            when (intent?.action) {
+                BluetoothDevice.ACTION_ACL_CONNECTED -> {
+                    connected = true
+                }
+                BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
+                    connected = false
+                }
+            }
+
+            if (connected == null) {
+                return
+            }
+            if (bluetoothAdapter?.bondedDevices?.contains(device) == true) {
+                _isConnected.update { connected }
+            } else {
+                CoroutineScope(Dispatchers.IO).launch {
+                    _errors.tryEmit("Cannot connect to a non-paired device")
+                }
+            }
+        }
+    }
+
+    private val hidDeviceListener = object : BluetoothProfile.ServiceListener {
+
+        override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
+            if (profile == BluetoothProfile.HID_DEVICE) {
+                bluetoothHidDevice = proxy as BluetoothHidDevice
+            }
+        }
+
+        override fun onServiceDisconnected(profile: Int) {
+            if (profile == BluetoothProfile.HID_DEVICE) {
+                bluetoothHidDevice = null
+            }
+        }
+    }
+
+    companion object {
+        const val BT_NAME = "PeripheryApp"
+        const val BT_UUID = "00001124-0000-1000-8000-00805f9b34fb"
+    }
+
     init {
         context.registerReceiver(bluetoothStateReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        context.registerReceiver(
+            btConnectionStateReceiver,
+            IntentFilter().apply {
+                addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
+                addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+                addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+            }
+        )
         updatePairedDevices()
     }
 
@@ -92,11 +187,16 @@ class BluetoothController(private val context: Context) : IBluetoothController {
         if (!permissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
-        val filter = IntentFilter()
-        filter.addAction(BluetoothDevice.ACTION_FOUND)
-        filter.addAction(BluetoothDevice.ACTION_NAME_CHANGED)
-        context.registerReceiver(foundBtDeviceReceiver, filter)
+        context.registerReceiver(
+            foundBtDeviceReceiver,
+            IntentFilter().apply {
+                addAction(BluetoothDevice.ACTION_FOUND)
+                addAction(BluetoothDevice.ACTION_NAME_CHANGED)
+            }
+        )
+
         updatePairedDevices()
+        _scannedDevices.update { emptyList() }
         bluetoothAdapter?.startDiscovery()
     }
 
@@ -105,7 +205,72 @@ class BluetoothController(private val context: Context) : IBluetoothController {
             return
         }
         bluetoothAdapter?.cancelDiscovery()
-        _scannedDevices.update { emptyList() }
+    }
+
+    override fun startServer(): Flow<BtConnectionResult> {
+        return flow<BtConnectionResult> {
+            if (!permissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+                throw SecurityException("BluetoothController.startServer: BLUETOOTH_CONNECT " +
+                        "permission denied")
+            }
+            serverSocket = bluetoothAdapter
+                ?.listenUsingRfcommWithServiceRecord(BT_NAME, UUID.fromString(BT_UUID))
+
+            var running = true
+            while (running) {
+                clientSocket = try {
+                    serverSocket?.accept()
+                } catch (e: IOException) {
+                    running = false
+                    null
+                }
+                clientSocket?.let {
+                    emit(BtConnectionResult.ConnectionEstablished)
+                    serverSocket?.close()
+                    running = false
+                }
+            }
+        }.onCompletion {
+            closeConnection()
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun connectToDevice(btDevice: BtDevice): Flow<BtConnectionResult> {
+        return flow {
+            if (!permissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+                throw SecurityException(
+                    "BluetoothController.connectToDevice: BLUETOOTH_CONNECT" +
+                            "permission denied"
+                )
+            }
+
+            clientSocket = bluetoothAdapter
+                ?.getRemoteDevice(btDevice.address)
+                ?.createRfcommSocketToServiceRecord(UUID.fromString(BT_UUID))
+            stopDiscovery()
+
+            clientSocket?.let { _clientSocket ->
+                try {
+                    _clientSocket.connect()
+                    emit(BtConnectionResult.ConnectionEstablished)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    _clientSocket.close()
+                    clientSocket = null
+                    emit(BtConnectionResult.Error("Bluetooth connection to remote " +
+                            "device interrupted"))
+                }
+            }
+        }.onCompletion {
+            closeConnection()
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun closeConnection() {
+        serverSocket?.close()
+        clientSocket?.close()
+        serverSocket = null
+        clientSocket = null
     }
 
     override fun updatePairedDevices() {
@@ -121,25 +286,8 @@ class BluetoothController(private val context: Context) : IBluetoothController {
     override fun release() {
         context.unregisterReceiver(bluetoothStateReceiver)
         context.unregisterReceiver(foundBtDeviceReceiver)
-    }
-
-    private fun onDeviceFound(foundDevice: BluetoothDevice) {
-        val newDevice = foundDevice.toBtDevice()
-        _scannedDevices.update { devices ->
-            if (newDevice in devices ) devices
-            else devices + newDevice
-        }
-    }
-
-    private fun onDeviceNameChanged(device: BluetoothDevice) {
-        val changedDevice = device.toBtDevice()
-        _scannedDevices.update { devices ->
-            if (changedDevice in devices) {
-                devices.filterNot { it.address == changedDevice.address } + changedDevice
-            } else {
-                devices + changedDevice
-            }
-        }
+        context.unregisterReceiver(btConnectionStateReceiver)
+        closeConnection()
     }
 
     private fun permissionGranted(permission: String): Boolean =
