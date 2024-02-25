@@ -71,7 +71,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Hilt dependency injection
-    implementation(libs.hilt.android)
+    implementation(libs.com.google.dagger.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
-    ksp(libs.hilt.android.compiler)
+    ksp(libs.com.google.dagger.hilt.android.compiler)
+
+    // Compose
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 }
