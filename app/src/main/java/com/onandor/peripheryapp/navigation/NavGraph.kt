@@ -15,7 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.onandor.peripheryapp.ui.screens.MainScreen
 import com.onandor.peripheryapp.ui.screens.NewBtConnectionScreen
 import com.onandor.peripheryapp.ui.screens.PairedBtDevicesScreen
-import com.onandor.peripheryapp.viewmodels.NavigationViewmodel
+import com.onandor.peripheryapp.viewmodels.NavigationViewModel
 import java.lang.IllegalArgumentException
 
 @Composable
@@ -23,7 +23,7 @@ fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     startDestination: String = NavDestinations.MAIN,
-    viewModel: NavigationViewmodel = hiltViewModel()
+    viewModel: NavigationViewModel = hiltViewModel()
 ) {
     val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentNavBackStackEntry?.destination?.route ?: startDestination

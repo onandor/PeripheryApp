@@ -30,13 +30,13 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.onandor.peripheryapp.viewmodels.PairedBtDevicesViewmodel
+import com.onandor.peripheryapp.viewmodels.PairedBtDevicesViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 @Composable
 fun PairedBtDevicesScreen(
-    viewmodel: PairedBtDevicesViewmodel = hiltViewModel()
+    viewModel: PairedBtDevicesViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,7 +63,7 @@ fun PairedBtDevicesScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            viewmodel.updatePairedDevices()
+            viewModel.updatePairedDevices()
         }
     }
     val permissionsLauncher = rememberLauncherForActivityResult(
@@ -81,7 +81,7 @@ fun PairedBtDevicesScreen(
         }
     }
 
-    val uiState by viewmodel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     fun Context.openApplicationSettings() {
         appSettingsOpen = true
@@ -108,7 +108,7 @@ fun PairedBtDevicesScreen(
 
     LaunchedEffect(canUseBluetooth) {
         if (uiState.isBluetoothEnabled) {
-            viewmodel.updatePairedDevices()
+            viewModel.updatePairedDevices()
         }
     }
 
@@ -158,7 +158,7 @@ fun PairedBtDevicesScreen(
                         }
                     }
                 }
-                Button(onClick = viewmodel::pairNewDevice) {
+                Button(onClick = viewModel::pairNewDevice) {
                     Text(text = "Pair new device")
                 }
             }

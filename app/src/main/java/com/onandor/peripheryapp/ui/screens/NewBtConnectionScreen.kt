@@ -30,21 +30,21 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.onandor.peripheryapp.kbm.data.BtDevice
-import com.onandor.peripheryapp.viewmodels.NewBtConnectionViewmodel
+import com.onandor.peripheryapp.viewmodels.NewBtConnectionViewModel
 
 @Composable
 fun NewBtConnectionScreen(
-    viewmodel: NewBtConnectionViewmodel = hiltViewModel()
+    viewModel: NewBtConnectionViewModel = hiltViewModel()
 ) {
     val enableBluetoothLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            viewmodel.updatePairedDevices()
+            viewModel.updatePairedDevices()
         }
     }
 
-    val uiState by viewmodel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(uiState.isConnected) {
@@ -56,7 +56,7 @@ fun NewBtConnectionScreen(
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            viewmodel.errorMessageShown()
+            viewModel.errorMessageShown()
         }
     }
 
@@ -76,7 +76,7 @@ fun NewBtConnectionScreen(
                     Text(text = "Enable Bluetooth")
                 }
             } else {
-                Button(onClick = viewmodel::showSearchForDevicesDialog) {
+                Button(onClick = viewModel::showSearchForDevicesDialog) {
                     Text(text = "Search for devices")
                 }
                 Button(onClick = { /*TODO*/ }) {
@@ -88,8 +88,8 @@ fun NewBtConnectionScreen(
 
     if (uiState.searchForDevicesDialogShown) {
         SearchForDevicesDialog(
-            onDeviceClick = viewmodel::connectToDevice,
-            onDismissRequest = viewmodel::dismissSearchForDevicesDialog,
+            onDeviceClick = viewModel::connectToDevice,
+            onDismissRequest = viewModel::dismissSearchForDevicesDialog,
             scannedDevices = uiState.scannedDevices
         )
     }

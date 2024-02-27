@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 data class PairedBtDevicesUiState(
@@ -22,7 +21,7 @@ data class PairedBtDevicesUiState(
 )
 
 @HiltViewModel
-class PairedBtDevicesViewmodel @Inject constructor(
+class PairedBtDevicesViewModel @Inject constructor(
     private val navManager: INavigationManager,
     private val bluetoothController: IBluetoothController
 ) : ViewModel() {

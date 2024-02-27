@@ -29,7 +29,7 @@ data class NewBtConnectionUiState(
 )
 
 @HiltViewModel
-class NewBtConnectionViewmodel @Inject constructor(
+class NewBtConnectionViewModel @Inject constructor(
     private val bluetoothController: IBluetoothController
 ) : ViewModel() {
 
@@ -89,13 +89,6 @@ class NewBtConnectionViewmodel @Inject constructor(
         _uiState.update { it.copy(isConnecting = true) }
         deviceConnection = bluetoothController
             .connectToDevice(device)
-            .listen()
-    }
-
-    fun waitForIncomingConnections() {
-        _uiState.update { it.copy(isConnecting = true) }
-        deviceConnection = bluetoothController
-            .startServer()
             .listen()
     }
 
