@@ -60,7 +60,6 @@ class BluetoothController(private val context: Context) : IBluetoothController {
     private val _errors = MutableSharedFlow<String>()
     override val errors: SharedFlow<String> = _errors.asSharedFlow()
 
-    private var serverSocket: BluetoothServerSocket? = null
     private var clientSocket: BluetoothSocket? = null
 
     private val bluetoothStateReceiver = object : BroadcastReceiver() {
@@ -153,9 +152,11 @@ class BluetoothController(private val context: Context) : IBluetoothController {
     private val hidDeviceListener = object : BluetoothProfile.ServiceListener {
 
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
-            if (profile == BluetoothProfile.HID_DEVICE) {
-                bluetoothHidDevice = proxy as BluetoothHidDevice
+            if (profile != BluetoothProfile.HID_DEVICE) {
+                return
             }
+            bluetoothHidDevice = proxy as BluetoothHidDevice
+            //bluetoothHidDevice.registerApp()
         }
 
         override fun onServiceDisconnected(profile: Int) {
@@ -207,34 +208,6 @@ class BluetoothController(private val context: Context) : IBluetoothController {
         bluetoothAdapter?.cancelDiscovery()
     }
 
-    override fun startServer(): Flow<BtConnectionResult> {
-        return flow<BtConnectionResult> {
-            if (!permissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
-                throw SecurityException("BluetoothController.startServer: BLUETOOTH_CONNECT " +
-                        "permission denied")
-            }
-            serverSocket = bluetoothAdapter
-                ?.listenUsingRfcommWithServiceRecord(BT_NAME, UUID.fromString(BT_UUID))
-
-            var running = true
-            while (running) {
-                clientSocket = try {
-                    serverSocket?.accept()
-                } catch (e: IOException) {
-                    running = false
-                    null
-                }
-                clientSocket?.let {
-                    emit(BtConnectionResult.ConnectionEstablished)
-                    serverSocket?.close()
-                    running = false
-                }
-            }
-        }.onCompletion {
-            closeConnection()
-        }.flowOn(Dispatchers.IO)
-    }
-
     override fun connectToDevice(btDevice: BtDevice): Flow<BtConnectionResult> {
         return flow {
             if (!permissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
@@ -267,9 +240,7 @@ class BluetoothController(private val context: Context) : IBluetoothController {
     }
 
     override fun closeConnection() {
-        serverSocket?.close()
         clientSocket?.close()
-        serverSocket = null
         clientSocket = null
     }
 

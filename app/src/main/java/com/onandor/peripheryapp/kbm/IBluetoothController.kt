@@ -17,7 +17,6 @@ interface IBluetoothController {
     fun stopDiscovery()
     fun updatePairedDevices()
 
-    fun startServer(): Flow<BtConnectionResult>
     fun connectToDevice(device: BtDevice): Flow<BtConnectionResult>
     fun closeConnection()
 
