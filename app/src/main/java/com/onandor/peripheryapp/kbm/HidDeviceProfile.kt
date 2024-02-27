@@ -33,15 +33,6 @@ class HidDeviceProfile(private val context: Context) {
     private var hidServiceProxy: BluetoothHidDevice? = null
     private var serviceStateListener: ServiceStateListener? = null
 
-    private val _scannedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
-    val scannedDevices: StateFlow<List<BluetoothDevice>> = _scannedDevices.asStateFlow()
-
-    private val _bondedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
-    val bondedDevices: StateFlow<List<BluetoothDevice>> = _bondedDevices.asStateFlow()
-
-    private val _isBluetoothEnabled = MutableStateFlow(bluetoothAdapter?.isEnabled ?: false)
-    val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled.asStateFlow()
-
     private val hidServiceListener = object : ServiceListener {
 
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
@@ -117,7 +108,4 @@ class HidDeviceProfile(private val context: Context) {
         }
         return hidServiceProxy!!.connectedDevices
     }
-
-    private fun isPermissionGranted(permission: String): Boolean =
-        context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 }

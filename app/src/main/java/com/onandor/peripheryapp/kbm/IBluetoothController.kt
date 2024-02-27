@@ -1,24 +1,16 @@
 package com.onandor.peripheryapp.kbm
 
-import com.onandor.peripheryapp.kbm.data.BtDevice
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
+import android.bluetooth.BluetoothDevice
 import kotlinx.coroutines.flow.StateFlow
 
 interface IBluetoothController {
 
-    val scannedDevices: StateFlow<List<BtDevice>>
-    val pairedDevices: StateFlow<List<BtDevice>>
+    val foundDevices: StateFlow<List<BluetoothDevice>>
+    val bondedDevices: StateFlow<List<BluetoothDevice>>
     val isBluetoothEnabled: StateFlow<Boolean>
-    val isConnected: StateFlow<Boolean>
-    val errors: SharedFlow<String>
 
     fun startDiscovery()
     fun stopDiscovery()
-    fun updatePairedDevices()
-
-    fun connectToDevice(device: BtDevice): Flow<BtConnectionResult>
-    fun closeConnection()
-
+    fun updateBondedDevices()
     fun release()
 }
