@@ -37,19 +37,13 @@ fun BtDevicesScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(uiState.isBluetoothEnabled) {
-        if (uiState.isBluetoothEnabled) {
-            viewModel.updateBondedDevices()
-        }
-    }
-
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            if (!uiState.isBluetoothEnabled) {
+            if (uiState.bluetoothState != BluetoothAdapter.STATE_ON) {
                 Text("Bluetooth is disabled. Enable it to access the functionalities.")
                 Button(
                     onClick = {

@@ -13,7 +13,7 @@ class BtConnectionTypeSelectViewModel @Inject constructor(
     private val bluetoothController: IBluetoothController
 ) : ViewModel() {
 
-    val isBluetoothEnabled = bluetoothController.isBluetoothEnabled
+    val bluetoothState = bluetoothController.bluetoothState
 
     init {
         bluetoothController.init()

@@ -49,7 +49,7 @@ fun BtConnectionTypeSelectScreen(
         }
     )
     val isBluetoothPermissionGranted by _isBluetoothPermissionGranted.collectAsState()
-    val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsState()
+    val bluetoothState by viewModel.bluetoothState.collectAsState()
 
     val _isLocationPermissionGranted = MutableStateFlow(
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -126,7 +126,7 @@ fun BtConnectionTypeSelectScreen(
                 Button(onClick = { context.openApplicationSettings() }) {
                     Text(text = "Open app settings")
                 }
-            } else if (!isBluetoothEnabled) {
+            } else if (bluetoothState != BluetoothAdapter.STATE_ON) {
                 Text("Bluetooth is disabled. Enable it to access the functionalities.")
                 Button(
                     onClick = {

@@ -42,8 +42,10 @@ class BluetoothController @Inject constructor(
     private val _bondedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     override val bondedDevices: StateFlow<List<BluetoothDevice>> = _bondedDevices.asStateFlow()
 
-    private val _isBluetoothEnabled = MutableStateFlow(bluetoothAdapter?.isEnabled ?: false)
-    override val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled.asStateFlow()
+    private val _bluetoothState = MutableStateFlow(
+        bluetoothAdapter?.state ?: BluetoothAdapter.STATE_OFF
+    )
+    override val bluetoothState: StateFlow<Int> = _bluetoothState.asStateFlow()
 
     private val bluetoothScanReceiver = object : BroadcastReceiver() {
 
@@ -87,15 +89,15 @@ class BluetoothController @Inject constructor(
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    when(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
+                    val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+                    _bluetoothState.update { state }
+                    when(state) {
+                        BluetoothAdapter.STATE_ON -> {
+                            updateBondedDevices()
+                        }
                         BluetoothAdapter.STATE_OFF -> {
-                            _isBluetoothEnabled.update { false }
                             _foundDevices.update { emptyList() }
                             _bondedDevices.update { emptyList() }
-                        }
-                        BluetoothAdapter.STATE_ON -> {
-                            _isBluetoothEnabled.update { true }
-                            updateBondedDevices()
                         }
                     }
                 }
@@ -118,17 +120,20 @@ class BluetoothController @Inject constructor(
         }
     }
 
-    override fun startDiscovery() {
+    override fun startDiscovery(clearFoundDevices: Boolean) {
         if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
         val scanIntentFilter = IntentFilter()
         scanIntentFilter.addAction(BluetoothDevice.ACTION_FOUND)
         scanIntentFilter.addAction(BluetoothDevice.ACTION_NAME_CHANGED)
+        scanIntentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         context.registerReceiver(bluetoothScanReceiver, scanIntentFilter)
 
         updateBondedDevices()
-        _foundDevices.update { emptyList() }
+        if (clearFoundDevices) {
+            _foundDevices.update { emptyList() }
+        }
         bluetoothAdapter?.startDiscovery()
     }
 
@@ -164,30 +169,18 @@ class BluetoothController @Inject constructor(
     }
 
     override fun pair(device: BluetoothDevice) {
-        println("pair")
-        println("device.bondState: ${device.bondState}")
-        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
         device.createBond()
     }
 
     override fun unpair(device: BluetoothDevice) {
-        println("unpair")
-        println("device.bondState: ${device.bondState}")
-        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
         TODO("Not yet implemented")
     }
 
     override fun connect(device: BluetoothDevice) {
-        println("connect")
-        println("device.bondState: ${device.bondState}")
-        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
         hidDataSender.requestConnect(device)
     }
 
     override fun disconnect(device: BluetoothDevice) {
-        println("disconnect")
-        println("device.bondState: ${device.bondState}")
-        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
         TODO("Not yet implemented")
     }
 
@@ -201,8 +194,11 @@ class BluetoothController @Inject constructor(
 
             }
             BluetoothDevice.BOND_NONE -> {
-                _foundDevices.update { it + device }
                 updateBondedDevices()
+                if (bluetoothAdapter?.isDiscovering == true) {
+                    stopDiscovery()
+                }
+                startDiscovery(false)
             }
         }
     }
