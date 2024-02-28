@@ -15,12 +15,12 @@ class BtConnectionTypeSelectViewModel @Inject constructor(
 
     val bluetoothState = bluetoothController.bluetoothState
 
-    init {
-        bluetoothController.init()
-    }
-
     fun navigateToBtDevices(){
         navManager.navigateTo(NavActions.btDevices())
+    }
+
+    fun permissionsGranted() {
+        bluetoothController.init()
     }
 
     override fun onCleared() {

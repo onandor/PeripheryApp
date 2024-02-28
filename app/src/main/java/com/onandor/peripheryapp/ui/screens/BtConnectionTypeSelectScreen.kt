@@ -97,6 +97,12 @@ fun BtConnectionTypeSelectScreen(
             }
         }
     }
+    
+    LaunchedEffect(isBluetoothPermissionGranted, isLocationPermissionGranted) {
+        if (isBluetoothPermissionGranted && isLocationPermissionGranted) {
+            viewModel.permissionsGranted()
+        }
+    }
 
     Scaffold { innerPadding ->
         Column(
