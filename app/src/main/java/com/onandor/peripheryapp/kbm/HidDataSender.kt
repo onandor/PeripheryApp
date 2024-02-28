@@ -8,7 +8,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class HidDataSender @Inject constructor(
     private val hidDeviceApp: HidDeviceApp,
     private val hidDeviceProfile: HidDeviceProfile

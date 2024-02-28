@@ -17,8 +17,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
+import javax.inject.Singleton
 
 @SuppressLint("MissingPermission")
+@Singleton
 class BluetoothController @Inject constructor(
     private val context: Context,
     private val hidDataSender: HidDataSender
@@ -100,15 +102,15 @@ class BluetoothController @Inject constructor(
     private val profileListener = object : HidDataSender.ProfileListener {
 
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
-            TODO("Not yet implemented")
+            // TODO
         }
 
         override fun onAppStatusChanged(registered: Boolean) {
-            TODO("Not yet implemented")
+            // TODO
         }
 
         override fun onServiceStateChanged(proxy: BluetoothProfile?) {
-            TODO("Not yet implemented")
+            // TODO
         }
     }
 

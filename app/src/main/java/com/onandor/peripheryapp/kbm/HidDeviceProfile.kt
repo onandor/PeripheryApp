@@ -112,6 +112,6 @@ class HidDeviceProfile(private val context: Context) {
         if (hidServiceProxy == null) {
             return emptyList()
         }
-        return hidServiceProxy.getDevicesMatchingConnectionStates(states)
+        return hidServiceProxy!!.getDevicesMatchingConnectionStates(states)
     }
 }

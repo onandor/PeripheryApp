@@ -2,6 +2,7 @@ package com.onandor.peripheryapp.ui.screens
 
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.onandor.peripheryapp.kbm.data.BtDevice
 import com.onandor.peripheryapp.viewmodels.NewBtConnectionViewModel
 
 @Composable
@@ -40,7 +40,7 @@ fun NewBtConnectionScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.updatePairedDevices()
+            viewModel.updateBondedDevices()
         }
     }
 
@@ -90,16 +90,16 @@ fun NewBtConnectionScreen(
         SearchForDevicesDialog(
             onDeviceClick = viewModel::connectToDevice,
             onDismissRequest = viewModel::dismissSearchForDevicesDialog,
-            scannedDevices = uiState.scannedDevices
+            foundDevices = uiState.foundDevices
         )
     }
 }
 
 @Composable
 private fun SearchForDevicesDialog(
-    onDeviceClick: (BtDevice) -> Unit,
+    onDeviceClick: (BluetoothDevice) -> Unit,
     onDismissRequest: () -> Unit,
-    scannedDevices: List<BtDevice>
+    foundDevices: List<BluetoothDevice>
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Card(shape = RoundedCornerShape(16.dp)) {
@@ -112,7 +112,7 @@ private fun SearchForDevicesDialog(
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(text = "Choose a device to pair")
                 LazyColumn {
-                    scannedDevices.forEach { device ->
+                    foundDevices.forEach { device ->
                         item { 
                             Text(
                                 text = device.name ?: device.address,

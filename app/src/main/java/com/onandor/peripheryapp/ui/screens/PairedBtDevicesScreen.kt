@@ -63,7 +63,7 @@ fun PairedBtDevicesScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.updatePairedDevices()
+            viewModel.updateBondedDevices()
         }
     }
     val permissionsLauncher = rememberLauncherForActivityResult(
@@ -108,7 +108,7 @@ fun PairedBtDevicesScreen(
 
     LaunchedEffect(canUseBluetooth) {
         if (uiState.isBluetoothEnabled) {
-            viewModel.updatePairedDevices()
+            viewModel.updateBondedDevices()
         }
     }
 
@@ -152,9 +152,9 @@ fun PairedBtDevicesScreen(
             } else {
                 Text("Paired Bluetooth devices:")
                 LazyColumn {
-                    uiState.pairedDevices.forEach { pairedDevice ->
+                    uiState.bondedDevices.forEach { bondedDevice ->
                         item {
-                            Text(text = pairedDevice.name ?: pairedDevice.address)
+                            Text(text = bondedDevice.name ?: bondedDevice.address)
                         }
                     }
                 }

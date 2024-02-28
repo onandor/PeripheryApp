@@ -7,7 +7,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
+import javax.inject.Singleton
 
+@Singleton
 class HidDeviceApp : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender, BatteryReport.BatteryDataSender {
 
     interface DeviceStateListener {
@@ -96,7 +98,7 @@ class HidDeviceApp : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSen
     }
 
     override fun sendBatteryLevel(batteryLevel: Float) {
-        TODO("Not yet implemented")
+        // TODO
     }
 
     override fun sendKeyboard(
