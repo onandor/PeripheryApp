@@ -160,6 +160,34 @@ class BluetoothController @Inject constructor(
         hidDataSender.unregister(context, profileListener)
     }
 
+    override fun pair(device: BluetoothDevice) {
+        println("pair")
+        println("device.bondState: ${device.bondState}")
+        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
+        device.createBond()
+    }
+
+    override fun unpair(device: BluetoothDevice) {
+        println("unpair")
+        println("device.bondState: ${device.bondState}")
+        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
+        TODO("Not yet implemented")
+    }
+
+    override fun connect(device: BluetoothDevice) {
+        println("connect")
+        println("device.bondState: ${device.bondState}")
+        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
+        hidDataSender.requestConnect(device)
+    }
+
+    override fun disconnect(device: BluetoothDevice) {
+        println("disconnect")
+        println("device.bondState: ${device.bondState}")
+        println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
+        TODO("Not yet implemented")
+    }
+
     private fun isPermissionGranted(permission: String): Boolean =
         context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 }

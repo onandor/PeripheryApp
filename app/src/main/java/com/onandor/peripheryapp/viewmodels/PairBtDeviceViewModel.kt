@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.kbm.IBluetoothController
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -46,8 +45,6 @@ class PairBtDeviceViewModel @Inject constructor(
         initialValue = _uiState.value
     )
 
-    private var deviceConnection: Job? = null
-
     init {
         /*
         bluetoothController.isConnected.onEach { isConnected ->
@@ -82,8 +79,8 @@ class PairBtDeviceViewModel @Inject constructor(
         bluetoothController.updateBondedDevices()
     }
 
-    fun connectToDevice(device: BluetoothDevice) {
-        // TODO
+    fun requestPair(device: BluetoothDevice) {
+        bluetoothController.pair(device)
     }
 
     fun errorMessageShown() {

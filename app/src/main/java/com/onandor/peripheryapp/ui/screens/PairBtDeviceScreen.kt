@@ -88,7 +88,7 @@ fun PairBtDeviceScreen(
 
     if (uiState.searchForDevicesDialogShown) {
         SearchForDevicesDialog(
-            onDeviceClick = viewModel::connectToDevice,
+            onDeviceClick = viewModel::requestPair,
             onDismissRequest = viewModel::dismissSearchForDevicesDialog,
             foundDevices = uiState.foundDevices
         )
@@ -118,8 +118,8 @@ private fun SearchForDevicesDialog(
                                 text = device.name ?: device.address,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp)
                                     .clickable { onDeviceClick(device) }
+                                    .padding(16.dp)
                             )
                         }
                     }

@@ -14,4 +14,8 @@ interface IBluetoothController {
     fun updateBondedDevices()
     fun init()
     fun release()
+    fun pair(device: BluetoothDevice)
+    fun unpair(device: BluetoothDevice)
+    fun connect(device: BluetoothDevice)
+    fun disconnect(device: BluetoothDevice)
 }

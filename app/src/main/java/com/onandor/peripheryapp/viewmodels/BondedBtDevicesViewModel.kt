@@ -48,12 +48,16 @@ class BondedBtDevicesViewModel @Inject constructor(
         bluetoothController.init()
     }
 
-    fun pairNewDevice() {
+    fun navigateToPairBtDevice() {
         navManager.navigateTo(NavActions.pairBtDevice())
     }
 
     fun updateBondedDevices() {
         bluetoothController.updateBondedDevices()
+    }
+
+    fun connect(device: BluetoothDevice) {
+        bluetoothController.connect(device)
     }
 
     override fun onCleared() {

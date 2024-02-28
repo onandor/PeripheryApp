@@ -11,8 +11,10 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -154,11 +157,17 @@ fun BondedBtDevicesScreen(
                 LazyColumn {
                     uiState.bondedDevices.forEach { bondedDevice ->
                         item {
-                            Text(text = bondedDevice.name ?: bondedDevice.address)
+                            Text(
+                                text = bondedDevice.name ?: bondedDevice.address,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { viewModel.connect(bondedDevice) }
+                                    .padding(16.dp)
+                            )
                         }
                     }
                 }
-                Button(onClick = viewModel::pairNewDevice) {
+                Button(onClick = viewModel::navigateToPairBtDevice) {
                     Text(text = "Pair new device")
                 }
             }
