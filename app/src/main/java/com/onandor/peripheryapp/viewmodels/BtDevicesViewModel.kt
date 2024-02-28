@@ -5,11 +5,11 @@ import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.kbm.IBluetoothController
+import com.onandor.peripheryapp.utils.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -18,7 +18,9 @@ import javax.inject.Inject
 data class BtDevicesUiState(
     val foundDevices: List<BluetoothDevice> = emptyList(),
     val bondedDevices: List<BluetoothDevice> = emptyList(),
-    val bluetoothState: Int = BluetoothAdapter.STATE_OFF
+    val bluetoothState: Int = BluetoothAdapter.STATE_OFF,
+    val waitingForDevice: BluetoothDevice? = null,
+    val connectedDevice: BluetoothDevice? = null
 )
 
 @HiltViewModel
@@ -31,12 +33,16 @@ class BtDevicesViewModel @Inject constructor(
         bluetoothController.foundDevices,
         bluetoothController.bondedDevices,
         bluetoothController.bluetoothState,
+        bluetoothController.waitingForDevice,
+        bluetoothController.connectedDevice,
         _uiState
-    ) { foundDevices, bondedDevices, bluetoothState, uiState ->
+    ) { foundDevices, bondedDevices, bluetoothState, waitingForDevice, connectedDevice, uiState ->
         uiState.copy(
             foundDevices = foundDevices,
             bondedDevices = bondedDevices,
-            bluetoothState = bluetoothState
+            bluetoothState = bluetoothState,
+            waitingForDevice = waitingForDevice,
+            connectedDevice = connectedDevice
         )
     }.stateIn(
         scope = viewModelScope,

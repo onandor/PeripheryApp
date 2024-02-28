@@ -8,6 +8,8 @@ interface IBluetoothController {
     val foundDevices: StateFlow<List<BluetoothDevice>>
     val bondedDevices: StateFlow<List<BluetoothDevice>>
     val bluetoothState: StateFlow<Int>
+    val waitingForDevice: StateFlow<BluetoothDevice?>
+    val connectedDevice: StateFlow<BluetoothDevice?>
 
     fun startDiscovery(clearFoundDevices: Boolean)
     fun stopDiscovery()
