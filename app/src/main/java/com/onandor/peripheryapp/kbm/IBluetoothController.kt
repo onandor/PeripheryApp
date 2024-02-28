@@ -12,5 +12,6 @@ interface IBluetoothController {
     fun startDiscovery()
     fun stopDiscovery()
     fun updateBondedDevices()
+    fun init()
     fun release()
 }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.lang.IllegalArgumentException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -114,15 +115,6 @@ class BluetoothController @Inject constructor(
         }
     }
 
-    init {
-        hidDeviceProfile = hidDataSender.register(context, profileListener)
-        context.registerReceiver(
-            bluetoothStateReceiver,
-            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
-        )
-        updateBondedDevices()
-    }
-
     override fun startDiscovery() {
         if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
@@ -141,6 +133,7 @@ class BluetoothController @Inject constructor(
         if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
+        context.unregisterReceiver(bluetoothScanReceiver)
         bluetoothAdapter?.cancelDiscovery()
     }
 
@@ -153,8 +146,16 @@ class BluetoothController @Inject constructor(
             ?.also { devices -> _bondedDevices.update { devices.toList() } }
     }
 
+    override fun init() {
+        hidDeviceProfile = hidDataSender.register(context, profileListener)
+        context.registerReceiver(
+            bluetoothStateReceiver,
+            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        )
+        updateBondedDevices()
+    }
+
     override fun release() {
-        context.unregisterReceiver(bluetoothScanReceiver)
         context.unregisterReceiver(bluetoothStateReceiver)
         hidDataSender.unregister(context, profileListener)
     }

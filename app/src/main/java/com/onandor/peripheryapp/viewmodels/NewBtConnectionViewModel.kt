@@ -89,9 +89,4 @@ class NewBtConnectionViewModel @Inject constructor(
     fun errorMessageShown() {
         _uiState.update { it.copy(errorMessage = null) }
     }
-
-    override fun onCleared() {
-        super.onCleared()
-        bluetoothController.release()
-    }
 }
