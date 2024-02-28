@@ -75,6 +75,9 @@ class BluetoothController @Inject constructor(
                         }
                     }
                 }
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                    onDeviceBondStateChanged(device)
+                }
             }
         }
     }
@@ -186,6 +189,22 @@ class BluetoothController @Inject constructor(
         println("device.bondState: ${device.bondState}")
         println("hidDeviceProfile.connectionState: ${hidDeviceProfile.getConnectionState(device)}")
         TODO("Not yet implemented")
+    }
+
+    private fun onDeviceBondStateChanged(device: BluetoothDevice) {
+        when (device.bondState) {
+            BluetoothDevice.BOND_BONDED -> {
+                _foundDevices.update { devices -> devices.filterNot { it == device } }
+                updateBondedDevices()
+            }
+            BluetoothDevice.BOND_BONDING -> {
+
+            }
+            BluetoothDevice.BOND_NONE -> {
+                _foundDevices.update { it + device }
+                updateBondedDevices()
+            }
+        }
     }
 
     private fun isPermissionGranted(permission: String): Boolean =

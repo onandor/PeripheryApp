@@ -143,7 +143,7 @@ class HidDataSender @Inject constructor(
             connectedDevice = null
             updateDeviceList()
 
-            if (device != null && device.equals(connectedDevice)) {
+            if (device != null && device == connectedDevice) {
                 listeners.forEach { listener ->
                     listener.onConnectionStateChanged(device, BluetoothProfile.STATE_CONNECTED)
                 }
