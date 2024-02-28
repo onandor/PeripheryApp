@@ -13,8 +13,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.onandor.peripheryapp.ui.screens.MainScreen
-import com.onandor.peripheryapp.ui.screens.NewBtConnectionScreen
-import com.onandor.peripheryapp.ui.screens.PairedBtDevicesScreen
+import com.onandor.peripheryapp.ui.screens.PairBtDeviceScreen
+import com.onandor.peripheryapp.ui.screens.BondedBtDevicesScreen
 import com.onandor.peripheryapp.viewmodels.NavigationViewModel
 import java.lang.IllegalArgumentException
 
@@ -47,11 +47,11 @@ fun NavGraph(
             composable(NavDestinations.MAIN) {
                 MainScreen()
             }
-            composable(NavDestinations.PAIRED_BT_DEVICES) {
-                PairedBtDevicesScreen()
+            composable(NavDestinations.BONDED_BT_DEVICES) {
+                BondedBtDevicesScreen()
             }
-            composable(NavDestinations.NEW_BT_CONNECTION) {
-                NewBtConnectionScreen()
+            composable(NavDestinations.PAIR_BT_DEVICE) {
+                PairBtDeviceScreen()
             }
         }
     }

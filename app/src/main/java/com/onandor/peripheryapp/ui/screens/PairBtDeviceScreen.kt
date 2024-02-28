@@ -30,11 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.onandor.peripheryapp.viewmodels.NewBtConnectionViewModel
+import com.onandor.peripheryapp.viewmodels.PairBtDeviceViewModel
 
 @Composable
-fun NewBtConnectionScreen(
-    viewModel: NewBtConnectionViewModel = hiltViewModel()
+fun PairBtDeviceScreen(
+    viewModel: PairBtDeviceViewModel = hiltViewModel()
 ) {
     val enableBluetoothLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()

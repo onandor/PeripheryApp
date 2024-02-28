@@ -30,13 +30,13 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.onandor.peripheryapp.viewmodels.PairedBtDevicesViewModel
+import com.onandor.peripheryapp.viewmodels.BondedBtDevicesViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 @Composable
-fun PairedBtDevicesScreen(
-    viewModel: PairedBtDevicesViewModel = hiltViewModel()
+fun BondedBtDevicesScreen(
+    viewModel: BondedBtDevicesViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

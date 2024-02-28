@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-data class NewBtConnectionUiState(
+data class PairBtDeviceUiState(
     val foundDevices: List<BluetoothDevice> = emptyList(),
     val pairedDevices: List<BluetoothDevice> = emptyList(),
     val isBluetoothEnabled: Boolean = false,
@@ -24,11 +24,11 @@ data class NewBtConnectionUiState(
 )
 
 @HiltViewModel
-class NewBtConnectionViewModel @Inject constructor(
+class PairBtDeviceViewModel @Inject constructor(
     private val bluetoothController: IBluetoothController
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(NewBtConnectionUiState())
+    private val _uiState = MutableStateFlow(PairBtDeviceUiState())
     val uiState = combine(
         bluetoothController.foundDevices,
         bluetoothController.bondedDevices,

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-data class PairedBtDevicesUiState(
+data class BondedBtDevicesUiState(
     val foundDevices: List<BluetoothDevice> = emptyList(),
     val bondedDevices: List<BluetoothDevice> = emptyList(),
     val isBluetoothEnabled: Boolean = false,
@@ -21,12 +21,12 @@ data class PairedBtDevicesUiState(
 )
 
 @HiltViewModel
-class PairedBtDevicesViewModel @Inject constructor(
+class BondedBtDevicesViewModel @Inject constructor(
     private val navManager: INavigationManager,
     private val bluetoothController: IBluetoothController
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PairedBtDevicesUiState())
+    private val _uiState = MutableStateFlow(BondedBtDevicesUiState())
     val uiState = combine(
         bluetoothController.foundDevices,
         bluetoothController.bondedDevices,
@@ -49,7 +49,7 @@ class PairedBtDevicesViewModel @Inject constructor(
     }
 
     fun pairNewDevice() {
-        navManager.navigateTo(NavActions.newBtConnection())
+        navManager.navigateTo(NavActions.pairBtDevice())
     }
 
     fun updateBondedDevices() {
