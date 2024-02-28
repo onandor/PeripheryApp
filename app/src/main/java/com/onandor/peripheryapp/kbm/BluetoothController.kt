@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -20,7 +21,7 @@ import javax.inject.Inject
 @SuppressLint("MissingPermission")
 class BluetoothController @Inject constructor(
     private val context: Context,
-    private val hidDeviceProfile: HidDeviceProfile
+    private val hidDataSender: HidDataSender
 ): IBluetoothController {
 
     private val bluetoothManager by lazy {
@@ -29,6 +30,8 @@ class BluetoothController @Inject constructor(
     private val bluetoothAdapter by lazy {
         bluetoothManager?.adapter
     }
+
+    private lateinit var hidDeviceProfile: HidDeviceProfile
 
     private val _foundDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     override val foundDevices: StateFlow<List<BluetoothDevice>> = _foundDevices.asStateFlow()
@@ -94,7 +97,23 @@ class BluetoothController @Inject constructor(
         }
     }
 
+    private val profileListener = object : HidDataSender.ProfileListener {
+
+        override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onAppStatusChanged(registered: Boolean) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onServiceStateChanged(proxy: BluetoothProfile?) {
+            TODO("Not yet implemented")
+        }
+    }
+
     init {
+        hidDeviceProfile = hidDataSender.register(context, profileListener)
         context.registerReceiver(
             bluetoothStateReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
@@ -135,6 +154,7 @@ class BluetoothController @Inject constructor(
     override fun release() {
         context.unregisterReceiver(bluetoothScanReceiver)
         context.unregisterReceiver(bluetoothStateReceiver)
+        hidDataSender.unregister(context, profileListener)
     }
 
     private fun isPermissionGranted(permission: String): Boolean =

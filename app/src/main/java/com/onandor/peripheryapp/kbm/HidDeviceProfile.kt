@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-@SuppressLint("MissingPermission")
 class HidDeviceProfile(private val context: Context) {
 
     private val HOGP_UUID = ParcelUuid.fromString("00001812-0000-1000-8000-00805f9b34fb")
@@ -107,5 +106,12 @@ class HidDeviceProfile(private val context: Context) {
             return emptyList()
         }
         return hidServiceProxy!!.connectedDevices
+    }
+
+    fun getDevicesMatchingConnectionStates(states: IntArray): List<BluetoothDevice> {
+        if (hidServiceProxy == null) {
+            return emptyList()
+        }
+        return hidServiceProxy.getDevicesMatchingConnectionStates(states)
     }
 }
