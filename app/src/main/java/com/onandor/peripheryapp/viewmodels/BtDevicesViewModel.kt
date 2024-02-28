@@ -4,8 +4,6 @@ import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.kbm.IBluetoothController
-import com.onandor.peripheryapp.navigation.INavigationManager
-import com.onandor.peripheryapp.navigation.NavActions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,20 +11,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-data class BondedBtDevicesUiState(
+data class BtDevicesUiState(
     val foundDevices: List<BluetoothDevice> = emptyList(),
     val bondedDevices: List<BluetoothDevice> = emptyList(),
-    val isBluetoothEnabled: Boolean = false,
-    val canUseBluetooth: Boolean = false
+    val isBluetoothEnabled: Boolean = false
 )
 
 @HiltViewModel
-class BondedBtDevicesViewModel @Inject constructor(
-    private val navManager: INavigationManager,
+class BtDevicesViewModel @Inject constructor(
     private val bluetoothController: IBluetoothController
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BondedBtDevicesUiState())
+    private val _uiState = MutableStateFlow(BtDevicesUiState())
     val uiState = combine(
         bluetoothController.foundDevices,
         bluetoothController.bondedDevices,
@@ -45,23 +41,23 @@ class BondedBtDevicesViewModel @Inject constructor(
     )
 
     init {
-        bluetoothController.init()
-    }
-
-    fun navigateToPairBtDevice() {
-        navManager.navigateTo(NavActions.pairBtDevice())
+        bluetoothController.startDiscovery()
     }
 
     fun updateBondedDevices() {
         bluetoothController.updateBondedDevices()
     }
 
-    fun connect(device: BluetoothDevice) {
+    fun requestConnect(device: BluetoothDevice) {
         bluetoothController.connect(device)
+    }
+
+    fun requestPair(device: BluetoothDevice) {
+        bluetoothController.pair(device)
     }
 
     override fun onCleared() {
         super.onCleared()
-        bluetoothController.release()
+        bluetoothController.stopDiscovery()
     }
 }

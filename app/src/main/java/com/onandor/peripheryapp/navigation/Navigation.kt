@@ -1,22 +1,22 @@
 package com.onandor.peripheryapp.navigation
 
 import androidx.navigation.NavOptions
-import com.onandor.peripheryapp.navigation.Screens.PAIR_BT_DEVICE_SCREEN
+import com.onandor.peripheryapp.navigation.Screens.BT_DEVICES_SCREEN
 import com.onandor.peripheryapp.navigation.Screens.MAIN_SCREEN
-import com.onandor.peripheryapp.navigation.Screens.BONDED_BT_DEVICES_SCREEN
+import com.onandor.peripheryapp.navigation.Screens.BT_CONNECTION_TYPE_SELECT_SCREEN
 
 private object Screens {
     const val MAIN_SCREEN = "mainScreen"
     // Bluetooth kb&m screens
-    const val BONDED_BT_DEVICES_SCREEN = "bondedBtDevicesScreen"
-    const val PAIR_BT_DEVICE_SCREEN = "pairBtDeviceScreen"
+    const val BT_DEVICES_SCREEN = "btDevices"
+    const val BT_CONNECTION_TYPE_SELECT_SCREEN = "btConnectionTypeSelectScreen"
 }
 
 object NavDestinations {
     const val MAIN = MAIN_SCREEN
     // Bluetooth kb&m screens
-    const val BONDED_BT_DEVICES = BONDED_BT_DEVICES_SCREEN
-    const val PAIR_BT_DEVICE = PAIR_BT_DEVICE_SCREEN
+    const val BT_DEVICES = BT_DEVICES_SCREEN
+    const val BT_CONNECTION_TYPE_SELECT = BT_CONNECTION_TYPE_SELECT_SCREEN
 }
 
 interface NavAction {
@@ -33,11 +33,11 @@ object NavActions {
         override val destination: String = NavDestinations.MAIN
     }
 
-    fun bondedBtDevices() = object : NavAction {
-        override val destination: String = NavDestinations.BONDED_BT_DEVICES
+    fun btDevices() = object : NavAction {
+        override val destination: String = NavDestinations.BT_DEVICES
     }
 
-    fun pairBtDevice() = object : NavAction {
-        override val destination: String = NavDestinations.PAIR_BT_DEVICE
+    fun btConnectionTypeSelect() = object : NavAction {
+        override val destination: String = NavDestinations.BT_CONNECTION_TYPE_SELECT
     }
 }
