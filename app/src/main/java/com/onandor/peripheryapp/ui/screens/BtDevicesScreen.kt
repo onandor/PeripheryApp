@@ -75,8 +75,8 @@ fun BtDevicesScreen(
                                 connecting = connecting,
                                 connected = uiState.connectedDevice == device,
                                 onConnect = { viewModel.requestConnect(device) },
-                                onDisconnect = { /* TODO */ },
-                                onForget = { /* TODO */}
+                                onDisconnect = { viewModel.disconnect(device) },
+                                onForget = { viewModel.forget(device) }
                             )
                         }
                     }

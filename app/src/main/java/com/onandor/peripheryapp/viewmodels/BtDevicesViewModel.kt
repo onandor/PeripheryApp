@@ -108,6 +108,14 @@ class BtDevicesViewModel @Inject constructor(
         bluetoothController.pair(device)
     }
 
+    fun disconnect(device: BluetoothDevice) {
+        bluetoothController.disconnect(device)
+    }
+
+    fun forget(device: BluetoothDevice) {
+        bluetoothController.unpair(device)
+    }
+
     override fun onCleared() {
         super.onCleared()
         bluetoothController.stopDiscovery()

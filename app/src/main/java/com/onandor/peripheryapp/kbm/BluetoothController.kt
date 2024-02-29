@@ -194,7 +194,7 @@ class BluetoothController @Inject constructor(
     }
 
     override fun unpair(device: BluetoothDevice) {
-        TODO("Not yet implemented")
+       // TODO
     }
 
     override fun connect(device: BluetoothDevice) {
@@ -202,7 +202,8 @@ class BluetoothController @Inject constructor(
     }
 
     override fun disconnect(device: BluetoothDevice) {
-        TODO("Not yet implemented")
+        println("disconnect")
+        hidDataSender.requestConnect(null)
     }
 
     private fun onDeviceBondStateChanged(device: BluetoothDevice) {
