@@ -1,7 +1,9 @@
 package com.onandor.peripheryapp.ui.screens
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,14 +17,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.onandor.peripheryapp.ui.components.BondedBluetoothDeviceItem
+import com.onandor.peripheryapp.ui.components.FoundBluetoothDeviceItem
 import com.onandor.peripheryapp.viewmodels.BtDevicesViewModel
 
+@SuppressLint("MissingPermission")
 @Composable
 fun BtDevicesScreen(
     viewModel: BtDevicesViewModel = hiltViewModel()
@@ -59,12 +63,20 @@ fun BtDevicesScreen(
                     }
                     uiState.bondedDevices.forEach { device ->
                         item {
-                            Text(
-                                text = device.name ?: device.address,
+                            val connecting =
+                                uiState.waitingForDeviceConnecting == device &&
+                                    uiState.waitingForDeviceConnecting!!.bondState ==
+                                        BluetoothDevice.BOND_BONDED
+                            BondedBluetoothDeviceItem(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { viewModel.requestConnect(device) }
-                                    .padding(16.dp)
+                                    .padding(16.dp),
+                                name = device.name ?: device.address,
+                                connecting = connecting,
+                                connected = uiState.connectedDevice == device,
+                                onConnect = { viewModel.requestConnect(device) },
+                                onDisconnect = { /* TODO */ },
+                                onForget = { /* TODO */}
                             )
                         }
                     }
@@ -73,12 +85,17 @@ fun BtDevicesScreen(
                     }
                     uiState.foundDevices.forEach { device ->
                         item {
-                            Text(
-                                text = device.name ?: device.address,
+                            val bonding =
+                                uiState.waitingForDeviceBonding == device &&
+                                    uiState.waitingForDeviceBonding!!.bondState ==
+                                        BluetoothDevice.BOND_BONDING
+                            FoundBluetoothDeviceItem(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { viewModel.requestPair(device) }
-                                    .padding(16.dp)
+                                    .padding(16.dp),
+                                name = device.name ?: device.address,
+                                bonding = bonding,
+                                onClick = { viewModel.requestPair(device) }
                             )
                         }
                     }

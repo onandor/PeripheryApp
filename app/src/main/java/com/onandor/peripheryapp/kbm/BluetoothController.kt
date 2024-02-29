@@ -47,8 +47,11 @@ class BluetoothController @Inject constructor(
     )
     override val bluetoothState: StateFlow<Int> = _bluetoothState.asStateFlow()
 
-    private val _waitingForDevice = MutableStateFlow<BluetoothDevice?>(null)
-    override val waitingForDevice: StateFlow<BluetoothDevice?> = _waitingForDevice.asStateFlow()
+    private val _waitingForDeviceBonding = MutableStateFlow<BluetoothDevice?>(null)
+    override val waitingForDeviceBonding: StateFlow<BluetoothDevice?> = _waitingForDeviceBonding.asStateFlow()
+
+    private val _waitingForDeviceConnecting = MutableStateFlow<BluetoothDevice?>(null)
+    override val waitingForDeviceConnecting: StateFlow<BluetoothDevice?> = _waitingForDeviceConnecting.asStateFlow()
 
     private val _connectedDevice = MutableStateFlow<BluetoothDevice?>(null)
     override val connectedDevice: StateFlow<BluetoothDevice?> = _connectedDevice.asStateFlow()
@@ -117,11 +120,11 @@ class BluetoothController @Inject constructor(
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
             when (state) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    _waitingForDevice.update { null }
+                    _waitingForDeviceConnecting.update { null }
                     _connectedDevice.update { device }
                 }
                 BluetoothProfile.STATE_CONNECTING -> {
-                    _waitingForDevice.update { device }
+                    _waitingForDeviceConnecting.update { device }
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     _connectedDevice.update { null }
@@ -203,16 +206,19 @@ class BluetoothController @Inject constructor(
     }
 
     private fun onDeviceBondStateChanged(device: BluetoothDevice) {
+        println("Device bond state changed: ${device.name}, ${device.bondState}")
         when (device.bondState) {
             BluetoothDevice.BOND_BONDED -> {
                 _foundDevices.update { devices -> devices.filterNot { it == device } }
-                _waitingForDevice.update { null }
+                _waitingForDeviceBonding.update { null }
                 updateBondedDevices()
             }
             BluetoothDevice.BOND_BONDING -> {
-                _waitingForDevice.update { device }
+                _waitingForDeviceBonding.update { device }
+                println("BONDING: ${waitingForDeviceBonding.value?.bondState}")
             }
             BluetoothDevice.BOND_NONE -> {
+                _waitingForDeviceBonding.update { null }
                 updateBondedDevices()
                 if (bluetoothAdapter?.isDiscovering == true) {
                     stopDiscovery()

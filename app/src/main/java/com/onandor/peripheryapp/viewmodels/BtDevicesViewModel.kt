@@ -5,11 +5,11 @@ import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.kbm.IBluetoothController
-import com.onandor.peripheryapp.utils.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -19,7 +19,8 @@ data class BtDevicesUiState(
     val foundDevices: List<BluetoothDevice> = emptyList(),
     val bondedDevices: List<BluetoothDevice> = emptyList(),
     val bluetoothState: Int = BluetoothAdapter.STATE_OFF,
-    val waitingForDevice: BluetoothDevice? = null,
+    val waitingForDeviceBonding: BluetoothDevice? = null,
+    val waitingForDeviceConnecting: BluetoothDevice? = null,
     val connectedDevice: BluetoothDevice? = null
 )
 
@@ -28,21 +29,50 @@ class BtDevicesViewModel @Inject constructor(
     private val bluetoothController: IBluetoothController
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BtDevicesUiState())
-    val uiState = combine(
+    private data class BluetoothControllerFlows(
+        val foundDevices: List<BluetoothDevice>,
+        val bondedDevices: List<BluetoothDevice>,
+        val bluetoothState: Int,
+        val waitingForDeviceBonding: BluetoothDevice?,
+        val waitingForDeviceConnecting: BluetoothDevice?,
+        val connectedDevice: BluetoothDevice?
+    )
+
+    private val bluetoothControllerFlows = com.onandor.peripheryapp.utils.combine(
         bluetoothController.foundDevices,
         bluetoothController.bondedDevices,
         bluetoothController.bluetoothState,
-        bluetoothController.waitingForDevice,
-        bluetoothController.connectedDevice,
-        _uiState
-    ) { foundDevices, bondedDevices, bluetoothState, waitingForDevice, connectedDevice, uiState ->
-        uiState.copy(
+        bluetoothController.waitingForDeviceBonding,
+        bluetoothController.waitingForDeviceConnecting,
+        bluetoothController.connectedDevice
+    ) { foundDevices,
+        bondedDevices,
+        bluetoothState,
+        waitingForDeviceBonding,
+        waitingForDeviceConnecting,
+        connectedDevice ->
+        BluetoothControllerFlows(
             foundDevices = foundDevices,
             bondedDevices = bondedDevices,
             bluetoothState = bluetoothState,
-            waitingForDevice = waitingForDevice,
+            waitingForDeviceBonding = waitingForDeviceBonding,
+            waitingForDeviceConnecting = waitingForDeviceConnecting,
             connectedDevice = connectedDevice
+        )
+    }
+
+    private val _uiState = MutableStateFlow(BtDevicesUiState())
+    val uiState = combine(
+        bluetoothControllerFlows,
+        _uiState
+    ) { bluetoothControllerFlows, uiState ->
+        uiState.copy(
+            foundDevices = bluetoothControllerFlows.foundDevices,
+            bondedDevices = bluetoothControllerFlows.bondedDevices,
+            bluetoothState = bluetoothControllerFlows.bluetoothState,
+            waitingForDeviceBonding = bluetoothControllerFlows.waitingForDeviceBonding,
+            waitingForDeviceConnecting = bluetoothControllerFlows.waitingForDeviceConnecting,
+            connectedDevice = bluetoothControllerFlows.connectedDevice
         )
     }.stateIn(
         scope = viewModelScope,
