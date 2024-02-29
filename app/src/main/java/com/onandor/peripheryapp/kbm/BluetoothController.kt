@@ -206,7 +206,6 @@ class BluetoothController @Inject constructor(
     }
 
     private fun onDeviceBondStateChanged(device: BluetoothDevice) {
-        println("Device bond state changed: ${device.name}, ${device.bondState}")
         when (device.bondState) {
             BluetoothDevice.BOND_BONDED -> {
                 _foundDevices.update { devices -> devices.filterNot { it == device } }
@@ -215,7 +214,6 @@ class BluetoothController @Inject constructor(
             }
             BluetoothDevice.BOND_BONDING -> {
                 _waitingForDeviceBonding.update { device }
-                println("BONDING: ${waitingForDeviceBonding.value?.bondState}")
             }
             BluetoothDevice.BOND_NONE -> {
                 _waitingForDeviceBonding.update { null }
