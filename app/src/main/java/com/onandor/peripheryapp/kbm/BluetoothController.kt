@@ -10,13 +10,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.os.Build
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.lang.IllegalArgumentException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -197,7 +195,14 @@ class BluetoothController @Inject constructor(
     }
 
     override fun unpair(device: BluetoothDevice) {
-       // TODO
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
+        if (device.bondState == BluetoothDevice.BOND_BONDING) {
+            BluetoothUtils.cancelBondProcess(device)
+        } else if (device.bondState == BluetoothDevice.BOND_BONDED) {
+            BluetoothUtils.removeBond(device)
+        }
     }
 
     override fun connect(device: BluetoothDevice) {
@@ -205,7 +210,6 @@ class BluetoothController @Inject constructor(
     }
 
     override fun disconnect(device: BluetoothDevice) {
-        println("disconnect")
         hidDataSender.requestConnect(null)
     }
 
