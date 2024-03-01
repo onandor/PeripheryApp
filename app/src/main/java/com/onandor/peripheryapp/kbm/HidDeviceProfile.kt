@@ -1,5 +1,6 @@
 package com.onandor.peripheryapp.kbm
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
@@ -7,12 +8,9 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothProfile.ServiceListener
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.ParcelUuid
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
+@SuppressLint("MissingPermission")
 class HidDeviceProfile(private val context: Context) {
 
     private val HOGP_UUID = ParcelUuid.fromString("00001812-0000-1000-8000-00805f9b34fb")
@@ -83,33 +81,43 @@ class HidDeviceProfile(private val context: Context) {
     }
 
     fun getConnectionState(device: BluetoothDevice): Int {
-        if (hidServiceProxy == null) {
+        if (hidServiceProxy == null ||
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
             return BluetoothProfile.STATE_DISCONNECTED
         }
         return hidServiceProxy!!.getConnectionState(device)
     }
 
     fun connectToHost(device: BluetoothDevice) {
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
             hidServiceProxy!!.connect(device)
         }
     }
 
     fun disconnectFromHost(device: BluetoothDevice) {
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
             hidServiceProxy!!.disconnect(device)
         }
     }
 
     fun getConnectedDevices(): List<BluetoothDevice> {
-        if (hidServiceProxy == null) {
+        if (hidServiceProxy == null ||
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
             return emptyList()
         }
         return hidServiceProxy!!.connectedDevices
     }
 
     fun getDevicesMatchingConnectionStates(states: IntArray): List<BluetoothDevice> {
-        if (hidServiceProxy == null) {
+        if (hidServiceProxy == null ||
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+        ) {
             return emptyList()
         }
         return hidServiceProxy!!.getDevicesMatchingConnectionStates(states)

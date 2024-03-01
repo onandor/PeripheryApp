@@ -23,7 +23,8 @@ object BluetoothControllerModule {
 
     @Provides
     @Singleton
-    fun provideHidDeviceApp(): HidDeviceApp = HidDeviceApp()
+    fun provideHidDeviceApp(@ApplicationContext context: Context): HidDeviceApp =
+        HidDeviceApp(context)
 
     @Provides
     @Singleton

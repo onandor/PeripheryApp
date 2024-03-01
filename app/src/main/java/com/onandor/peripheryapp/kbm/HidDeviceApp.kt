@@ -1,16 +1,22 @@
 package com.onandor.peripheryapp.kbm
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothProfile
+import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class HidDeviceApp : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender, BatteryReport.BatteryDataSender {
+class HidDeviceApp @Inject constructor(
+    private val context: Context
+) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender, BatteryReport.BatteryDataSender {
 
     interface DeviceStateListener {
 
@@ -18,7 +24,7 @@ class HidDeviceApp : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSen
         fun onAppStatusChanged(registered: Boolean)
     }
 
-    private var inputHost: BluetoothHidDevice? = null
+    private var hidServiceProxy: BluetoothHidDevice? = null
     private val mouseReport = MouseReport()
     private val keyboardReport = KeyboardReport()
     private val batteryReport = BatteryReport()
@@ -64,12 +70,14 @@ class HidDeviceApp : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSen
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun registerApp(inputHost: BluetoothProfile?) {
-        if (inputHost == null) {
+        if (inputHost == null ||
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
-        this.inputHost = inputHost as BluetoothHidDevice
-        this.inputHost!!.registerApp(
+        this.hidServiceProxy = inputHost as BluetoothHidDevice
+        this.hidServiceProxy!!.registerApp(
             Constants.SDP_RECORD,
             null,
             Constants.QOS_OUT,
@@ -78,11 +86,15 @@ class HidDeviceApp : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSen
         )
     }
 
+    @SuppressLint("MissingPermission")
     fun unregisterApp() {
-        if (registered) {
-            inputHost?.unregisterApp()
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
         }
-        inputHost = null
+        if (registered) {
+            hidServiceProxy?.unregisterApp()
+        }
+        hidServiceProxy = null
     }
 
     fun registerDeviceListener(listener: DeviceStateListener) {

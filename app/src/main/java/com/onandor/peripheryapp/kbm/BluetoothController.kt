@@ -142,7 +142,7 @@ class BluetoothController @Inject constructor(
     }
 
     override fun startDiscovery(clearFoundDevices: Boolean) {
-        if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
         val scanIntentFilter = IntentFilter()
@@ -159,7 +159,7 @@ class BluetoothController @Inject constructor(
     }
 
     override fun stopDiscovery() {
-        if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
         context.unregisterReceiver(bluetoothScanReceiver)
@@ -167,7 +167,7 @@ class BluetoothController @Inject constructor(
     }
 
     override fun updateBondedDevices() {
-        if (!isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         bluetoothAdapter
@@ -190,6 +190,9 @@ class BluetoothController @Inject constructor(
     }
 
     override fun pair(device: BluetoothDevice) {
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
         device.createBond()
     }
 
@@ -207,6 +210,11 @@ class BluetoothController @Inject constructor(
     }
 
     private fun onDeviceBondStateChanged(device: BluetoothDevice) {
+        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT) ||
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_SCAN)
+        ) {
+            return
+        }
         when (device.bondState) {
             BluetoothDevice.BOND_BONDED -> {
                 _foundDevices.update { devices -> devices.filterNot { it == device } }
@@ -226,7 +234,4 @@ class BluetoothController @Inject constructor(
             }
         }
     }
-
-    private fun isPermissionGranted(permission: String): Boolean =
-        context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 }
