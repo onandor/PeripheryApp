@@ -53,7 +53,8 @@ fun BondedBluetoothDeviceItem(
     connected: Boolean = false,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
-    onForget: () -> Unit
+    onForget: () -> Unit,
+    onUse: () -> Unit
 ) {
     val description = if (connecting) {
         "Connecting..."
@@ -77,6 +78,9 @@ fun BondedBluetoothDeviceItem(
                     Text(text = "Connect")
                 }
             } else {
+                Button(onClick = onUse) {
+                    Text(text = "Use")
+                }
                 Button(onClick = onDisconnect) {
                     Text(text = "Disconnect")
                 }

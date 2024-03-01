@@ -4,12 +4,14 @@ import androidx.navigation.NavOptions
 import com.onandor.peripheryapp.navigation.Screens.BT_DEVICES_SCREEN
 import com.onandor.peripheryapp.navigation.Screens.MAIN_SCREEN
 import com.onandor.peripheryapp.navigation.Screens.BT_CONNECTION_TYPE_SELECT_SCREEN
+import com.onandor.peripheryapp.navigation.Screens.INPUT_SCREEN
 
 private object Screens {
     const val MAIN_SCREEN = "mainScreen"
     // Bluetooth kb&m screens
     const val BT_DEVICES_SCREEN = "btDevices"
     const val BT_CONNECTION_TYPE_SELECT_SCREEN = "btConnectionTypeSelectScreen"
+    const val INPUT_SCREEN = "inputScreen"
 }
 
 object NavDestinations {
@@ -17,6 +19,7 @@ object NavDestinations {
     // Bluetooth kb&m screens
     const val BT_DEVICES = BT_DEVICES_SCREEN
     const val BT_CONNECTION_TYPE_SELECT = BT_CONNECTION_TYPE_SELECT_SCREEN
+    const val INPUT = INPUT_SCREEN
 }
 
 interface NavAction {
@@ -39,5 +42,9 @@ object NavActions {
 
     fun btConnectionTypeSelect() = object : NavAction {
         override val destination: String = NavDestinations.BT_CONNECTION_TYPE_SELECT
+    }
+
+    fun input() = object : NavAction {
+        override val destination: String = NavDestinations.INPUT
     }
 }

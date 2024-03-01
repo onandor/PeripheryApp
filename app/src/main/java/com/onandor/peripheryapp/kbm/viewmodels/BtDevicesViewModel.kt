@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.kbm.bluetooth.IBluetoothController
+import com.onandor.peripheryapp.navigation.INavigationManager
+import com.onandor.peripheryapp.navigation.NavActions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +28,8 @@ data class BtDevicesUiState(
 
 @HiltViewModel
 class BtDevicesViewModel @Inject constructor(
-    private val bluetoothController: IBluetoothController
+    private val bluetoothController: IBluetoothController,
+    private val navManager: INavigationManager
 ) : ViewModel() {
 
     private data class BluetoothControllerFlows(
@@ -81,6 +84,7 @@ class BtDevicesViewModel @Inject constructor(
     )
 
     private var bluetoothStateJob: Job? = null
+    private var connectedDeviceJob: Job? = null
 
     init {
         bluetoothStateJob = bluetoothController.bluetoothState.onEach { state ->
@@ -92,6 +96,12 @@ class BtDevicesViewModel @Inject constructor(
                 BluetoothAdapter.STATE_TURNING_OFF -> {
                     bluetoothController.stopDiscovery()
                 }
+            }
+        }.launchIn(viewModelScope)
+
+        connectedDeviceJob = bluetoothController.connectedDevice.onEach { device ->
+            if (device != null) {
+                navigateToInput()
             }
         }.launchIn(viewModelScope)
     }
@@ -116,9 +126,14 @@ class BtDevicesViewModel @Inject constructor(
         bluetoothController.unpair(device)
     }
 
+    fun navigateToInput() {
+        navManager.navigateTo(NavActions.input())
+    }
+
     override fun onCleared() {
         super.onCleared()
         bluetoothController.stopDiscovery()
         bluetoothStateJob?.cancel()
+        connectedDeviceJob?.cancel()
     }
 }
