@@ -1,7 +1,7 @@
-package com.onandor.peripheryapp.viewmodels
+package com.onandor.peripheryapp.kbm.viewmodels
 
 import androidx.lifecycle.ViewModel
-import com.onandor.peripheryapp.kbm.IBluetoothController
+import com.onandor.peripheryapp.kbm.bluetooth.IBluetoothController
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
 import dagger.hilt.android.lifecycle.HiltViewModel

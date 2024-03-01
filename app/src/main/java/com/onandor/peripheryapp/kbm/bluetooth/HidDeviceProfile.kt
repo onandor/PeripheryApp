@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm
+package com.onandor.peripheryapp.kbm.bluetooth
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -82,7 +82,8 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getConnectionState(device: BluetoothDevice): Int {
         if (hidServiceProxy == null ||
-            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+        ) {
             return BluetoothProfile.STATE_DISCONNECTED
         }
         return hidServiceProxy!!.getConnectionState(device)
@@ -108,7 +109,8 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getConnectedDevices(): List<BluetoothDevice> {
         if (hidServiceProxy == null ||
-            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+        ) {
             return emptyList()
         }
         return hidServiceProxy!!.connectedDevices

@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm
+package com.onandor.peripheryapp.kbm.bluetooth
 
 import java.util.Arrays
 

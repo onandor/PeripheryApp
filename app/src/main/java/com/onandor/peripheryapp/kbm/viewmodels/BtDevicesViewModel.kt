@@ -1,10 +1,10 @@
-package com.onandor.peripheryapp.viewmodels
+package com.onandor.peripheryapp.kbm.viewmodels
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.onandor.peripheryapp.kbm.IBluetoothController
+import com.onandor.peripheryapp.kbm.bluetooth.IBluetoothController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

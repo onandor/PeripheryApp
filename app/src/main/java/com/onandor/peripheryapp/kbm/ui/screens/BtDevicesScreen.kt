@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.ui.screens
+package com.onandor.peripheryapp.kbm.ui.screens
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,9 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.onandor.peripheryapp.ui.components.BondedBluetoothDeviceItem
-import com.onandor.peripheryapp.ui.components.FoundBluetoothDeviceItem
-import com.onandor.peripheryapp.viewmodels.BtDevicesViewModel
+import com.onandor.peripheryapp.kbm.ui.components.BondedBluetoothDeviceItem
+import com.onandor.peripheryapp.kbm.ui.components.FoundBluetoothDeviceItem
+import com.onandor.peripheryapp.kbm.viewmodels.BtDevicesViewModel
 
 @SuppressLint("MissingPermission")
 @Composable

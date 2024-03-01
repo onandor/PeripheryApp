@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm
+package com.onandor.peripheryapp.kbm.bluetooth
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothProfile
@@ -16,7 +16,8 @@ class HidDataSender @Inject constructor(
     private val hidDeviceProfile: HidDeviceProfile
 ) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender {
 
-    interface ProfileListener: HidDeviceApp.DeviceStateListener, HidDeviceProfile.ServiceStateListener {}
+    interface ProfileListener: HidDeviceApp.DeviceStateListener,
+        HidDeviceProfile.ServiceStateListener {}
 
     private val batteryReceiver = object : BroadcastReceiver() {
 

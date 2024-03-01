@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.ui.theme
+package com.onandor.peripheryapp.kbm.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

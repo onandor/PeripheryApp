@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.ui.screens
+package com.onandor.peripheryapp.kbm.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +9,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.onandor.peripheryapp.viewmodels.MainViewmodel
+import com.onandor.peripheryapp.kbm.viewmodels.MainViewmodel
 
 @Composable
 fun MainScreen(

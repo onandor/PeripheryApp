@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm
+package com.onandor.peripheryapp.kbm.bluetooth
 
 import android.bluetooth.BluetoothDevice
 import kotlinx.coroutines.flow.StateFlow

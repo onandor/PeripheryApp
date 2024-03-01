@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm
+package com.onandor.peripheryapp.kbm.bluetooth
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -16,7 +16,8 @@ import javax.inject.Singleton
 @Singleton
 class HidDeviceApp @Inject constructor(
     private val context: Context
-) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender, BatteryReport.BatteryDataSender {
+) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender,
+    BatteryReport.BatteryDataSender {
 
     interface DeviceStateListener {
 
@@ -73,7 +74,8 @@ class HidDeviceApp @Inject constructor(
     @SuppressLint("MissingPermission")
     fun registerApp(inputHost: BluetoothProfile?) {
         if (inputHost == null ||
-            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+        ) {
             return
         }
         this.hidServiceProxy = inputHost as BluetoothHidDevice

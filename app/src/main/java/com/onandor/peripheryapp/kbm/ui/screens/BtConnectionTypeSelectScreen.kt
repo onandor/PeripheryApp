@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.ui.screens
+package com.onandor.peripheryapp.kbm.ui.screens
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
@@ -27,7 +27,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
-import com.onandor.peripheryapp.viewmodels.BtConnectionTypeSelectViewModel
+import com.onandor.peripheryapp.kbm.viewmodels.BtConnectionTypeSelectViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 

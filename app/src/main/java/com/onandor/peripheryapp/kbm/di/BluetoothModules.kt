@@ -1,11 +1,11 @@
-package com.onandor.peripheryapp.di
+package com.onandor.peripheryapp.kbm.di
 
 import android.content.Context
-import com.onandor.peripheryapp.kbm.BluetoothController
-import com.onandor.peripheryapp.kbm.HidDataSender
-import com.onandor.peripheryapp.kbm.HidDeviceApp
-import com.onandor.peripheryapp.kbm.HidDeviceProfile
-import com.onandor.peripheryapp.kbm.IBluetoothController
+import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
+import com.onandor.peripheryapp.kbm.bluetooth.HidDataSender
+import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceApp
+import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
+import com.onandor.peripheryapp.kbm.bluetooth.IBluetoothController
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.ui.components
+package com.onandor.peripheryapp.kbm.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
