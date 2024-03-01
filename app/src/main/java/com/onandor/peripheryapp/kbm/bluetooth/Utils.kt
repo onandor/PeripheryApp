@@ -7,13 +7,15 @@ import android.util.Log
 import java.lang.Exception
 import java.lang.reflect.Method
 
-fun isPermissionGranted(context: Context, permission: String): Boolean =
-    context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
-
 class BluetoothUtils {
 
     companion object {
+
         private val TAG = "BluetoothUtils"
+
+        fun isPermissionGranted(context: Context, permission: String): Boolean =
+            context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+
         fun cancelBondProcess(device: BluetoothDevice): Boolean {
             val cancelBondProcessMethod: Method = try {
                 BluetoothDevice::class.java.getMethod("cancelBondProcess")

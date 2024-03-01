@@ -82,7 +82,7 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getConnectionState(device: BluetoothDevice): Int {
         if (hidServiceProxy == null ||
-            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return BluetoothProfile.STATE_DISCONNECTED
         }
@@ -90,7 +90,7 @@ class HidDeviceProfile(private val context: Context) {
     }
 
     fun connectToHost(device: BluetoothDevice) {
-        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
@@ -99,7 +99,7 @@ class HidDeviceProfile(private val context: Context) {
     }
 
     fun disconnectFromHost(device: BluetoothDevice) {
-        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
@@ -109,7 +109,7 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getConnectedDevices(): List<BluetoothDevice> {
         if (hidServiceProxy == null ||
-            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return emptyList()
         }
@@ -118,7 +118,7 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getDevicesMatchingConnectionStates(states: IntArray): List<BluetoothDevice> {
         if (hidServiceProxy == null ||
-            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return emptyList()
         }

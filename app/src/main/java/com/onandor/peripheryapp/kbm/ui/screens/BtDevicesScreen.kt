@@ -73,7 +73,7 @@ fun BtDevicesScreen(
                                 name = device.name ?: device.address,
                                 connecting = connecting,
                                 connected = uiState.connectedDevice == device,
-                                onConnect = { viewModel.requestConnect(device) },
+                                onConnect = { viewModel.connect(device) },
                                 onDisconnect = { viewModel.disconnect(device) },
                                 onForget = { viewModel.forget(device) },
                                 onUse = { viewModel.navigateToInput() }
@@ -95,7 +95,7 @@ fun BtDevicesScreen(
                                     .padding(16.dp),
                                 name = device.name ?: device.address,
                                 bonding = bonding,
-                                onClick = { viewModel.requestPair(device) }
+                                onClick = { viewModel.pair(device) }
                             )
                         }
                     }

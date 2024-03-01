@@ -74,7 +74,7 @@ class HidDeviceApp @Inject constructor(
     @SuppressLint("MissingPermission")
     fun registerApp(inputHost: BluetoothProfile?) {
         if (inputHost == null ||
-            !isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return
         }
@@ -90,7 +90,7 @@ class HidDeviceApp @Inject constructor(
 
     @SuppressLint("MissingPermission")
     fun unregisterApp() {
-        if (!isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (registered) {
