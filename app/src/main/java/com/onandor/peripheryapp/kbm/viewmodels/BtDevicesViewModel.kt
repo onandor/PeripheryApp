@@ -158,11 +158,33 @@ class BtDevicesViewModel @Inject constructor(
         }
 
         override fun onAppStatusChanged(registered: Boolean) {
-            println("BluetoothController: onAppStatusChanged: $registered")
+            if (registered) {
+                return
+            }
+            _uiState.update {
+                it.copy(
+                    foundDevices = emptyList(),
+                    bondedDevices = emptyList(),
+                    connectedDevice = null,
+                    waitingForDeviceBonding = null,
+                    waitingForDeviceConnecting = null
+                )
+            }
         }
 
         override fun onServiceStateChanged(proxy: BluetoothProfile?) {
-            println("BluetoothController: onServiceStateChanged: ${proxy.toString()}")
+            if (proxy != null) {
+                return
+            }
+            _uiState.update {
+                it.copy(
+                    foundDevices = emptyList(),
+                    bondedDevices = emptyList(),
+                    connectedDevice = null,
+                    waitingForDeviceBonding = null,
+                    waitingForDeviceConnecting = null
+                )
+            }
         }
     }
 
