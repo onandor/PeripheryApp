@@ -7,9 +7,9 @@ import android.bluetooth.BluetoothHidDeviceAppSdpSettings
 class Constants {
 
     companion object {
-        private const val ID_KEYBOARD = 1
-        private const val ID_MOUSE = 2
-        private const val ID_BATTERY = 32
+        const val ID_KEYBOARD = 1
+        const val ID_MOUSE = 2
+        const val ID_BATTERY = 32
 
         private val HID_REPORT_DESC = byteArrayOf(
             // Keyboard

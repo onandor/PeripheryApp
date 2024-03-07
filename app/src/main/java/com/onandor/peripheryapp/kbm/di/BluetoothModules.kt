@@ -4,6 +4,7 @@ import android.content.Context
 import com.onandor.peripheryapp.kbm.bluetooth.HidDataSender
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceApp
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
+import com.onandor.peripheryapp.kbm.input.TouchpadController
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,4 +31,11 @@ object BluetoothControllerModule {
         hidDeviceApp: HidDeviceApp,
         hidDeviceProfile: HidDeviceProfile
     ): HidDataSender = HidDataSender(hidDeviceApp, hidDeviceProfile)
+
+    @Provides
+    @Singleton
+    fun provideTouchPadController(
+        @ApplicationContext context: Context,
+        hidDataSender: HidDataSender
+    ): TouchpadController = TouchpadController(context, hidDataSender)
 }

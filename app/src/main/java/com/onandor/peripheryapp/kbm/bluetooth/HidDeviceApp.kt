@@ -34,6 +34,7 @@ class HidDeviceApp @Inject constructor(
     private var deviceStateListener: DeviceStateListener? = null
 
     private var registered: Boolean = false
+    private var lastReportEmpty = false
 
     private val callback = object : BluetoothHidDevice.Callback() {
 
@@ -115,6 +116,33 @@ class HidDeviceApp @Inject constructor(
         // TODO
     }
 
+    @SuppressLint("MissingPermission")
+    override fun sendMouse(
+        left: Boolean,
+        right: Boolean,
+        middle: Boolean,
+        dX: Int,
+        dY: Int,
+        dWheel: Int
+    ) {
+        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
+        if (hidServiceProxy == null || device == null) {
+            return
+        }
+        val report = mouseReport.setValue(left, right, middle, dX, dY, dWheel)
+        if (report.all { it == 0.toByte() }) {
+            if (lastReportEmpty) {
+                return
+            }
+            lastReportEmpty = true
+        } else {
+            lastReportEmpty = false
+        }
+        hidServiceProxy!!.sendReport(device, Constants.ID_MOUSE, report)
+    }
+
     override fun sendKeyboard(
         modifier: Int,
         key1: Int,
@@ -123,17 +151,6 @@ class HidDeviceApp @Inject constructor(
         key4: Int,
         key5: Int,
         key6: Int
-    ) {
-        TODO("Not yet implemented")
-    }
-
-    override fun sendMouse(
-        left: Boolean,
-        right: Boolean,
-        middle: Boolean,
-        dX: Int,
-        dY: Int,
-        dWheel: Int
     ) {
         TODO("Not yet implemented")
     }

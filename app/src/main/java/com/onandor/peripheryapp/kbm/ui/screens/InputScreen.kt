@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.onandor.peripheryapp.kbm.input.MouseButton
 import com.onandor.peripheryapp.kbm.viewmodels.InputViewModel
-
 
 @Composable
 fun InputScreen(
@@ -27,14 +27,24 @@ fun InputScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            TouchSurface()
+            TouchSurface(
+                onButtonDown = viewModel::buttonDown,
+                onButtonUp = viewModel::buttonUp,
+                onMove = viewModel::move,
+                onScroll = viewModel::scroll
+            )
         }
     }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun TouchSurface() {
+private fun TouchSurface(
+    onButtonDown: (MouseButton) -> Unit,
+    onButtonUp: (MouseButton) -> Unit,
+    onMove: (Float, Float) -> Unit,
+    onScroll: (Float) -> Unit
+) {
     var inTap = true
     var inRightClick = false
     val viewConfiguration = LocalViewConfiguration.current
@@ -47,6 +57,8 @@ private fun TouchSurface() {
     var prevDownTime = 0L
     var inDoubleTapHold = false
     var prevRightClick = false
+    var prevFocusX = 0f
+    var prevFocusY = 0f
 
     Surface(
         modifier = Modifier
@@ -82,6 +94,7 @@ private fun TouchSurface() {
                             // We are in a double tap and holding the button. The down event needs
                             // to be sent now to support dragging
                             inDoubleTapHold = true
+                            onButtonDown(MouseButton.LEFT)
                             Log.d("MotionEvent", "Left down")
                         }
                     }
@@ -102,10 +115,12 @@ private fun TouchSurface() {
                         if (!inTap) {
                             if (inRightClick  && count > 1) {
                                 if (!inDoubleTapHold) {
+                                    onScroll((prevFocusY - focusY) / 10f)
                                     Log.d("MotionEvent", "Scroll")
                                 }
                                 inRightClick = false
                             } else {
+                                onMove(focusX - prevFocusX, focusY - prevFocusY)
                                 Log.d("MotionEvent", "Move")
                             }
                         }
@@ -113,7 +128,9 @@ private fun TouchSurface() {
                     MotionEvent.ACTION_UP -> {
                         if (inRightClick) {
                             if (deltaTime <= tapTimeout) {
+                                onButtonDown(MouseButton.RIGHT)
                                 Log.d("MotionEvent", "Right down")
+                                onButtonUp(MouseButton.RIGHT)
                                 Log.d("MotionEvent", "Right up")
                                 prevRightClick = true
                             }
@@ -123,11 +140,14 @@ private fun TouchSurface() {
                                 if (!inDoubleTapHold) {
                                     // Only send down event if not holding left button after
                                     // double click
+                                    onButtonDown(MouseButton.LEFT)
                                     Log.d("MotionEvent", "Left down")
                                 }
+                                onButtonUp(MouseButton.LEFT)
                                 Log.d("MotionEvent", "Left up")
                             } else if (inDoubleTapHold) {
                                 // If holding left button after double tap, send up event
+                                onButtonUp(MouseButton.LEFT)
                                 Log.d("MotionEvent", "Left up")
                             }
                             prevRightClick = false
@@ -137,6 +157,8 @@ private fun TouchSurface() {
                         inDoubleTapHold = false
                     }
                 }
+                prevFocusX = focusX
+                prevFocusY = focusY
                 true
             }
     ) {

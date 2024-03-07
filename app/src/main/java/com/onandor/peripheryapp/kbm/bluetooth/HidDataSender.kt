@@ -152,6 +152,21 @@ class HidDataSender @Inject constructor(
         }
     }
 
+    override fun sendMouse(
+        left: Boolean,
+        right: Boolean,
+        middle: Boolean,
+        dX: Int,
+        dY: Int,
+        dWheel: Int
+    ) {
+        synchronized(lock) {
+            if (connectedDevice != null) {
+                hidDeviceApp.sendMouse(left, right, middle, dX, dY, dWheel)
+            }
+        }
+    }
+
     override fun sendKeyboard(
         modifier: Int,
         key1: Int,
@@ -160,17 +175,6 @@ class HidDataSender @Inject constructor(
         key4: Int,
         key5: Int,
         key6: Int
-    ) {
-        TODO("Not yet implemented")
-    }
-
-    override fun sendMouse(
-        left: Boolean,
-        right: Boolean,
-        middle: Boolean,
-        dX: Int,
-        dY: Int,
-        dWheel: Int
     ) {
         TODO("Not yet implemented")
     }
