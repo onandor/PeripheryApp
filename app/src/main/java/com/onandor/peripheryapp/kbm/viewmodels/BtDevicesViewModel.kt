@@ -185,7 +185,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     init {
-        hidDeviceProfile = hidDataSender.register(context, profileListener)
+        hidDeviceProfile = hidDataSender.register(profileListener)
         bluetoothAdapter = hidDeviceProfile.bluetoothAdapter
 
         _uiState.update {

@@ -67,14 +67,9 @@ class HidDeviceProfile @Inject constructor(
         return true
     }
 
-    fun registerServiceListener(context: Context, listener: ServiceStateListener) {
-        val applicationContext = context.applicationContext
+    fun registerServiceListener(listener: ServiceStateListener) {
         serviceStateListener = listener
-        bluetoothAdapter?.getProfileProxy(
-            applicationContext,
-            hidServiceListener,
-            BluetoothProfile.HID_DEVICE
-        )
+        bluetoothAdapter?.getProfileProxy(context, hidServiceListener, BluetoothProfile.HID_DEVICE)
     }
 
     fun unregisterServiceListener() {

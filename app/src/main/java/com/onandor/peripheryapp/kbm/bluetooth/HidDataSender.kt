@@ -7,11 +7,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class HidDataSender @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val hidDeviceApp: HidDeviceApp,
     private val hidDeviceProfile: HidDeviceProfile
 ) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender {
@@ -88,7 +90,7 @@ class HidDataSender @Inject constructor(
         }
     }
 
-    fun register(context: Context, listener: ProfileListener): HidDeviceProfile {
+    fun register(listener: ProfileListener): HidDeviceProfile {
         synchronized (lock) {
             if (!listeners.add(listener)) {
                 return hidDeviceProfile
@@ -97,10 +99,9 @@ class HidDataSender @Inject constructor(
                 return hidDeviceProfile
             }
 
-            val appContext = context.applicationContext
-            hidDeviceProfile.registerServiceListener(appContext, profileListener)
+            hidDeviceProfile.registerServiceListener(profileListener)
             hidDeviceApp.registerDeviceListener(profileListener)
-            appContext.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         }
         return hidDeviceProfile
     }

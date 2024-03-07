@@ -31,9 +31,10 @@ object BluetoothControllerModule {
     @Provides
     @Singleton
     fun provideHidDataSender(
+        @ApplicationContext context: Context,
         hidDeviceApp: HidDeviceApp,
         hidDeviceProfile: HidDeviceProfile
-    ): HidDataSender = HidDataSender(hidDeviceApp, hidDeviceProfile)
+    ): HidDataSender = HidDataSender(context, hidDeviceApp, hidDeviceProfile)
 
     @Provides
     @Singleton
