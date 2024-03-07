@@ -82,7 +82,7 @@ class HidDeviceProfile @Inject constructor(
 
     fun getConnectionState(device: BluetoothDevice): Int {
         if (hidServiceProxy == null ||
-            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)
+            !permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return BluetoothProfile.STATE_DISCONNECTED
         }
@@ -90,7 +90,7 @@ class HidDeviceProfile @Inject constructor(
     }
 
     fun connectToHost(device: BluetoothDevice) {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
@@ -99,7 +99,7 @@ class HidDeviceProfile @Inject constructor(
     }
 
     fun disconnectFromHost(device: BluetoothDevice) {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
@@ -109,7 +109,7 @@ class HidDeviceProfile @Inject constructor(
 
     fun getConnectedDevices(): List<BluetoothDevice> {
         if (hidServiceProxy == null ||
-            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)
+            !permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return emptyList()
         }
@@ -118,7 +118,7 @@ class HidDeviceProfile @Inject constructor(
 
     fun getDevicesMatchingConnectionStates(states: IntArray): List<BluetoothDevice> {
         if (hidServiceProxy == null ||
-            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)
+            !permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return emptyList()
         }

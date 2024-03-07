@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm.bluetooth
+package com.onandor.peripheryapp.kbm.bluetooth.reports
 
 import kotlin.math.ceil
 

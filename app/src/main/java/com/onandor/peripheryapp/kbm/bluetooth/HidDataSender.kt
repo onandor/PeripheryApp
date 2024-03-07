@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
+import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,7 +20,7 @@ class HidDataSender @Inject constructor(
     private val hidDeviceProfile: HidDeviceProfile
 ) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender {
 
-    interface ProfileListener: HidDeviceApp.DeviceStateListener,
+    interface HidProfileListener: HidDeviceApp.DeviceStateListener,
         HidDeviceProfile.ServiceStateListener {}
 
     private val batteryReceiver = object : BroadcastReceiver() {
@@ -32,14 +34,14 @@ class HidDataSender @Inject constructor(
 
     private val lock: Any = Any()
 
-    private val listeners: MutableSet<ProfileListener> = mutableSetOf()
+    private val listeners: MutableSet<HidProfileListener> = mutableSetOf()
 
     private var connectedDevice: BluetoothDevice? = null
     private var waitingForDevice: BluetoothDevice? = null
 
     private var isAppRegistered: Boolean = false
 
-    private val profileListener = object : ProfileListener {
+    private val hidProfileListener = object : HidProfileListener {
 
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
             synchronized (lock) {
@@ -90,7 +92,7 @@ class HidDataSender @Inject constructor(
         }
     }
 
-    fun register(listener: ProfileListener): HidDeviceProfile {
+    fun registerListener(listener: HidProfileListener): HidDeviceProfile {
         synchronized (lock) {
             if (!listeners.add(listener)) {
                 return hidDeviceProfile
@@ -99,14 +101,14 @@ class HidDataSender @Inject constructor(
                 return hidDeviceProfile
             }
 
-            hidDeviceProfile.registerServiceListener(profileListener)
-            hidDeviceApp.registerDeviceListener(profileListener)
+            hidDeviceProfile.registerServiceListener(hidProfileListener)
+            hidDeviceApp.registerDeviceListener(hidProfileListener)
             context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         }
         return hidDeviceProfile
     }
 
-    fun unregister(context: Context, listener: ProfileListener) {
+    fun unregisterListener(listener: HidProfileListener) {
         synchronized (lock) {
             if (!listeners.remove(listener)) {
                 return
@@ -115,8 +117,7 @@ class HidDataSender @Inject constructor(
                 return
             }
 
-            val appContext = context.applicationContext
-            appContext.unregisterReceiver(batteryReceiver)
+            context.unregisterReceiver(batteryReceiver)
             hidDeviceApp.unregisterDeviceListener()
 
             hidDeviceProfile.getConnectedDevices().forEach { device ->

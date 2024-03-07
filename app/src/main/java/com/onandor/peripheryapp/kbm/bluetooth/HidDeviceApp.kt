@@ -5,6 +5,9 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothProfile
+import com.onandor.peripheryapp.kbm.bluetooth.reports.BatteryReport
+import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
+import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
 import com.onandor.peripheryapp.utils.PermissionChecker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,7 +78,7 @@ class HidDeviceApp @Inject constructor(
     @SuppressLint("MissingPermission")
     fun registerApp(inputHost: BluetoothProfile?) {
         if (inputHost == null ||
-            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)
+            !permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return
         }
@@ -91,7 +94,7 @@ class HidDeviceApp @Inject constructor(
 
     @SuppressLint("MissingPermission")
     fun unregisterApp() {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (registered) {
@@ -125,7 +128,7 @@ class HidDeviceApp @Inject constructor(
         dY: Int,
         dWheel: Int
     ) {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (hidServiceProxy == null || device == null) {

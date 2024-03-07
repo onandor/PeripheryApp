@@ -9,6 +9,6 @@ class PermissionChecker @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
-    fun isPermissionGranted(permission: String): Boolean =
+    fun isGranted(permission: String): Boolean =
         context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 }

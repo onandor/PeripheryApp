@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -120,7 +119,7 @@ class BtDevicesViewModel @Inject constructor(
         }
     }
 
-    private val profileListener = object : HidDataSender.ProfileListener {
+    private val hidProfileListener = object : HidDataSender.HidProfileListener {
 
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
             when (state) {
@@ -176,7 +175,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     init {
-        hidDeviceProfile = hidDataSender.register(profileListener)
+        hidDeviceProfile = hidDataSender.registerListener(hidProfileListener)
         bluetoothAdapter = hidDeviceProfile.bluetoothAdapter
 
         _uiState.update {
@@ -191,7 +190,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     fun updateBondedDevices() {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         bluetoothAdapter
@@ -208,14 +207,14 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     fun pair(device: BluetoothDevice) {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         device.createBond()
     }
 
     fun forget(device: BluetoothDevice) {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (device.bondState == BluetoothDevice.BOND_BONDING) {
@@ -230,7 +229,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     private fun startDiscovery(clearFoundDevices: Boolean) {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
         val scanIntentFilter = IntentFilter()
@@ -247,7 +246,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     private fun stopDiscovery() {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
         context.unregisterReceiver(bluetoothScanReceiver)
@@ -255,8 +254,8 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     private fun onDeviceBondStateChanged(device: BluetoothDevice) {
-        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT) ||
-            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT) ||
+            !permissionChecker.isGranted(Manifest.permission.BLUETOOTH_SCAN)
         ) {
             return
         }
@@ -288,6 +287,6 @@ class BtDevicesViewModel @Inject constructor(
         super.onCleared()
         stopDiscovery()
         context.unregisterReceiver(bluetoothStateReceiver)
-        hidDataSender.unregister(context, profileListener)
+        hidDataSender.unregisterListener(hidProfileListener)
     }
 }
