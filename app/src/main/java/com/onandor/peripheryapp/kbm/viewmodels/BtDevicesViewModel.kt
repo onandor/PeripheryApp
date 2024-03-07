@@ -43,15 +43,6 @@ class BtDevicesViewModel @Inject constructor(
     private val permissionChecker: PermissionChecker
 ) : ViewModel() {
 
-    private data class BluetoothControllerFlows(
-        val foundDevices: List<BluetoothDevice>,
-        val bondedDevices: List<BluetoothDevice>,
-        val bluetoothState: Int,
-        val waitingForDeviceBonding: BluetoothDevice?,
-        val waitingForDeviceConnecting: BluetoothDevice?,
-        val connectedDevice: BluetoothDevice?
-    )
-
     private val _uiState = MutableStateFlow(BtDevicesUiState())
     val uiState = _uiState.asStateFlow()
 
