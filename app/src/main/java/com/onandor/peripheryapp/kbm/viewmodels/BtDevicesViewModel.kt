@@ -56,13 +56,7 @@ class BtDevicesViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     private lateinit var hidDeviceProfile: HidDeviceProfile
-
-    private val bluetoothManager by lazy {
-        context.getSystemService(BluetoothManager::class.java)
-    }
-    private val bluetoothAdapter by lazy {
-        bluetoothManager?.adapter
-    }
+    private var bluetoothAdapter: BluetoothAdapter? = null
 
     private val bluetoothScanReceiver = object : BroadcastReceiver() {
 
@@ -191,10 +185,12 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     init {
+        hidDeviceProfile = hidDataSender.register(context, profileListener)
+        bluetoothAdapter = hidDeviceProfile.bluetoothAdapter
+
         _uiState.update {
             it.copy(bluetoothState = bluetoothAdapter?.state ?: BluetoothAdapter.STATE_OFF)
         }
-        hidDeviceProfile = hidDataSender.register(context, profileListener)
         context.registerReceiver(
             bluetoothStateReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)

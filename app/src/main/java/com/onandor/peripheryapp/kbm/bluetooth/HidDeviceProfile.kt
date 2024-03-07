@@ -29,7 +29,7 @@ class HidDeviceProfile @Inject constructor(
     private val bluetoothManager by lazy {
         context.getSystemService(BluetoothManager::class.java)
     }
-    private val bluetoothAdapter by lazy {
+    val bluetoothAdapter by lazy {
         bluetoothManager?.adapter
     }
     private var hidServiceProxy: BluetoothHidDevice? = null
