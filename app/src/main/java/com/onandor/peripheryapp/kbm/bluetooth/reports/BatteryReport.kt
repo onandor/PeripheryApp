@@ -12,10 +12,5 @@ class BatteryReport {
         return batteryData
     }
 
-    fun getReport(): ByteArray = batteryData
-
-    interface BatteryDataSender {
-
-        fun sendBatteryLevel(batteryLevel: Float)
-    }
+    fun getValue(): ByteArray = batteryData
 }

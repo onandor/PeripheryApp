@@ -1,13 +1,9 @@
 package com.onandor.peripheryapp.kbm.bluetooth
 
 import android.bluetooth.BluetoothDevice
-import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.lang.Exception
 import java.lang.reflect.Method
-import javax.inject.Inject
 
 class BluetoothUtils {
 

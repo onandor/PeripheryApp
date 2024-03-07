@@ -28,8 +28,7 @@ class BluetoothController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val hidDeviceProfile: HidDeviceProfile,
     private val permissionChecker: PermissionChecker
-) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender,
-    BatteryReport.BatteryDataSender {
+) {
 
     interface HidProfileListener : HidDeviceProfile.ServiceStateListener {
 
@@ -217,7 +216,7 @@ class BluetoothController @Inject constructor(
         }
     }
 
-    override fun sendMouse(
+    fun sendMouse(
         left: Boolean,
         right: Boolean,
         middle: Boolean,
@@ -245,7 +244,7 @@ class BluetoothController @Inject constructor(
         }
     }
 
-    override fun sendKeyboard(
+    fun sendKeyboard(
         modifier: Int,
         key1: Int,
         key2: Int,
@@ -257,7 +256,7 @@ class BluetoothController @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    override fun sendBatteryLevel(batteryLevel: Float) {
+    fun sendBatteryLevel(batteryLevel: Float) {
         // TODO
     }
 

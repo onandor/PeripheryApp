@@ -26,10 +26,5 @@ class MouseReport {
         return mouseData
     }
 
-    fun getReport(): ByteArray = mouseData
-
-    interface MouseDataSender {
-
-        fun sendMouse(left: Boolean, right: Boolean, middle: Boolean, dX: Int, dY: Int, dWheel: Int)
-    }
+    fun getValue(): ByteArray = mouseData
 }
