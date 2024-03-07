@@ -4,17 +4,16 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.lang.Exception
 import java.lang.reflect.Method
+import javax.inject.Inject
 
 class BluetoothUtils {
 
     companion object {
 
         private val TAG = "BluetoothUtils"
-
-        fun isPermissionGranted(context: Context, permission: String): Boolean =
-            context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
         fun cancelBondProcess(device: BluetoothDevice): Boolean {
             val cancelBondProcessMethod: Method = try {

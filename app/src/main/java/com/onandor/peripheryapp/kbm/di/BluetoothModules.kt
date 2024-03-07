@@ -5,6 +5,7 @@ import com.onandor.peripheryapp.kbm.bluetooth.HidDataSender
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceApp
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
 import com.onandor.peripheryapp.kbm.input.TouchpadController
+import com.onandor.peripheryapp.utils.PermissionChecker
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,13 +18,15 @@ import javax.inject.Singleton
 object BluetoothControllerModule {
 
     @Provides
-    fun provideHidDeviceProfile(@ApplicationContext context: Context): HidDeviceProfile =
-        HidDeviceProfile(context)
+    fun provideHidDeviceProfile(
+        @ApplicationContext context: Context,
+        permissionChecker: PermissionChecker
+    ): HidDeviceProfile = HidDeviceProfile(context, permissionChecker)
 
     @Provides
     @Singleton
-    fun provideHidDeviceApp(@ApplicationContext context: Context): HidDeviceApp =
-        HidDeviceApp(context)
+    fun provideHidDeviceApp(permissionChecker: PermissionChecker): HidDeviceApp =
+        HidDeviceApp(permissionChecker)
 
     @Provides
     @Singleton

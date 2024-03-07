@@ -27,7 +27,6 @@ class TouchpadController @Inject constructor(
     private var scheduledFuture: ScheduledFuture<*>? = null
 
     fun init() {
-        println("INIT")
         executor = ScheduledThreadPoolExecutor(1)
         scheduledFuture = executor.scheduleAtFixedRate(
             this::sendData,
@@ -85,7 +84,6 @@ class TouchpadController @Inject constructor(
     }
 
      fun release() {
-         println("RELEASE")
          if (scheduledFuture == null) {
              return
          }

@@ -17,6 +17,7 @@ import com.onandor.peripheryapp.kbm.bluetooth.HidDataSender
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
+import com.onandor.peripheryapp.utils.PermissionChecker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +39,8 @@ data class BtDevicesUiState(
 class BtDevicesViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val navManager: INavigationManager,
-    private val hidDataSender: HidDataSender
+    private val hidDataSender: HidDataSender,
+    private val permissionChecker: PermissionChecker
 ) : ViewModel() {
 
     private data class BluetoothControllerFlows(
@@ -202,7 +204,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     fun updateBondedDevices() {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         bluetoothAdapter
@@ -214,19 +216,19 @@ class BtDevicesViewModel @Inject constructor(
         hidDataSender.requestConnect(device)
     }
 
-    fun disconnect(device: BluetoothDevice) {
+    fun disconnect() {
         hidDataSender.requestConnect(null)
     }
 
     fun pair(device: BluetoothDevice) {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         device.createBond()
     }
 
     fun forget(device: BluetoothDevice) {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (device.bondState == BluetoothDevice.BOND_BONDING) {
@@ -241,7 +243,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     private fun startDiscovery(clearFoundDevices: Boolean) {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_SCAN)) {
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
         val scanIntentFilter = IntentFilter()
@@ -258,7 +260,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     private fun stopDiscovery() {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_SCAN)) {
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             return
         }
         context.unregisterReceiver(bluetoothScanReceiver)
@@ -266,8 +268,8 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     private fun onDeviceBondStateChanged(device: BluetoothDevice) {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT) ||
-            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_SCAN)
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT) ||
+            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)
         ) {
             return
         }

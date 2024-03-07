@@ -9,9 +9,14 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothProfile.ServiceListener
 import android.content.Context
 import android.os.ParcelUuid
+import com.onandor.peripheryapp.utils.PermissionChecker
+import javax.inject.Inject
 
 @SuppressLint("MissingPermission")
-class HidDeviceProfile(private val context: Context) {
+class HidDeviceProfile @Inject constructor(
+    private val context: Context,
+    private val permissionChecker: PermissionChecker
+) {
 
     private val HOGP_UUID = ParcelUuid.fromString("00001812-0000-1000-8000-00805f9b34fb")
     private val HID_UUID = ParcelUuid.fromString("00001124-0000-1000-8000-00805f9b34fb")
@@ -82,7 +87,7 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getConnectionState(device: BluetoothDevice): Int {
         if (hidServiceProxy == null ||
-            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return BluetoothProfile.STATE_DISCONNECTED
         }
@@ -90,7 +95,7 @@ class HidDeviceProfile(private val context: Context) {
     }
 
     fun connectToHost(device: BluetoothDevice) {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
@@ -99,7 +104,7 @@ class HidDeviceProfile(private val context: Context) {
     }
 
     fun disconnectFromHost(device: BluetoothDevice) {
-        if (!BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (!permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
         if (hidServiceProxy != null && isHidHostProfileSupported(device)) {
@@ -109,7 +114,7 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getConnectedDevices(): List<BluetoothDevice> {
         if (hidServiceProxy == null ||
-            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return emptyList()
         }
@@ -118,7 +123,7 @@ class HidDeviceProfile(private val context: Context) {
 
     fun getDevicesMatchingConnectionStates(states: IntArray): List<BluetoothDevice> {
         if (hidServiceProxy == null ||
-            !BluetoothUtils.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT)
+            !permissionChecker.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             return emptyList()
         }
