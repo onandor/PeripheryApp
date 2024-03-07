@@ -12,7 +12,7 @@ import android.content.IntentFilter
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothUtils
-import com.onandor.peripheryapp.kbm.bluetooth.HidDataSender
+import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
@@ -38,7 +38,7 @@ data class BtDevicesUiState(
 class BtDevicesViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val navManager: INavigationManager,
-    private val hidDataSender: HidDataSender,
+    private val bluetoothController: BluetoothController,
     private val permissionChecker: PermissionChecker
 ) : ViewModel() {
 
@@ -119,7 +119,7 @@ class BtDevicesViewModel @Inject constructor(
         }
     }
 
-    private val hidProfileListener = object : HidDataSender.HidProfileListener {
+    private val hidProfileListener = object : BluetoothController.HidProfileListener {
 
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
             when (state) {
@@ -175,7 +175,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     init {
-        hidDeviceProfile = hidDataSender.registerListener(hidProfileListener)
+        hidDeviceProfile = bluetoothController.registerListener(hidProfileListener)
         bluetoothAdapter = hidDeviceProfile.bluetoothAdapter
 
         _uiState.update {
@@ -199,11 +199,11 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     fun connect(device: BluetoothDevice) {
-        hidDataSender.requestConnect(device)
+        bluetoothController.requestConnect(device)
     }
 
     fun disconnect() {
-        hidDataSender.requestConnect(null)
+        bluetoothController.requestConnect(null)
     }
 
     fun pair(device: BluetoothDevice) {
@@ -287,6 +287,6 @@ class BtDevicesViewModel @Inject constructor(
         super.onCleared()
         stopDiscovery()
         context.unregisterReceiver(bluetoothStateReceiver)
-        hidDataSender.unregisterListener(hidProfileListener)
+        bluetoothController.unregisterListener(hidProfileListener)
     }
 }

@@ -1,7 +1,7 @@
 package com.onandor.peripheryapp.kbm.input
 
 import android.content.Context
-import com.onandor.peripheryapp.kbm.bluetooth.HidDataSender
+import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import java.util.LinkedList
 import java.util.Queue
 import java.util.concurrent.ScheduledFuture
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 class TouchpadController @Inject constructor(
     private val context: Context,
-    private val hidDataSender: HidDataSender
+    private val bluetoothController: BluetoothController
 ) {
 
     private val DATA_RATE_US = 11250L
@@ -79,7 +79,7 @@ class TouchpadController @Inject constructor(
                 }
             }
 
-            hidDataSender.sendMouse(leftButton, rightButton, false, x, y, wheel)
+            bluetoothController.sendMouse(leftButton, rightButton, false, x, y, wheel)
         }
     }
 

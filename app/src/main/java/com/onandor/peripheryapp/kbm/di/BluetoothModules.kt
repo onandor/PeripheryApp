@@ -1,8 +1,7 @@
 package com.onandor.peripheryapp.kbm.di
 
 import android.content.Context
-import com.onandor.peripheryapp.kbm.bluetooth.HidDataSender
-import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceApp
+import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
 import com.onandor.peripheryapp.kbm.input.TouchpadController
 import com.onandor.peripheryapp.utils.PermissionChecker
@@ -25,21 +24,16 @@ object BluetoothControllerModule {
 
     @Provides
     @Singleton
-    fun provideHidDeviceApp(permissionChecker: PermissionChecker): HidDeviceApp =
-        HidDeviceApp(permissionChecker)
-
-    @Provides
-    @Singleton
-    fun provideHidDataSender(
+    fun provideBluetoothController(
         @ApplicationContext context: Context,
-        hidDeviceApp: HidDeviceApp,
-        hidDeviceProfile: HidDeviceProfile
-    ): HidDataSender = HidDataSender(context, hidDeviceApp, hidDeviceProfile)
+        hidDeviceProfile: HidDeviceProfile,
+        permissionChecker: PermissionChecker
+    ): BluetoothController = BluetoothController(context, hidDeviceProfile, permissionChecker)
 
     @Provides
     @Singleton
     fun provideTouchPadController(
         @ApplicationContext context: Context,
-        hidDataSender: HidDataSender
-    ): TouchpadController = TouchpadController(context, hidDataSender)
+        bluetoothController: BluetoothController
+    ): TouchpadController = TouchpadController(context, bluetoothController)
 }

@@ -1,27 +1,41 @@
 package com.onandor.peripheryapp.kbm.bluetooth
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import com.onandor.peripheryapp.kbm.bluetooth.reports.BatteryReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
+import com.onandor.peripheryapp.utils.PermissionChecker
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@SuppressLint("MissingPermission")
 @Singleton
-class HidDataSender @Inject constructor(
+class BluetoothController @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val hidDeviceApp: HidDeviceApp,
-    private val hidDeviceProfile: HidDeviceProfile
-) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender {
+    private val hidDeviceProfile: HidDeviceProfile,
+    private val permissionChecker: PermissionChecker
+) : MouseReport.MouseDataSender, KeyboardReport.KeyboardDataSender,
+    BatteryReport.BatteryDataSender {
 
-    interface HidProfileListener: HidDeviceApp.DeviceStateListener,
-        HidDeviceProfile.ServiceStateListener {}
+    interface HidProfileListener : HidDeviceProfile.ServiceStateListener {
+
+        fun onConnectionStateChanged(device: BluetoothDevice?, state: Int)
+        fun onAppStatusChanged(registered: Boolean)
+    }
 
     private val batteryReceiver = object : BroadcastReceiver() {
 
@@ -33,47 +47,39 @@ class HidDataSender @Inject constructor(
     }
 
     private val lock: Any = Any()
-
+    private var isAppRegistered: Boolean = false
     private val listeners: MutableSet<HidProfileListener> = mutableSetOf()
-
     private var connectedDevice: BluetoothDevice? = null
     private var waitingForDevice: BluetoothDevice? = null
 
-    private var isAppRegistered: Boolean = false
+    private var hidServiceProxy: BluetoothHidDevice? = null
+    private val mouseReport = MouseReport()
+    private val keyboardReport = KeyboardReport()
+    private val batteryReport = BatteryReport()
+    private var lastReportEmpty = false
 
-    private val hidProfileListener = object : HidProfileListener {
+    private val hidServiceProxyCallback = object : BluetoothHidDevice.Callback() {
+
+        override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
+            super.onAppStatusChanged(pluggedDevice, registered)
+            this@BluetoothController.onAppStatusChanged(registered)
+        }
 
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
-            synchronized (lock) {
-                if (state == BluetoothProfile.STATE_CONNECTED) {
-                    waitingForDevice = device
-                } else if (state == BluetoothProfile.STATE_DISCONNECTED) {
-                    if (device == waitingForDevice) {
-                        waitingForDevice = null
-                    }
-                }
-                updateDeviceList()
-                listeners.forEach { listener ->
-                    listener.onConnectionStateChanged(device ,state)
-                }
-            }
+            super.onConnectionStateChanged(device, state)
+            this@BluetoothController.onConnectionStateChanged(device, state)
         }
 
-        override fun onAppStatusChanged(registered: Boolean) {
-            synchronized (lock) {
-                if (isAppRegistered == registered) {
-                    return
-                }
-                isAppRegistered = registered
-
-                listeners.forEach { listener ->
-                    listener.onAppStatusChanged(registered)
-                }
-                if (registered && waitingForDevice != null) {
-                    requestConnect(waitingForDevice)
-                }
-            }
+        override fun onGetReport(device: BluetoothDevice?, type: Byte, id: Byte, bufferSize: Int) {
+            super.onGetReport(device, type, id, bufferSize)
         }
+
+        override fun onSetReport(device: BluetoothDevice?, type: Byte, id: Byte, data: ByteArray?) {
+            super.onSetReport(device, type, id, data)
+        }
+    }
+
+    private val hidServiceStateListener = object : HidDeviceProfile.ServiceStateListener {
 
         override fun onServiceStateChanged(proxy: BluetoothProfile?) {
             synchronized (lock) {
@@ -82,7 +88,7 @@ class HidDataSender @Inject constructor(
                         onAppStatusChanged(false)
                     }
                 } else {
-                    hidDeviceApp.registerApp(proxy)
+                    registerApp(proxy)
                 }
                 updateDeviceList()
                 listeners.forEach { listener ->
@@ -90,6 +96,31 @@ class HidDataSender @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun registerApp(proxy: BluetoothProfile?) {
+        if (proxy == null ||
+            !permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
+        hidServiceProxy = proxy as BluetoothHidDevice
+        this.hidServiceProxy!!.registerApp(
+            Constants.SDP_RECORD,
+            null,
+            Constants.QOS_OUT,
+            Dispatchers.Main.asExecutor(),
+            hidServiceProxyCallback
+        )
+    }
+
+    private fun unregisterApp() {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
+        if (isAppRegistered) {
+            hidServiceProxy?.unregisterApp()
+        }
+        hidServiceProxy = null
     }
 
     fun registerListener(listener: HidProfileListener): HidDeviceProfile {
@@ -101,8 +132,7 @@ class HidDataSender @Inject constructor(
                 return hidDeviceProfile
             }
 
-            hidDeviceProfile.registerServiceListener(hidProfileListener)
-            hidDeviceApp.registerDeviceListener(hidProfileListener)
+            hidDeviceProfile.registerServiceListener(hidServiceStateListener)
             context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         }
         return hidDeviceProfile
@@ -118,19 +148,52 @@ class HidDataSender @Inject constructor(
             }
 
             context.unregisterReceiver(batteryReceiver)
-            hidDeviceApp.unregisterDeviceListener()
 
             hidDeviceProfile.getConnectedDevices().forEach { device ->
                 hidDeviceProfile.disconnectFromHost(device)
             }
 
-            hidDeviceApp.setDevice(null)
-            hidDeviceApp.unregisterApp()
+            unregisterApp()
 
             hidDeviceProfile.unregisterServiceListener()
 
             connectedDevice = null
             waitingForDevice = null
+        }
+    }
+
+    private fun onAppStatusChanged(registered: Boolean) {
+        CoroutineScope(Dispatchers.Main).launch {
+            synchronized (lock) {
+                if (isAppRegistered == registered) {
+                    return@launch
+                }
+                isAppRegistered = registered
+
+                listeners.forEach { listener ->
+                    listener.onAppStatusChanged(registered)
+                }
+                if (registered && waitingForDevice != null) {
+                    requestConnect(waitingForDevice)
+                }
+            }
+        }
+    }
+
+    private fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
+        CoroutineScope(Dispatchers.Main).launch {
+            synchronized (lock) {
+                if (state == BluetoothProfile.STATE_CONNECTED) {
+                    waitingForDevice = device
+                } else if (state == BluetoothProfile.STATE_DISCONNECTED &&
+                    device == waitingForDevice) {
+                    waitingForDevice = null
+                }
+                updateDeviceList()
+                listeners.forEach { listener ->
+                    listener.onConnectionStateChanged(device, state)
+                }
+            }
         }
     }
 
@@ -162,10 +225,23 @@ class HidDataSender @Inject constructor(
         dY: Int,
         dWheel: Int
     ) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
+        if (hidServiceProxy == null || connectedDevice == null) {
+            return
+        }
         synchronized(lock) {
-            if (connectedDevice != null) {
-                hidDeviceApp.sendMouse(left, right, middle, dX, dY, dWheel)
+            val report = mouseReport.setValue(left, right, middle, dX, dY, dWheel)
+            if (report.all { it == 0.toByte() }) {
+                if (lastReportEmpty) {
+                    return
+                }
+                lastReportEmpty = true
+            } else {
+                lastReportEmpty = false
             }
+            hidServiceProxy!!.sendReport(connectedDevice, Constants.ID_MOUSE, report)
         }
     }
 
@@ -179,6 +255,10 @@ class HidDataSender @Inject constructor(
         key6: Int
     ) {
         TODO("Not yet implemented")
+    }
+
+    override fun sendBatteryLevel(batteryLevel: Float) {
+        // TODO
     }
 
     private fun updateDeviceList() {
@@ -210,7 +290,6 @@ class HidDataSender @Inject constructor(
             } else if (connectedDevice != null && _connectedDevice == null) {
                 connectedDevice = null
             }
-            hidDeviceApp.setDevice(connectedDevice)
         }
     }
 
@@ -219,7 +298,7 @@ class HidDataSender @Inject constructor(
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
         if (level >= 0 && scale >= 0) {
             val batteryLevel = level.toFloat() / scale.toFloat()
-            hidDeviceApp.sendBatteryLevel(batteryLevel)
+            sendBatteryLevel(batteryLevel)
         }
     }
 }
