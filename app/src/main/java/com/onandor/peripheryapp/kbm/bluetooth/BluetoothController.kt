@@ -2,14 +2,17 @@ package com.onandor.peripheryapp.kbm.bluetooth
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
+import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.os.Build
 import com.onandor.peripheryapp.kbm.bluetooth.reports.BatteryReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
@@ -36,18 +39,30 @@ class BluetoothController @Inject constructor(
         fun onAppStatusChanged(registered: Boolean)
     }
 
-    private val batteryReceiver = object : BroadcastReceiver() {
+    interface BluetoothScanListener {
 
-        override fun onReceive(context: Context?, intent: Intent?) {
-            intent?.let {
-                onBatteryChanged(it)
-            }
-        }
+        fun onDeviceFound(device: BluetoothDevice)
+        fun onDeviceNameChanged(device: BluetoothDevice)
+        fun onDeviceBondStateChanged(device: BluetoothDevice)
+    }
+
+    interface BluetoothStateListener {
+
+        fun onStateChanged(state: Int)
+    }
+
+    private val bluetoothManager by lazy {
+        context.getSystemService(BluetoothManager::class.java)
+    }
+    val bluetoothAdapter by lazy {
+        bluetoothManager?.adapter
     }
 
     private val lock: Any = Any()
     private var isAppRegistered: Boolean = false
-    private val listeners: MutableSet<HidProfileListener> = mutableSetOf()
+    private val hidProfileListeners: MutableSet<HidProfileListener> = mutableSetOf()
+    private val bluetoothScanListeners: MutableSet<BluetoothScanListener> = mutableSetOf()
+    private val bluetoothStateListeners: MutableSet<BluetoothStateListener> = mutableSetOf()
     private var connectedDevice: BluetoothDevice? = null
     private var waitingForDevice: BluetoothDevice? = null
 
@@ -90,9 +105,62 @@ class BluetoothController @Inject constructor(
                     registerApp(proxy)
                 }
                 updateDeviceList()
-                listeners.forEach { listener ->
+                hidProfileListeners.forEach { listener ->
                     listener.onServiceStateChanged(proxy)
                 }
+            }
+        }
+    }
+
+    private val bluetoothScanReceiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+            } else {
+                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            }
+            if (device == null) {
+                return
+            }
+            bluetoothScanListeners.forEach { listener ->
+                when (intent?.action) {
+                    BluetoothDevice.ACTION_FOUND -> {
+                        listener.onDeviceFound(device)
+                    }
+                    BluetoothDevice.ACTION_NAME_CHANGED -> {
+                        listener.onDeviceNameChanged(device)
+                    }
+                    BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                        listener.onDeviceBondStateChanged(device)
+                    }
+                }
+            }
+        }
+    }
+
+    private val bluetoothStateReceiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                    val state = intent.getIntExtra(
+                        BluetoothAdapter.EXTRA_STATE,
+                        BluetoothAdapter.ERROR
+                    )
+                    bluetoothStateListeners.forEach { listener ->
+                        listener.onStateChanged(state)
+                    }
+                }
+            }
+        }
+    }
+
+    private val batteryReceiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent?.let {
+                onBatteryChanged(it)
             }
         }
     }
@@ -122,30 +190,35 @@ class BluetoothController @Inject constructor(
         hidServiceProxy = null
     }
 
-    fun registerListener(listener: HidProfileListener): HidDeviceProfile {
+    fun registerProfileListener(listener: HidProfileListener): HidDeviceProfile {
         synchronized (lock) {
-            if (!listeners.add(listener)) {
+            if (!hidProfileListeners.add(listener)) {
                 return hidDeviceProfile
             }
-            if (listeners.size > 1) {
+            if (hidProfileListeners.size > 1) {
                 return hidDeviceProfile
             }
 
             hidDeviceProfile.registerServiceListener(hidServiceStateListener)
+            context.registerReceiver(
+                bluetoothStateReceiver,
+                IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+            )
             context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         }
         return hidDeviceProfile
     }
 
-    fun unregisterListener(listener: HidProfileListener) {
+    fun unregisterProfileListener(listener: HidProfileListener) {
         synchronized (lock) {
-            if (!listeners.remove(listener)) {
+            if (!hidProfileListeners.remove(listener)) {
                 return
             }
-            if (listeners.isNotEmpty()) {
+            if (hidProfileListeners.isNotEmpty()) {
                 return
             }
 
+            context.unregisterReceiver(bluetoothStateReceiver)
             context.unregisterReceiver(batteryReceiver)
 
             hidDeviceProfile.getConnectedDevices().forEach { device ->
@@ -161,6 +234,39 @@ class BluetoothController @Inject constructor(
         }
     }
 
+    fun registerScanListener(listener: BluetoothScanListener) {
+        if (!bluetoothScanListeners.add(listener)) {
+            return
+        }
+        if (bluetoothScanListeners.size > 1) {
+            return
+        }
+
+        val scanIntentFilter = IntentFilter()
+        scanIntentFilter.addAction(BluetoothDevice.ACTION_FOUND)
+        scanIntentFilter.addAction(BluetoothDevice.ACTION_NAME_CHANGED)
+        scanIntentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+        context.registerReceiver(bluetoothScanReceiver, scanIntentFilter)
+    }
+
+    fun unregisterScanListener(listener: BluetoothScanListener) {
+        if (!bluetoothScanListeners.remove(listener)) {
+            return
+        }
+        if (bluetoothScanListeners.isNotEmpty()) {
+            return
+        }
+        context.unregisterReceiver(bluetoothScanReceiver)
+    }
+
+    fun registerStateListener(listener: BluetoothStateListener) {
+        bluetoothStateListeners.add(listener)
+    }
+
+    fun unregisterStateListener(listener: BluetoothStateListener) {
+        bluetoothStateListeners.remove(listener)
+    }
+
     private fun onAppStatusChanged(registered: Boolean) {
         CoroutineScope(Dispatchers.Main).launch {
             synchronized (lock) {
@@ -169,7 +275,7 @@ class BluetoothController @Inject constructor(
                 }
                 isAppRegistered = registered
 
-                listeners.forEach { listener ->
+                hidProfileListeners.forEach { listener ->
                     listener.onAppStatusChanged(registered)
                 }
                 if (registered && waitingForDevice != null) {
@@ -189,7 +295,7 @@ class BluetoothController @Inject constructor(
                     waitingForDevice = null
                 }
                 updateDeviceList()
-                listeners.forEach { listener ->
+                hidProfileListeners.forEach { listener ->
                     listener.onConnectionStateChanged(device, state)
                 }
             }
@@ -209,11 +315,25 @@ class BluetoothController @Inject constructor(
             updateDeviceList()
 
             if (device != null && device == connectedDevice) {
-                listeners.forEach { listener ->
+                hidProfileListeners.forEach { listener ->
                     listener.onConnectionStateChanged(device, BluetoothProfile.STATE_CONNECTED)
                 }
             }
         }
+    }
+
+    fun startDiscovery() {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_SCAN)) {
+            return
+        }
+        bluetoothAdapter?.startDiscovery()
+    }
+
+    fun stopDiscovery() {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_SCAN)) {
+            return
+        }
+        bluetoothAdapter?.cancelDiscovery()
     }
 
     fun sendMouse(
