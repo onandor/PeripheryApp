@@ -2,17 +2,52 @@ package com.onandor.peripheryapp.kbm.ui.screens
 
 import android.util.Log
 import android.view.MotionEvent
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.kbm.input.MouseButton
 import com.onandor.peripheryapp.kbm.viewmodels.InputViewModel
 
@@ -20,19 +55,68 @@ import com.onandor.peripheryapp.kbm.viewmodels.InputViewModel
 fun InputScreen(
     viewModel: InputViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
+    Scaffold(
+        topBar = {
+            InputTopAppBar(
+                hostName = uiState.hostName,
+                onToggleKeyboard = viewModel::toggleKeyboard
+            )
+        }
+    ) { innerPadding ->
+        val focusRequester = remember { FocusRequester() }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val focusManager = LocalFocusManager.current
+        val isKeyboardShown = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+
+        LaunchedEffect(isKeyboardShown) {
+            if (!isKeyboardShown && uiState.isKeyboardShown) {
+                viewModel.keyboardDismissed()
+            }
+        }
+
+        LaunchedEffect(uiState.isKeyboardShown) {
+            if (uiState.isKeyboardShown) {
+                focusRequester.requestFocus()
+                keyboardController?.show()
+            } else {
+                keyboardController?.hide()
+                focusManager.clearFocus()
+            }
+        }
+
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .imePadding()
         ) {
+            BasicTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                value = uiState.keyboardInputSink,
+                onValueChange = viewModel::onKeyboardInputChanged,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrect = false
+                ),
+                singleLine = false
+            )
             TouchSurface(
                 onButtonDown = viewModel::buttonDown,
                 onButtonUp = viewModel::buttonUp,
                 onMove = viewModel::move,
                 onScroll = viewModel::scroll
             )
+            if (uiState.keyboardInput.isNotEmpty()) {
+                KeyboardInputPreview(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .align(Alignment.BottomCenter),
+                    input = uiState.keyboardInput
+                )
+            }
         }
     }
 }
@@ -40,6 +124,7 @@ fun InputScreen(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun TouchSurface(
+    modifier: Modifier = Modifier,
     onButtonDown: (MouseButton) -> Unit,
     onButtonUp: (MouseButton) -> Unit,
     onMove: (Float, Float) -> Unit,
@@ -61,7 +146,8 @@ private fun TouchSurface(
     var prevFocusY = 0f
 
     Surface(
-        modifier = Modifier
+        color = Color.Blue,
+        modifier = modifier
             .fillMaxSize()
             .pointerInteropFilter { event ->
                 val action = event.actionMasked
@@ -90,7 +176,8 @@ private fun TouchSurface(
                         downFocusX = focusX
                         downFocusY = focusY
                         if (event.downTime - prevDownTime
-                            in doubleTapMinTime..doubleTapTimeout && !prevRightClick) {
+                            in doubleTapMinTime..doubleTapTimeout && !prevRightClick
+                        ) {
                             // We are in a double tap and holding the button. The down event needs
                             // to be sent now to support dragging
                             inDoubleTapHold = true
@@ -98,10 +185,12 @@ private fun TouchSurface(
                             Log.d("MotionEvent", "Left down")
                         }
                     }
+
                     MotionEvent.ACTION_POINTER_DOWN -> {
                         downFocusX = focusX
                         downFocusY = focusY
                     }
+
                     MotionEvent.ACTION_MOVE -> {
                         if (inTap) {
                             val deltaX = (focusX - downFocusX).toInt()
@@ -113,7 +202,7 @@ private fun TouchSurface(
                         }
 
                         if (!inTap) {
-                            if (inRightClick  && count > 1) {
+                            if (inRightClick && count > 1) {
                                 if (!inDoubleTapHold) {
                                     onScroll((prevFocusY - focusY) / 10f)
                                     Log.d("MotionEvent", "Scroll")
@@ -125,6 +214,7 @@ private fun TouchSurface(
                             }
                         }
                     }
+
                     MotionEvent.ACTION_UP -> {
                         if (inRightClick) {
                             if (deltaTime <= tapTimeout) {
@@ -161,7 +251,61 @@ private fun TouchSurface(
                 prevFocusY = focusY
                 true
             }
-    ) {
+    ) { }
+}
 
+@Composable
+private fun KeyboardInputPreview(
+    modifier: Modifier,
+    input: String
+) {
+    val lineHeight = 30
+    val lineHeightDp = with(LocalDensity.current) { lineHeight.sp.toDp() }
+    val padding = 10
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .border(
+                width = padding.dp,
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(16.dp)
+            ),
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        LazyColumn(
+            modifier = Modifier.heightIn(
+                min = 0.dp,
+                max = 2 * lineHeightDp + 2 * padding.dp
+            ),
+            reverseLayout = true
+        ) {
+            item {
+                Text(
+                    modifier = Modifier.padding(padding.dp),
+                    text = input,
+                    lineHeight = lineHeight.sp,
+                    fontSize = 20.sp
+                )
+            }
+        }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InputTopAppBar(
+    hostName: String,
+    onToggleKeyboard: () -> Unit
+){
+    TopAppBar(
+        title = { Text(hostName) },
+        actions = {
+            IconButton(onClick = onToggleKeyboard) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_keyboard_filled),
+                    contentDescription = stringResource(id = R.string.input_toggle_keyboard)
+                )
+            }
+        }
+    )
 }

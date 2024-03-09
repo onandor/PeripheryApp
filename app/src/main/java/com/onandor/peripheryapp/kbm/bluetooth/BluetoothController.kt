@@ -72,6 +72,9 @@ class BluetoothController @Inject constructor(
     private val batteryReport = BatteryReport()
     private var lastReportEmpty = false
 
+    var deviceName: String = ""
+        private set
+
     private val hidServiceProxyCallback = object : BluetoothHidDevice.Callback() {
 
         override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
@@ -406,8 +409,10 @@ class BluetoothController @Inject constructor(
             if (connectedDevice == null && _connectedDevice != null) {
                 connectedDevice = _connectedDevice
                 waitingForDevice = null
+                deviceName = connectedDevice!!.name
             } else if (connectedDevice != null && _connectedDevice == null) {
                 connectedDevice = null
+                deviceName = ""
             }
         }
     }

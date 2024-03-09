@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PeripheryApp</string>
+    <string name="input_toggle_keyboard">Toggle keyboard</string>
 </resources>

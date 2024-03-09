@@ -1,5 +1,6 @@
 package com.onandor.peripheryapp.navigation
 
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,7 +41,7 @@ fun NavGraph(
         }
     }
 
-    Surface {
+    Surface(modifier = Modifier.navigationBarsPadding()) {
         NavHost(
             navController = navController,
             startDestination = startDestination
