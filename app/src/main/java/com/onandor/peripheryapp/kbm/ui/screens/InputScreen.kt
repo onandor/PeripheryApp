@@ -35,6 +35,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -94,7 +97,13 @@ fun InputScreen(
             BasicTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusRequester(focusRequester),
+                    .focusRequester(focusRequester)
+                    .onKeyEvent { event ->
+                        if (event.key == Key.Backspace) {
+                            viewModel.onBackspace()
+                        }
+                        false
+                    },
                 value = uiState.keyboardInputSink,
                 onValueChange = viewModel::onKeyboardInputChanged,
                 keyboardOptions = KeyboardOptions(
@@ -109,12 +118,12 @@ fun InputScreen(
                 onMove = viewModel::move,
                 onScroll = viewModel::scroll
             )
-            if (uiState.keyboardInput.isNotEmpty()) {
+            if (uiState.keyboardInputDisplay.isNotEmpty()) {
                 KeyboardInputPreview(
                     modifier = Modifier
                         .padding(10.dp)
                         .align(Alignment.BottomCenter),
-                    input = uiState.keyboardInput
+                    input = uiState.keyboardInputDisplay
                 )
             }
         }

@@ -3,6 +3,7 @@ package com.onandor.peripheryapp.kbm.viewmodels
 import android.os.CountDownTimer
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
+import com.onandor.peripheryapp.kbm.input.KeyboardController
 import com.onandor.peripheryapp.kbm.input.MouseButton
 import com.onandor.peripheryapp.kbm.input.TouchpadController
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,13 +15,14 @@ import javax.inject.Inject
 data class InputUiState(
     val hostName: String = "",
     val isKeyboardShown: Boolean = false,
-    val keyboardInput: String = "",
+    val keyboardInputDisplay: String = "",
     val keyboardInputSink: String = "_"
 )
 
 @HiltViewModel
 class InputViewModel @Inject constructor(
     private val touchpadController: TouchpadController,
+    private val keyboardController: KeyboardController,
     private val bluetoothController: BluetoothController
 ) : ViewModel() {
 
@@ -40,7 +42,7 @@ class InputViewModel @Inject constructor(
             millisUntilClear -= 100
             if (millisUntilClear == 0) {
                 running = false
-                _uiState.update { it.copy(keyboardInput = "") }
+                _uiState.update { it.copy(keyboardInputDisplay = "") }
                 this.cancel()
             }
         }
@@ -81,25 +83,39 @@ class InputViewModel @Inject constructor(
     }
 
     fun onKeyboardInputChanged(value: String) {
-        var lastChar = value[value.length - 2]
-        var newChar = when (lastChar) {
-            '\n' -> {
-                '\u23CE'
+        val backspace = value.length <= uiState.value.keyboardInputSink.length
+        if (backspace) {
+            keyboardController.sendSpecialKey(KeyboardController.SpecialKey.BACKSPACE)
+            _uiState.update {
+                it.copy(keyboardInputDisplay = it.keyboardInputDisplay.dropLast(1))
             }
-            '\t' -> {
-                '\u21E5'
+        } else {
+            println(value)
+            // The last character is always the "_" character
+            val lastChar = value[value.length - 2]
+            val displayChar: Char
+            when (lastChar) {
+                '\n' -> {
+                    displayChar = '\u23CE'
+                    keyboardController.sendSpecialKey(KeyboardController.SpecialKey.RETURN)
+                }
+                '\t' -> {
+                    displayChar = '\u21E5'
+                    keyboardController.sendSpecialKey(KeyboardController.SpecialKey.TAB)
+                }
+                else -> {
+                    displayChar = lastChar
+                    keyboardController.sendChar(lastChar)
+                }
             }
-            else -> {
-                lastChar
-            }
+            _uiState.update { it.copy(keyboardInputDisplay = it.keyboardInputDisplay + displayChar) }
         }
-        _uiState.update {
-            it.copy(
-                keyboardInput = it.keyboardInput + newChar,
-                keyboardInputSink = value
-            )
-        }
+        _uiState.update { it.copy(keyboardInputSink = value.ifEmpty { "_" }) }
         clearTextTimer.reset()
+    }
+
+    fun onBackspace() {
+        keyboardController.sendSpecialKey(KeyboardController.SpecialKey.BACKSPACE)
     }
 
     override fun onCleared() {
