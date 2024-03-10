@@ -34,7 +34,7 @@ class KeyboardController @Inject constructor(
         scanCode?.let { code ->
             sendKeys(KeyMapping.ModifierKeys.LEFT_SHIFT, code)
             sendKeys(KeyMapping.ModifierKeys.NONE)
-            return KeyMapping.shiftScanCodeToCharacter_EnUs[keyCode] ?: ""
+            return KeyMapping.shiftScanCodeToCharacter_EnUs[scanCode] ?: ""
         }
         return ""
     }
