@@ -1,20 +1,24 @@
 package com.onandor.peripheryapp.kbm.ui.screens
 
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.util.Log
+import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,28 +28,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
@@ -59,18 +56,16 @@ fun InputScreen(
     viewModel: InputViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
             InputTopAppBar(
                 hostName = uiState.hostName,
-                onToggleKeyboard = viewModel::toggleKeyboard
+                onToggleKeyboard = { viewModel.toggleKeyboard(context) }
             )
         }
     ) { innerPadding ->
-        val focusRequester = remember { FocusRequester() }
-        val keyboardController = LocalSoftwareKeyboardController.current
-        val focusManager = LocalFocusManager.current
         val isKeyboardShown = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
         LaunchedEffect(isKeyboardShown) {
@@ -79,51 +74,24 @@ fun InputScreen(
             }
         }
 
-        LaunchedEffect(uiState.isKeyboardShown) {
-            if (uiState.isKeyboardShown) {
-                focusRequester.requestFocus()
-                keyboardController?.show()
-            } else {
-                keyboardController?.hide()
-                focusManager.clearFocus()
-            }
-        }
-
         Box(modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
             .imePadding()
         ) {
-            BasicTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-                    .onKeyEvent { event ->
-                        if (event.key == Key.Backspace) {
-                            viewModel.onBackspace()
-                        }
-                        false
-                    },
-                value = uiState.keyboardInputSink,
-                onValueChange = viewModel::onKeyboardInputChanged,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    autoCorrect = false
-                ),
-                singleLine = false
-            )
+            InputReceiver(onKeyPressed = viewModel::onKeyPressed)
             TouchSurface(
                 onButtonDown = viewModel::buttonDown,
                 onButtonUp = viewModel::buttonUp,
                 onMove = viewModel::move,
                 onScroll = viewModel::scroll
             )
-            if (uiState.keyboardInputDisplay.isNotEmpty()) {
+            if (uiState.keyboardInput.isNotEmpty()) {
                 KeyboardInputPreview(
                     modifier = Modifier
                         .padding(10.dp)
                         .align(Alignment.BottomCenter),
-                    input = uiState.keyboardInputDisplay
+                    input = uiState.keyboardInput
                 )
             }
         }
@@ -155,7 +123,7 @@ private fun TouchSurface(
     var prevFocusY = 0f
 
     Surface(
-        color = Color.Blue,
+        color = Color.Gray,
         modifier = modifier
             .fillMaxSize()
             .pointerInteropFilter { event ->
@@ -296,6 +264,31 @@ private fun KeyboardInputPreview(
                     fontSize = 20.sp
                 )
             }
+        }
+    }
+}
+
+@SuppressLint("UnspecifiedRegisterReceiverFlag")
+@Composable
+private fun InputReceiver(
+    onKeyPressed: (KeyEvent) -> Unit
+) {
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val event = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent?.getParcelableExtra("event", KeyEvent::class.java)
+                } else {
+                    intent?.getParcelableExtra("event")
+                }
+                event?.let { onKeyPressed(it) }
+            }
+        }
+        context.registerReceiver(receiver, IntentFilter("key_up"))
+        onDispose {
+            context.unregisterReceiver(receiver)
         }
     }
 }

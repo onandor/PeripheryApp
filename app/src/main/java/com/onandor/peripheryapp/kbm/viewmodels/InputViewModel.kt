@@ -1,8 +1,15 @@
 package com.onandor.peripheryapp.kbm.viewmodels
 
+import android.app.Activity
+import android.content.Context
+import android.content.Context.INPUT_METHOD_SERVICE
 import android.os.CountDownTimer
+import android.view.KeyEvent
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
+import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.KeyboardController
 import com.onandor.peripheryapp.kbm.input.MouseButton
 import com.onandor.peripheryapp.kbm.input.TouchpadController
@@ -15,8 +22,7 @@ import javax.inject.Inject
 data class InputUiState(
     val hostName: String = "",
     val isKeyboardShown: Boolean = false,
-    val keyboardInputDisplay: String = "",
-    val keyboardInputSink: String = "_"
+    val keyboardInput: String = "",
 )
 
 @HiltViewModel
@@ -42,7 +48,7 @@ class InputViewModel @Inject constructor(
             millisUntilClear -= 100
             if (millisUntilClear == 0) {
                 running = false
-                _uiState.update { it.copy(keyboardInputDisplay = "") }
+                _uiState.update { it.copy(keyboardInput = "") }
                 this.cancel()
             }
         }
@@ -74,48 +80,39 @@ class InputViewModel @Inject constructor(
         touchpadController.scroll(wheel)
     }
 
-    fun toggleKeyboard() {
-        _uiState.update { it.copy(isKeyboardShown = !it.isKeyboardShown) }
-    }
-
     fun keyboardDismissed() {
         _uiState.update { it.copy(isKeyboardShown = false) }
     }
 
-    fun onKeyboardInputChanged(value: String) {
-        val backspace = value.length <= uiState.value.keyboardInputSink.length
-        if (backspace) {
-            keyboardController.sendSpecialKey(KeyboardController.SpecialKey.BACKSPACE)
-            _uiState.update {
-                it.copy(keyboardInputDisplay = it.keyboardInputDisplay.dropLast(1))
-            }
-        } else {
-            println(value)
-            // The last character is always the "_" character
-            val lastChar = value[value.length - 2]
-            val displayChar: Char
-            when (lastChar) {
-                '\n' -> {
-                    displayChar = '\u23CE'
-                    keyboardController.sendSpecialKey(KeyboardController.SpecialKey.RETURN)
-                }
-                '\t' -> {
-                    displayChar = '\u21E5'
-                    keyboardController.sendSpecialKey(KeyboardController.SpecialKey.TAB)
-                }
-                else -> {
-                    displayChar = lastChar
-                    keyboardController.sendChar(lastChar)
-                }
-            }
-            _uiState.update { it.copy(keyboardInputDisplay = it.keyboardInputDisplay + displayChar) }
+    fun onKeyPressed(event: KeyEvent) {
+        if (event.keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+            return
         }
-        _uiState.update { it.copy(keyboardInputSink = value.ifEmpty { "_" }) }
+        val modifier = if (event.isShiftPressed) {
+            KeyMapping.ModifierKeys.LEFT_SHIFT
+        } else {
+            KeyMapping.ModifierKeys.NONE
+        }
+        val character = keyboardController.sendKey(modifier, event.keyCode)
+        if (character == KeyMapping.BACKSPACE) {
+            _uiState.update { it.copy(keyboardInput = it.keyboardInput.dropLast(1)) }
+        } else {
+            _uiState.update { it.copy(keyboardInput = it.keyboardInput + character) }
+        }
         clearTextTimer.reset()
     }
 
-    fun onBackspace() {
-        keyboardController.sendSpecialKey(KeyboardController.SpecialKey.BACKSPACE)
+    fun toggleKeyboard(context: Context) {
+        val view = (context as Activity).findViewById<View>(android.R.id.content)
+        val inputMethodManager =
+            context.getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+        val shouldShow = !_uiState.value.isKeyboardShown
+        if (shouldShow) {
+            inputMethodManager?.showSoftInput(context.window.decorView, 0)
+        } else {
+            inputMethodManager?.hideSoftInputFromWindow(view.applicationWindowToken, 0)
+        }
+        _uiState.update { it.copy(isKeyboardShown = shouldShow) }
     }
 
     override fun onCleared() {

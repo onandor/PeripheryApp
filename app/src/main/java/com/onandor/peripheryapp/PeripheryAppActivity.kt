@@ -1,6 +1,9 @@
 package com.onandor.peripheryapp
 
+import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,5 +32,13 @@ class PeripheryAppActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    @SuppressLint("RestrictedApi")
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        if (event?.action == KeyEvent.ACTION_UP || event?.action == KeyEvent.ACTION_MULTIPLE) {
+            sendBroadcast(Intent("key_up").apply { putExtra("event", event) })
+        }
+        return super.dispatchKeyEvent(event)
     }
 }
