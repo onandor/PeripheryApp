@@ -20,22 +20,21 @@ class KeyboardController @Inject constructor(
     }
 
     fun sendKey(modifier: Int, keyCode: Int): String {
-        var scanCode = KeyMapping.keyCodeToScanCode_EnUs[keyCode]
-        scanCode?.let { code ->
-            sendKeys(modifier, code)
-            sendKeys(KeyMapping.ModifierKeys.NONE)
-            return if (modifier == KeyMapping.ModifierKeys.NONE) {
-                KeyMapping.scanCodeToCharacter_EnUs[scanCode] ?: ""
-            } else {
-                KeyMapping.shiftScanCodeToCharacter_EnUs[scanCode] ?: ""
-            }
+        val key = if (modifier == KeyMapping.Modifiers.NONE) {
+            KeyMapping.keyCodeMap_HuHu[keyCode]
+        } else {
+            KeyMapping.shiftKeyCodeMap_HuHu[keyCode]
         }
-        scanCode = KeyMapping.shiftKeyCodeToScanCode_EnUs[keyCode]
-        scanCode?.let { code ->
-            sendKeys(KeyMapping.ModifierKeys.LEFT_SHIFT, code)
-            sendKeys(KeyMapping.ModifierKeys.NONE)
-            return KeyMapping.shiftScanCodeToCharacter_EnUs[scanCode] ?: ""
+
+        key?.let { (scanCode, modifier) ->
+            sendKeys(modifier, scanCode)
+            sendKeys(KeyMapping.Modifiers.NONE)
         }
-        return ""
+
+        return if (modifier == KeyMapping.Modifiers.NONE) {
+            KeyMapping.keyCodeToCharacterMap[keyCode]
+        } else {
+            KeyMapping.shiftKeyCodeToCharacterMap[keyCode]
+        } ?: ""
     }
 }

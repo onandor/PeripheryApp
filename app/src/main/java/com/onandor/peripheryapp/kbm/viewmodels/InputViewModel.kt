@@ -89,9 +89,11 @@ class InputViewModel @Inject constructor(
             return
         }
         val modifier = if (event.isShiftPressed) {
-            KeyMapping.ModifierKeys.LEFT_SHIFT
+            println("KeyCode: 0x${Integer.toHexString(event.keyCode)}, Modifier: SHIFT")
+            KeyMapping.Modifiers.L_SHIFT
         } else {
-            KeyMapping.ModifierKeys.NONE
+            println("KeyCode: 0x${Integer.toHexString(event.keyCode)}, Modifier: NONE")
+            KeyMapping.Modifiers.NONE
         }
         val character = keyboardController.sendKey(modifier, event.keyCode)
         if (character == KeyMapping.BACKSPACE) {
