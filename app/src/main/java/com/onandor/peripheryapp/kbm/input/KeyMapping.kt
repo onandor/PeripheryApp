@@ -102,10 +102,13 @@ class KeyMapping {
         val shiftKeyCodeMap_EnUs = mapOf(
             0x07 to Key(0x27, Modifiers.L_SHIFT),   // )
             0x08 to Key(0x1E, Modifiers.L_SHIFT),   // !
+            0x09 to Key(0x1F, Modifiers.L_SHIFT),   // @
+            0x0A to Key(0x20, Modifiers.L_SHIFT),   // #
             0x0B to Key(0x21, Modifiers.L_SHIFT),   // $
             0x0C to Key(0x22, Modifiers.L_SHIFT),   // %
             0x0D to Key(0x23, Modifiers.L_SHIFT),   // ^
             0x0E to Key(0x24, Modifiers.L_SHIFT),   // &
+            0x0F to Key(0x25, Modifiers.L_SHIFT),   // *
             0x10 to Key(0x26, Modifiers.L_SHIFT),   // (
             0x1D to Key(0x04, Modifiers.L_SHIFT),   // A
             0x1E to Key(0x05, Modifiers.L_SHIFT),   // B
@@ -141,6 +144,7 @@ class KeyMapping {
             0x43 to Key(0x2A),   // Backspace
             0x44 to Key(0x35, Modifiers.L_SHIFT),   // ~
             0x45 to Key(0x2D, Modifiers.L_SHIFT),   // _
+            0x46 to Key(0x2E, Modifiers.L_SHIFT),    // +
             0x47 to Key(0x2F, Modifiers.L_SHIFT),   // {
             0x48 to Key(0x30, Modifiers.L_SHIFT),   // }
             0x49 to Key(0x31, Modifiers.L_SHIFT),   // |
@@ -149,13 +153,6 @@ class KeyMapping {
             0x4C to Key(0x38, Modifiers.L_SHIFT),   // ?
             0x6F to Key(0x29),   // Escape
             0x70 to Key(0x4C)    // Delete
-        )
-
-        val shiftKeyCodeToScanCode_EnUs = mapOf(
-            0x4D to 0x1F,   // @
-            0x12 to 0x20,   // #
-            0x11 to 0x25,   // *
-            0x51 to 0x2E    // +
         )
 
         val keyCodeMap_HuHu = mapOf(
@@ -221,10 +218,13 @@ class KeyMapping {
         val shiftKeyCodeMap_HuHu = mapOf(
             0x07 to Key(0x26, Modifiers.L_SHIFT),   // )
             0x08 to Key(0x21, Modifiers.L_SHIFT),   // !
+            0x09 to Key(0x19, Modifiers.R_ALT),  // @
+            0x0A to Key(0x1B, Modifiers.R_ALT),   // #
             0x0B to Key(0x33, Modifiers.R_ALT),   // $
             0x0C to Key(0x22, Modifiers.L_SHIFT),   // %
             0x0D to Key(0x20, Modifiers.R_ALT),   // ^
             0x0E to Key(0x06, Modifiers.R_ALT),   // &
+            0x0F to Key(0x38, Modifiers.R_ALT),   // *
             0x10 to Key(0x25, Modifiers.L_SHIFT),   // (
             0x1D to Key(0x04, Modifiers.L_SHIFT),   // A
             0x1E to Key(0x05, Modifiers.L_SHIFT),   // B
@@ -258,6 +258,7 @@ class KeyMapping {
             0x43 to Key(0x2A),   // Backspace
             0x44 to Key(0x1E, Modifiers.R_ALT),   // ~
             0x45 to Key(0x38, Modifiers.L_SHIFT),   // _
+            0x46 to Key(0x20, Modifiers.L_SHIFT),    // +
             0x47 to Key(0x05, Modifiers.R_ALT),   // {
             0x48 to Key(0x11, Modifiers.R_ALT),   // }
             0x49 to Key(0x1A, Modifiers.R_ALT),   // |
@@ -352,10 +353,13 @@ class KeyMapping {
         val shiftKeyCodeToCharacterMap = mapOf(
             0x07 to ")",
             0x08 to "!",
+            0x09 to "@",
+            0x0A to "#",
             0x0B to "$",
             0x0C to "%",
             0x0D to "^",
             0x0E to "&",
+            0x0F to "*",
             0x10 to "(",
             0x1D to "A",
             0x1E to "B",
@@ -391,6 +395,7 @@ class KeyMapping {
             0x43 to BACKSPACE,
             0x44 to "~",
             0x45 to "_",
+            0x46 to "+",
             0x47 to "{",
             0x48 to "}",
             0x49 to "|",
