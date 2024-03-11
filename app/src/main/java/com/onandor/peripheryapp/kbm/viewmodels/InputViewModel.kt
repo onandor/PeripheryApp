@@ -3,10 +3,12 @@ package com.onandor.peripheryapp.kbm.viewmodels
 import android.app.Activity
 import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
+import android.os.Build
 import android.os.CountDownTimer
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.input.KeyMapping
@@ -119,10 +121,19 @@ class InputViewModel @Inject constructor(
         val inputMethodManager =
             context.getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
         val shouldShow = !_uiState.value.isKeyboardShown
-        if (shouldShow) {
-            inputMethodManager?.showSoftInput(context.window.decorView, 0)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (shouldShow) {
+                view.windowInsetsController?.show(WindowInsetsCompat.Type.ime())
+            } else {
+                view.windowInsetsController?.hide(WindowInsetsCompat.Type.ime())
+            }
         } else {
-            inputMethodManager?.hideSoftInputFromWindow(view.applicationWindowToken, 0)
+            if (shouldShow) {
+                context.window.decorView.requestFocus()
+                inputMethodManager?.showSoftInput(context.window.decorView, 0)
+            } else {
+                inputMethodManager?.hideSoftInputFromWindow(view.applicationWindowToken, 0)
+            }
         }
         _uiState.update { it.copy(isKeyboardShown = shouldShow) }
     }

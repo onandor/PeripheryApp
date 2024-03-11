@@ -39,6 +39,9 @@ class PeripheryAppActivity : ComponentActivity() {
         if (event?.action == KeyEvent.ACTION_UP || event?.action == KeyEvent.ACTION_MULTIPLE) {
             sendBroadcast(Intent("key_up").apply { putExtra("event", event) })
         }
+        if (event?.keyCode == KeyEvent.KEYCODE_ENTER) {
+            return true
+        }
         return super.dispatchKeyEvent(event)
     }
 }
