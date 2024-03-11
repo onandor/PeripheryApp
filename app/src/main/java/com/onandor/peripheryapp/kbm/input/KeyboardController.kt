@@ -37,4 +37,14 @@ class KeyboardController @Inject constructor(
             KeyMapping.shiftKeyCodeToCharacterMap[keyCode]
         } ?: ""
     }
+
+    fun sendKey(character: String): String {
+        val key = KeyMapping.specialCharacterMap_HuHu[character]
+        key?.let { (scanCode, modifier) ->
+            sendKeys(modifier, scanCode)
+            sendKeys(KeyMapping.Modifiers.NONE)
+            return character
+        }
+        return ""
+    }
 }

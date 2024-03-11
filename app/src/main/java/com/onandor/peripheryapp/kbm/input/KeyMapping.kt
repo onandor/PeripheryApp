@@ -268,6 +268,27 @@ class KeyMapping {
             0x70 to Key(0x4C)    // Delete
         )
 
+        val specialCharacterMap_HuHu = mapOf(
+            "á" to Key(0x34),
+            "é" to Key(0x33),
+            "í" to Key(0x64),
+            "ó" to Key(0x2E),
+            "ö" to Key(0x27),
+            "ő" to Key(0x2F),
+            "ú" to Key(0x30),
+            "ü" to Key(0x2D),
+            "ű" to Key(0x32),
+            "Á" to Key(0x34, Modifiers.L_SHIFT),
+            "É" to Key(0x33, Modifiers.L_SHIFT),
+            "Í" to Key(0x64, Modifiers.L_SHIFT),
+            "Ó" to Key(0x2E, Modifiers.L_SHIFT),
+            "Ö" to Key(0x27, Modifiers.L_SHIFT),
+            "Ő" to Key(0x2F, Modifiers.L_SHIFT),
+            "Ú" to Key(0x30, Modifiers.L_SHIFT),
+            "Ü" to Key(0x2D, Modifiers.L_SHIFT),
+            "Ű" to Key(0x32, Modifiers.L_SHIFT)
+        )
+
         val keyCodeToCharacterMap = mapOf(
             0x07 to "0",
             0x08 to "1",

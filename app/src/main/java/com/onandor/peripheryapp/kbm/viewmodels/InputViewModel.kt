@@ -86,13 +86,12 @@ class InputViewModel @Inject constructor(
 
     fun onKeyPressed(event: KeyEvent) {
         if (event.keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+            specialCharacterPressed(event)
             return
         }
         val modifier = if (event.isShiftPressed) {
-            println("KeyCode: 0x${Integer.toHexString(event.keyCode)}, Modifier: SHIFT")
             KeyMapping.Modifiers.L_SHIFT
         } else {
-            println("KeyCode: 0x${Integer.toHexString(event.keyCode)}, Modifier: NONE")
             KeyMapping.Modifiers.NONE
         }
         val character = keyboardController.sendKey(modifier, event.keyCode)
@@ -102,6 +101,17 @@ class InputViewModel @Inject constructor(
             _uiState.update { it.copy(keyboardInput = it.keyboardInput + character) }
         }
         clearTextTimer.reset()
+    }
+
+    private fun specialCharacterPressed(event: KeyEvent) {
+        if (event.characters == null) {
+            return
+        }
+        val character = keyboardController.sendKey(event.characters)
+        if (character.isNotEmpty()) {
+            _uiState.update { it.copy(keyboardInput = it.keyboardInput + character) }
+            clearTextTimer.reset()
+        }
     }
 
     fun toggleKeyboard(context: Context) {
