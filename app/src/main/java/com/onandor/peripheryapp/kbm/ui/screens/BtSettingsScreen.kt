@@ -1,5 +1,6 @@
 package com.onandor.peripheryapp.kbm.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -46,6 +47,10 @@ fun BtSettingsScreen(
                 onClick = { viewModel.onLocaleChanged(option.value) }
             )
         }
+
+    BackHandler {
+        viewModel.onNavigateBack()
+    }
 
     Scaffold(
         topBar = {

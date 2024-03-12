@@ -2,6 +2,13 @@ package com.onandor.peripheryapp.kbm.input
 
 import android.content.Context
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
+import com.onandor.peripheryapp.utils.BtSettingKeys
+import com.onandor.peripheryapp.utils.Settings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.util.LinkedList
 import java.util.Queue
 import java.util.concurrent.ScheduledFuture
@@ -10,17 +17,16 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class TouchpadController @Inject constructor(
-    private val context: Context,
-    private val bluetoothController: BluetoothController
+    private val bluetoothController: BluetoothController,
+    private val settings: Settings
 ) {
 
     object PollingRates {
         val LOW = 20000L
         val HIGH = 11250L
-        val AUTO = 0L
     }
 
-    private val POLLING_RATE_US = 11250L
+    private var pollingRateJob: Job? = null
     private val buttonEventQueue: Queue<ButtonEvent> = LinkedList()
 
     private var dX = 0f
@@ -30,16 +36,14 @@ class TouchpadController @Inject constructor(
     private var rightButton = false
 
     private lateinit var executor: ScheduledThreadPoolExecutor
-    private var scheduledFuture: ScheduledFuture<*>? = null
+    private var sendDataTask: ScheduledFuture<*>? = null
 
     fun init() {
         executor = ScheduledThreadPoolExecutor(1)
-        scheduledFuture = executor.scheduleAtFixedRate(
-            this::sendData,
-            0,
-            POLLING_RATE_US,
-            TimeUnit.MICROSECONDS
-        )
+        pollingRateJob = settings
+            .observe(BtSettingKeys.MOUSE_POLLING_RATE, PollingRates.HIGH)
+            .onEach { resetSendDataTask(it) }
+            .launchIn(CoroutineScope(Dispatchers.Main))
     }
 
     fun buttonDown(button: MouseButton) {
@@ -89,12 +93,26 @@ class TouchpadController @Inject constructor(
         }
     }
 
+    private fun resetSendDataTask(pollingRate: Long) {
+        println("resetSendDataTask")
+        if (sendDataTask != null) {
+            sendDataTask?.cancel(true)
+            sendDataTask = null
+        }
+        sendDataTask = executor.scheduleAtFixedRate(
+            this::sendData,
+            0,
+            pollingRate,
+            TimeUnit.MICROSECONDS
+        )
+    }
+
      fun release() {
-         if (scheduledFuture == null) {
-             return
-         }
+         pollingRateJob?.cancel()
+         pollingRateJob = null
+
          executor.shutdownNow()
-         scheduledFuture!!.cancel(true)
-         scheduledFuture = null
+         sendDataTask?.cancel(true)
+         sendDataTask = null
      }
 }

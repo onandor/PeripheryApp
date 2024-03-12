@@ -35,9 +35,9 @@ object BluetoothControllerModule {
     @Provides
     @Singleton
     fun provideTouchpadController(
-        @ApplicationContext context: Context,
-        bluetoothController: BluetoothController
-    ): TouchpadController = TouchpadController(context, bluetoothController)
+        bluetoothController: BluetoothController,
+        settings: Settings
+    ): TouchpadController = TouchpadController(bluetoothController, settings)
 
     @Provides
     @Singleton

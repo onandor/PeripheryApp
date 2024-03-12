@@ -162,7 +162,7 @@ private fun TouchSurface(
                             // to be sent now to support dragging
                             inDoubleTapHold = true
                             onButtonDown(MouseButton.LEFT)
-                            Log.d("MotionEvent", "Left down")
+                            //Log.d("MotionEvent", "Left down")
                         }
                     }
 
@@ -185,12 +185,12 @@ private fun TouchSurface(
                             if (inRightClick && count > 1) {
                                 if (!inDoubleTapHold) {
                                     onScroll((prevFocusY - focusY) / 10f)
-                                    Log.d("MotionEvent", "Scroll")
+                                    //Log.d("MotionEvent", "Scroll")
                                 }
                                 inRightClick = false
                             } else {
                                 onMove(focusX - prevFocusX, focusY - prevFocusY)
-                                Log.d("MotionEvent", "Move")
+                                //Log.d("MotionEvent", "Move")
                             }
                         }
                     }
@@ -199,9 +199,9 @@ private fun TouchSurface(
                         if (inRightClick) {
                             if (deltaTime <= tapTimeout) {
                                 onButtonDown(MouseButton.RIGHT)
-                                Log.d("MotionEvent", "Right down")
+                                //Log.d("MotionEvent", "Right down")
                                 onButtonUp(MouseButton.RIGHT)
-                                Log.d("MotionEvent", "Right up")
+                                //Log.d("MotionEvent", "Right up")
                                 prevRightClick = true
                             }
                             inRightClick = false
@@ -211,14 +211,14 @@ private fun TouchSurface(
                                     // Only send down event if not holding left button after
                                     // double click
                                     onButtonDown(MouseButton.LEFT)
-                                    Log.d("MotionEvent", "Left down")
+                                    //Log.d("MotionEvent", "Left down")
                                 }
                                 onButtonUp(MouseButton.LEFT)
-                                Log.d("MotionEvent", "Left up")
+                                //Log.d("MotionEvent", "Left up")
                             } else if (inDoubleTapHold) {
                                 // If holding left button after double tap, send up event
                                 onButtonUp(MouseButton.LEFT)
-                                Log.d("MotionEvent", "Left up")
+                                //Log.d("MotionEvent", "Left up")
                             }
                             prevRightClick = false
                         }

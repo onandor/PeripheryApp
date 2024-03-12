@@ -27,15 +27,11 @@ class SettingOptions {
         )
 
         val POLLING_RATE_DEFAULT = LongSettingOption(
-            value = TouchpadController.PollingRates.AUTO,
+            value = TouchpadController.PollingRates.HIGH,
             resourceId = R.string.bt_settings_mouse_polling_rate_high
         )
 
         val pollingRates = listOf(
-            LongSettingOption(
-                value = TouchpadController.PollingRates.AUTO,
-                resourceId = R.string.bt_settings_mouse_polling_rate_automatic
-            ),
             LongSettingOption(
                 value = TouchpadController.PollingRates.LOW,
                 resourceId = R.string.bt_settings_mouse_polling_rate_low
