@@ -1,6 +1,10 @@
 package com.onandor.peripheryapp.di
 
 import android.content.Context
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import com.onandor.peripheryapp.utils.PermissionChecker
 import dagger.Module
 import dagger.Provides
@@ -17,4 +21,13 @@ class UtilModules {
     @Provides
     fun providePermissionChecker(@ApplicationContext context: Context): PermissionChecker =
         PermissionChecker(context)
+
+    @Singleton
+    @Provides
+    fun provideDataStore(@ApplicationContext context: Context) = PreferenceDataStoreFactory.create(
+        corruptionHandler = ReplaceFileCorruptionHandler(
+            produceNewData = { emptyPreferences() }
+        ),
+        produceFile = { context.preferencesDataStoreFile("settings.preferences_pb") }
+    )
 }
