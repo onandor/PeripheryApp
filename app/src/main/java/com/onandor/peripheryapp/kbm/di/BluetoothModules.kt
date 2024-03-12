@@ -6,6 +6,7 @@ import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
 import com.onandor.peripheryapp.kbm.input.KeyboardController
 import com.onandor.peripheryapp.kbm.input.TouchpadController
 import com.onandor.peripheryapp.utils.PermissionChecker
+import com.onandor.peripheryapp.utils.Settings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,6 +42,7 @@ object BluetoothControllerModule {
     @Provides
     @Singleton
     fun provideKeyboardController(
-        bluetoothController: BluetoothController
-    ): KeyboardController = KeyboardController(bluetoothController)
+        bluetoothController: BluetoothController,
+        settings: Settings
+    ): KeyboardController = KeyboardController(bluetoothController, settings)
 }

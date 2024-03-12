@@ -10,14 +10,21 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.KeyboardController
 import com.onandor.peripheryapp.kbm.input.MouseButton
 import com.onandor.peripheryapp.kbm.input.TouchpadController
+import com.onandor.peripheryapp.navigation.INavigationManager
+import com.onandor.peripheryapp.navigation.NavActions
+import com.onandor.peripheryapp.utils.BtSettingKeys
+import com.onandor.peripheryapp.utils.Settings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
@@ -25,13 +32,16 @@ data class InputUiState(
     val hostName: String = "",
     val isKeyboardShown: Boolean = false,
     val keyboardInput: String = "",
+    val keyboardLocale: Int = KeyMapping.Locales.EN_US
 )
 
 @HiltViewModel
 class InputViewModel @Inject constructor(
     private val touchpadController: TouchpadController,
     private val keyboardController: KeyboardController,
-    private val bluetoothController: BluetoothController
+    private val bluetoothController: BluetoothController,
+    private val settings: Settings,
+    private val navManager: INavigationManager
 ) : ViewModel() {
 
     private val clearTextTimer = object : CountDownTimer(Long.MAX_VALUE, 100) {
@@ -58,11 +68,20 @@ class InputViewModel @Inject constructor(
         override fun onFinish() { }
     }
 
+    private val localeFlow = settings.observe(BtSettingKeys.KEYBOARD_LOCALE, -1)
     private val _uiState = MutableStateFlow(InputUiState())
-    val uiState = _uiState.asStateFlow()
+    val uiState = combine(_uiState, localeFlow) { uiState, locale ->
+        uiState.copy(keyboardLocale = locale)
+    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = InputUiState()
+        )
 
     init {
         touchpadController.init()
+        keyboardController.init()
         _uiState.update { it.copy(hostName = bluetoothController.deviceName) }
     }
 
@@ -138,8 +157,13 @@ class InputViewModel @Inject constructor(
         _uiState.update { it.copy(isKeyboardShown = shouldShow) }
     }
 
+    fun navigateToSettings() {
+        navManager.navigateTo(NavActions.btSettings())
+    }
+
     override fun onCleared() {
         super.onCleared()
         touchpadController.release()
+        keyboardController.release()
     }
 }

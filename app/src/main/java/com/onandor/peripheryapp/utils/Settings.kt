@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -13,7 +14,7 @@ import javax.inject.Inject
 
 object BtSettingKeys {
     val KEYBOARD_LOCALE = intPreferencesKey("keyboard_locale")
-    val MOUSE_POLLING_RATE = intPreferencesKey("mouse_polling_rate")
+    val MOUSE_POLLING_RATE = longPreferencesKey("mouse_polling_rate")
 }
 
 class Settings @Inject constructor(

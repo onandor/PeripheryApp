@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.onandor.peripheryapp.utils.DropdownItem
 
 @Composable
-fun SettingsDropdown(
+fun SettingsDropdownMenu(
     icon: @Composable () -> Unit = { Icon(Icons.Filled.KeyboardArrowDown, "") },
     textToTheLeft: @Composable () -> Unit = { },
     textToTheRight: @Composable () -> Unit = { },

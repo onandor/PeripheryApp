@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,6 +64,7 @@ fun InputScreen(
         topBar = {
             InputTopAppBar(
                 hostName = uiState.hostName,
+                onNavigateToSettings = viewModel::navigateToSettings,
                 onToggleKeyboard = { viewModel.toggleKeyboard(context) }
             )
         }
@@ -297,11 +300,18 @@ private fun InputReceiver(
 @Composable
 private fun InputTopAppBar(
     hostName: String,
+    onNavigateToSettings: () -> Unit,
     onToggleKeyboard: () -> Unit
 ){
     TopAppBar(
         title = { Text(hostName) },
         actions = {
+            IconButton(onClick = onNavigateToSettings) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = ""
+                )
+            }
             IconButton(onClick = onToggleKeyboard) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_keyboard_filled),

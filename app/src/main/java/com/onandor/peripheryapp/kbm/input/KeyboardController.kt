@@ -1,11 +1,30 @@
 package com.onandor.peripheryapp.kbm.input
 
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
+import com.onandor.peripheryapp.utils.BtSettingKeys
+import com.onandor.peripheryapp.utils.Settings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 class KeyboardController @Inject constructor(
-    private val bluetoothController: BluetoothController
+    private val bluetoothController: BluetoothController,
+    private val settings: Settings
 ) {
+
+    private var localeJob: Job? = null
+    private var locale = KeyMapping.Locales.EN_US
+
+    fun init() {
+        localeJob = settings
+            .observe(BtSettingKeys.KEYBOARD_LOCALE, KeyMapping.Locales.EN_US)
+            .onEach { locale = it; println("locale changed: $locale") }
+            .launchIn(CoroutineScope(Dispatchers.Main))
+    }
 
     private fun sendKeys(
         modifier: Int,
@@ -21,9 +40,9 @@ class KeyboardController @Inject constructor(
 
     fun sendKey(modifier: Int, keyCode: Int): String {
         val key = if (modifier == KeyMapping.Modifiers.NONE) {
-            KeyMapping.keyCodeMap_HuHu[keyCode]
+            KeyMapping.getKeyCodeMap(locale)[keyCode]
         } else {
-            KeyMapping.shiftKeyCodeMap_HuHu[keyCode]
+            KeyMapping.getShiftKeyCodeMap(locale)[keyCode]
         }
 
         key?.let { (scanCode, modifier) ->
@@ -39,12 +58,17 @@ class KeyboardController @Inject constructor(
     }
 
     fun sendKey(character: String): String {
-        val key = KeyMapping.specialCharacterMap_HuHu[character]
+        val key = KeyMapping.getSpecialCharacterMap(locale)[character]
         key?.let { (scanCode, modifier) ->
             sendKeys(modifier, scanCode)
             sendKeys(KeyMapping.Modifiers.NONE)
             return character
         }
         return ""
+    }
+
+    fun release() {
+        localeJob?.cancel()
+        localeJob = null
     }
 }

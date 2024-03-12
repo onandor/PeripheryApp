@@ -34,12 +34,17 @@ class KeyMapping {
         val UP = 0x52
     }
 
+    object Locales {
+        val EN_US = 1
+        val HU_HU = 2
+    }
+
     companion object {
 
         val BACKSPACE = "BACKSPACE"
 
         // Android key code
-        val keyCodeMap_EnUs = mapOf(
+        private val keyCodeMap_EnUs = mapOf(
             0x07 to Key(0x27),   // 0
             0x08 to Key(0x1E),   // 1
             0x09 to Key(0x1F),   // 2
@@ -99,7 +104,7 @@ class KeyMapping {
             0x70 to Key(0x4C)    // Delete
         )
 
-        val shiftKeyCodeMap_EnUs = mapOf(
+        private val shiftKeyCodeMap_EnUs = mapOf(
             0x07 to Key(0x27, Modifiers.L_SHIFT),   // )
             0x08 to Key(0x1E, Modifiers.L_SHIFT),   // !
             0x09 to Key(0x1F, Modifiers.L_SHIFT),   // @
@@ -155,7 +160,7 @@ class KeyMapping {
             0x70 to Key(0x4C)    // Delete
         )
 
-        val keyCodeMap_HuHu = mapOf(
+        private val keyCodeMap_HuHu = mapOf(
             0x07 to Key(0x35),   // 0
             0x08 to Key(0x1E),   // 1
             0x09 to Key(0x1F),   // 2
@@ -215,7 +220,7 @@ class KeyMapping {
             0x70 to Key(0x4C)    // Delete
         )
 
-        val shiftKeyCodeMap_HuHu = mapOf(
+        private val shiftKeyCodeMap_HuHu = mapOf(
             0x07 to Key(0x26, Modifiers.L_SHIFT),   // )
             0x08 to Key(0x21, Modifiers.L_SHIFT),   // !
             0x09 to Key(0x19, Modifiers.R_ALT),  // @
@@ -269,7 +274,7 @@ class KeyMapping {
             0x70 to Key(0x4C)    // Delete
         )
 
-        val specialCharacterMap_HuHu = mapOf(
+        private val specialCharacterMap_HuHu = mapOf(
             "á" to Key(0x34),
             "é" to Key(0x33),
             "í" to Key(0x64),
@@ -288,6 +293,21 @@ class KeyMapping {
             "Ú" to Key(0x30, Modifiers.L_SHIFT),
             "Ü" to Key(0x2D, Modifiers.L_SHIFT),
             "Ű" to Key(0x32, Modifiers.L_SHIFT)
+        )
+
+        private val keyCodeMap = mapOf(
+            Locales.EN_US to keyCodeMap_EnUs,
+            Locales.HU_HU to keyCodeMap_HuHu
+        )
+
+        private val shiftKeyCodeMap = mapOf(
+            Locales.EN_US to shiftKeyCodeMap_EnUs,
+            Locales.HU_HU to shiftKeyCodeMap_HuHu
+        )
+
+        private val specialCharacterMap = mapOf(
+            Locales.EN_US to emptyMap(),
+            Locales.HU_HU to specialCharacterMap_HuHu
         )
 
         val keyCodeToCharacterMap = mapOf(
@@ -405,5 +425,17 @@ class KeyMapping {
             0x6F to "",
             0x70 to ""
         )
+
+        fun getKeyCodeMap(locale: Int): Map<Int, Key> {
+            return keyCodeMap[locale] ?: emptyMap()
+        }
+
+        fun getShiftKeyCodeMap(locale: Int): Map<Int, Key> {
+            return shiftKeyCodeMap[locale] ?: emptyMap()
+        }
+
+        fun getSpecialCharacterMap(locale: Int): Map<String, Key> {
+            return specialCharacterMap[locale] ?: emptyMap()
+        }
     }
 }

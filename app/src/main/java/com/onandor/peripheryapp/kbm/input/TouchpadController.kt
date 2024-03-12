@@ -14,7 +14,13 @@ class TouchpadController @Inject constructor(
     private val bluetoothController: BluetoothController
 ) {
 
-    private val DATA_RATE_US = 11250L
+    object PollingRates {
+        val LOW = 20000L
+        val HIGH = 11250L
+        val AUTO = 0L
+    }
+
+    private val POLLING_RATE_US = 11250L
     private val buttonEventQueue: Queue<ButtonEvent> = LinkedList()
 
     private var dX = 0f
@@ -31,7 +37,7 @@ class TouchpadController @Inject constructor(
         scheduledFuture = executor.scheduleAtFixedRate(
             this::sendData,
             0,
-            DATA_RATE_US,
+            POLLING_RATE_US,
             TimeUnit.MICROSECONDS
         )
     }
