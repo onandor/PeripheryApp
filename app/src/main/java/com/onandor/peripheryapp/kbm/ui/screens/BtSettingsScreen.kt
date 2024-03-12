@@ -49,14 +49,14 @@ fun BtSettingsScreen(
         }
 
     BackHandler {
-        viewModel.onNavigateBack()
+        viewModel.navigateBack()
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = viewModel::onNavigateBack) {
+                    IconButton(onClick = viewModel::navigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_back)

@@ -94,7 +94,6 @@ class TouchpadController @Inject constructor(
     }
 
     private fun resetSendDataTask(pollingRate: Long) {
-        println("resetSendDataTask")
         if (sendDataTask != null) {
             sendDataTask?.cancel(true)
             sendDataTask = null

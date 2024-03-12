@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -59,6 +60,10 @@ fun InputScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    BackHandler {
+        viewModel.navigateBack()
+    }
 
     Scaffold(
         topBar = {

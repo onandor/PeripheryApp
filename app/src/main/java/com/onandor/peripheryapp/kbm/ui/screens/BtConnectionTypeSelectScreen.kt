@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -81,6 +82,10 @@ fun BtConnectionTypeSelectScreen(
             action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
             data = Uri.parse("package:${packageName}")
         })
+    }
+
+    BackHandler {
+        viewModel.navigateBack()
     }
 
     LaunchedEffect(lifecycleState) {

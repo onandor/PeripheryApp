@@ -161,6 +161,10 @@ class InputViewModel @Inject constructor(
         navManager.navigateTo(NavActions.btSettings())
     }
 
+    fun navigateBack() {
+        navManager.navigateBack()
+    }
+
     override fun onCleared() {
         super.onCleared()
         touchpadController.release()

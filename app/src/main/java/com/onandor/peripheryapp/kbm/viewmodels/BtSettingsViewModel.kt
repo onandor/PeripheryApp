@@ -70,7 +70,7 @@ class BtSettingsViewModel @Inject constructor(
         }
     }
 
-    fun onNavigateBack() {
+    fun navigateBack() {
         navManager.navigateBack()
     }
 }

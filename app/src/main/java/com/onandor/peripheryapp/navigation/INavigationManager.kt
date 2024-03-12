@@ -1,10 +1,10 @@
 package com.onandor.peripheryapp.navigation
 
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharedFlow
 
 interface INavigationManager {
 
-    val navActions: StateFlow<NavAction?>
+    val navActions: SharedFlow<NavAction?>
     fun navigateTo(navAction: NavAction?)
     fun navigateBack()
 }

@@ -58,6 +58,10 @@ class BtConnectionTypeSelectViewModel @Inject constructor(
         )
     }
 
+    fun navigateBack() {
+        navManager.navigateBack()
+    }
+
     override fun onCleared() {
         super.onCleared()
         context.unregisterReceiver(bluetoothStateReceiver)

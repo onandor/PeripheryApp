@@ -233,6 +233,10 @@ class BtDevicesViewModel @Inject constructor(
         }
     }
 
+    fun navigateBack() {
+        navManager.navigateBack()
+    }
+
     override fun onCleared() {
         super.onCleared()
         bluetoothController.stopDiscovery()

@@ -17,6 +17,7 @@ private object Screens {
 }
 
 object NavDestinations {
+    const val BACK = ""
     const val MAIN = MAIN_SCREEN
     // Bluetooth kb&m screens
     const val BT_DEVICES = BT_DEVICES_SCREEN
@@ -35,7 +36,11 @@ interface NavAction {
 }
 
 object NavActions {
-    fun mainNavigation() = object : NavAction {
+    fun back() = object : NavAction {
+        override val destination: String = NavDestinations.BACK
+    }
+
+    fun main() = object : NavAction {
         override val destination: String = NavDestinations.MAIN
     }
 

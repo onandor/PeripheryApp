@@ -30,12 +30,16 @@ fun NavGraph(
 ) {
     val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentNavBackStackEntry?.destination?.route ?: startDestination
-    val navManagerState by viewModel.navigationManager.navActions.collectAsState()
+    val navManagerState by viewModel.navigationManager.navActions.collectAsState(null)
 
     LaunchedEffect(navManagerState) {
         navManagerState?.let {
             try {
-                navController.navigate(it.destination, it.navOptions)
+                if (it.destination == NavDestinations.BACK) {
+                    navController.popBackStack()
+                } else {
+                    navController.navigate(it.destination, it.navOptions)
+                }
             } catch (_: IllegalArgumentException) {
                 /* Sometimes Live Edit has issues here with the graph, this solves it */
             }

@@ -5,6 +5,7 @@ import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,10 @@ fun BtDevicesScreen(
         if (result.resultCode == Activity.RESULT_OK) {
             viewModel.updateBondedDevices()
         }
+    }
+
+    BackHandler {
+        viewModel.navigateBack()
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
