@@ -63,7 +63,6 @@ class PeripheryAppActivity : ComponentActivity() {
         if (event?.keyCode == KeyEvent.KEYCODE_ENTER) {
             return true
         }
-        println(navManager.getCurrentRoute())
         if (navManager.getCurrentRoute() == NavDestinations.INPUT && sendVolume
             && (event?.keyCode == KeyEvent.KEYCODE_VOLUME_UP
             || event?.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {

@@ -399,7 +399,15 @@ class BluetoothController @Inject constructor(
     }
 
     fun sendBatteryLevel(batteryLevel: Float) {
-        // TODO
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
+        if (hidServiceProxy == null || connectedDevice == null) {
+            return
+        }
+        println("sendBatteryLevel: $batteryLevel")
+        val report = batteryReport.setValue(batteryLevel)
+        hidServiceProxy!!.sendReport(connectedDevice, Constants.ID_BATTERY, report)
     }
 
     fun sendMultimedia(key: Int) {
@@ -452,7 +460,7 @@ class BluetoothController @Inject constructor(
     private fun onBatteryChanged(intent: Intent) {
         val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-        if (level >= 0 && scale >= 0) {
+        if (level >= 0 && scale > 0) {
             val batteryLevel = level.toFloat() / scale.toFloat()
             sendBatteryLevel(batteryLevel)
         }
