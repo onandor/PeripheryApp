@@ -13,13 +13,34 @@ import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import com.onandor.peripheryapp.navigation.NavGraph
 import com.onandor.peripheryapp.kbm.ui.theme.PeripheryAppTheme
+import com.onandor.peripheryapp.navigation.INavigationManager
+import com.onandor.peripheryapp.navigation.NavDestinations
+import com.onandor.peripheryapp.utils.BtSettingKeys
+import com.onandor.peripheryapp.utils.Settings
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class PeripheryAppActivity : ComponentActivity() {
+
+    @Inject lateinit var settings: Settings
+    @Inject lateinit var navManager: INavigationManager
+    private var volumeJob: Job? = null
+    private var sendVolume: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        volumeJob = settings
+            .observe(BtSettingKeys.SEND_VOLUME_INPUT, false)
+            .onEach { sendVolume = it }
+            .launchIn(CoroutineScope(Dispatchers.Main))
 
         setContent {
             PeripheryAppTheme {
@@ -40,6 +61,12 @@ class PeripheryAppActivity : ComponentActivity() {
             sendBroadcast(Intent("key_up").apply { putExtra("event", event) })
         }
         if (event?.keyCode == KeyEvent.KEYCODE_ENTER) {
+            return true
+        }
+        println(navManager.getCurrentRoute())
+        if (navManager.getCurrentRoute() == NavDestinations.INPUT && sendVolume
+            && (event?.keyCode == KeyEvent.KEYCODE_VOLUME_UP
+            || event?.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
             return true
         }
         return super.dispatchKeyEvent(event)

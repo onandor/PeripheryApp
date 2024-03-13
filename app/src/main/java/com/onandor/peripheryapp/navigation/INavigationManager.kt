@@ -7,4 +7,5 @@ interface INavigationManager {
     val navActions: SharedFlow<NavAction?>
     fun navigateTo(navAction: NavAction?)
     fun navigateBack()
+    fun getCurrentRoute(): String
 }

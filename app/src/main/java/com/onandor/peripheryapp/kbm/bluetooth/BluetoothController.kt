@@ -411,7 +411,6 @@ class BluetoothController @Inject constructor(
         }
         synchronized(lock) {
             val report = multimediaReport.setValue(key)
-            println("report ${Integer.toHexString(report[0].toInt())}")
             hidServiceProxy!!.sendReport(connectedDevice, Constants.ID_MULTIMEDIA, report)
         }
     }

@@ -20,12 +20,20 @@ class NavigationManager : INavigationManager {
 
     override val navActions: SharedFlow<NavAction?> = _navActions.asSharedFlow()
 
+    private var currentRoute: String = ""
+
+    init {
+        backStack.push(NavActions.main())
+        currentRoute = NavDestinations.MAIN
+    }
+
     override fun navigateTo(navAction: NavAction?) {
         navAction?.let {
             if (navAction.navOptions.popUpToId == 0) {
                 backStack.clear()
             }
             backStack.push(navAction)
+            currentRoute = navAction.destination
             CoroutineScope(Dispatchers.Main).launch {
                 _navActions.emit(navAction)
             }
@@ -35,9 +43,14 @@ class NavigationManager : INavigationManager {
     override fun navigateBack() {
         if (backStack.isNotEmpty()) {
             backStack.pop()
+            currentRoute = backStack.peek().destination
             CoroutineScope(Dispatchers.Main).launch {
                 _navActions.emit(NavActions.back())
             }
         }
+    }
+
+    override fun getCurrentRoute(): String {
+        return currentRoute
     }
 }
