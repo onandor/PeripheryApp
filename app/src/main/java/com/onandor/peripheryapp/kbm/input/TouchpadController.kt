@@ -89,7 +89,7 @@ class TouchpadController @Inject constructor(
                 }
             }
 
-            bluetoothController.sendMouse(leftButton, rightButton, false, x, y, wheel)
+            bluetoothController.sendMouse(leftButton, rightButton, false, x, y, wheel, 0)
         }
     }
 

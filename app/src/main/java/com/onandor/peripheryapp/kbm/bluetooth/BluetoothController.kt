@@ -347,7 +347,8 @@ class BluetoothController @Inject constructor(
         middle: Boolean,
         dX: Int,
         dY: Int,
-        dWheel: Int
+        dWheelHorizontal: Int,
+        dWheelVertical: Int
     ) {
         if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
@@ -356,7 +357,15 @@ class BluetoothController @Inject constructor(
             return
         }
         synchronized(lock) {
-            val report = mouseReport.setValue(left, right, middle, dX, dY, dWheel)
+            val report = mouseReport.setValue(
+                left = left,
+                right = right,
+                middle = middle,
+                x = dX,
+                y = dY,
+                wheelHorizontal = dWheelHorizontal,
+                wheelVertical = dWheelVertical
+            )
             if (report.all { it == 0.toByte() }) {
                 if (lastReportEmpty) {
                     return
@@ -405,7 +414,6 @@ class BluetoothController @Inject constructor(
         if (hidServiceProxy == null || connectedDevice == null) {
             return
         }
-        println("sendBatteryLevel: $batteryLevel")
         val report = batteryReport.setValue(batteryLevel)
         hidServiceProxy!!.sendReport(connectedDevice, Constants.ID_BATTERY, report)
     }

@@ -20,7 +20,7 @@ class KeyboardReport {
         key6: Int
     ): ByteArray {
         keyboardData[0] = modifier.toByte()
-        keyboardData[1] = 0;
+        keyboardData[1] = 0.toByte()
         keyboardData[2] = key1.toByte()
         keyboardData[3] = key2.toByte()
         keyboardData[4] = key3.toByte()
