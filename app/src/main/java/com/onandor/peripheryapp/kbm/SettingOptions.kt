@@ -10,12 +10,7 @@ class SettingOptions {
 
     companion object {
 
-        val KEYBOARD_LOCALE_DEFAULT = IntSettingOption(
-            value = KeyMapping.Locales.EN_US,
-            resourceId = R.string.bt_settings_keyboard_language_en_us
-        )
-
-        val keyboardLocales = listOf(
+        val keyboardLocale = listOf(
             IntSettingOption(
                 value = KeyMapping.Locales.EN_US,
                 resourceId = R.string.bt_settings_keyboard_language_en_us
@@ -26,20 +21,21 @@ class SettingOptions {
             )
         )
 
-        val POLLING_RATE_DEFAULT = LongSettingOption(
-            value = TouchpadController.PollingRates.HIGH,
-            resourceId = R.string.bt_settings_mouse_polling_rate_high
-        )
+        val KEYBOARD_LOCALE_DEFAULT = keyboardLocale[0]
 
-        val pollingRates = listOf(
-            LongSettingOption(
-                value = TouchpadController.PollingRates.LOW,
-                resourceId = R.string.bt_settings_mouse_polling_rate_low
-            ),
+        val pollingRate = listOf(
             LongSettingOption(
                 value = TouchpadController.PollingRates.HIGH,
                 resourceId = R.string.bt_settings_mouse_polling_rate_high
+            ),
+            LongSettingOption(
+                value = TouchpadController.PollingRates.LOW,
+                resourceId = R.string.bt_settings_mouse_polling_rate_low
             )
         )
+
+        val POLLING_RATE_DEFAULT = pollingRate[0]
+
+        const val SEND_VOLUME_DEFAULT = false
     }
 }

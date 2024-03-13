@@ -16,6 +16,7 @@ import android.os.Build
 import com.onandor.peripheryapp.kbm.bluetooth.reports.BatteryReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
+import com.onandor.peripheryapp.kbm.bluetooth.reports.MultimediaReport
 import com.onandor.peripheryapp.utils.PermissionChecker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -70,6 +71,7 @@ class BluetoothController @Inject constructor(
     private val mouseReport = MouseReport()
     private val keyboardReport = KeyboardReport()
     private val batteryReport = BatteryReport()
+    private val multimediaReport = MultimediaReport()
     private var lastReportEmpty = false
 
     var deviceName: String = ""
@@ -398,6 +400,20 @@ class BluetoothController @Inject constructor(
 
     fun sendBatteryLevel(batteryLevel: Float) {
         // TODO
+    }
+
+    fun sendMultimedia(key: Int) {
+        if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+            return
+        }
+        if (hidServiceProxy == null || connectedDevice == null) {
+            return
+        }
+        synchronized(lock) {
+            val report = multimediaReport.setValue(key)
+            println("report ${Integer.toHexString(report[0].toInt())}")
+            hidServiceProxy!!.sendReport(connectedDevice, Constants.ID_MULTIMEDIA, report)
+        }
     }
 
     private fun updateDeviceList() {

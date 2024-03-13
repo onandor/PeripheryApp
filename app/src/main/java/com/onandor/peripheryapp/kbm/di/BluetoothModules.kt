@@ -4,6 +4,7 @@ import android.content.Context
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
 import com.onandor.peripheryapp.kbm.input.KeyboardController
+import com.onandor.peripheryapp.kbm.input.MultimediaController
 import com.onandor.peripheryapp.kbm.input.TouchpadController
 import com.onandor.peripheryapp.utils.PermissionChecker
 import com.onandor.peripheryapp.utils.Settings
@@ -45,4 +46,11 @@ object BluetoothControllerModule {
         bluetoothController: BluetoothController,
         settings: Settings
     ): KeyboardController = KeyboardController(bluetoothController, settings)
+
+    @Provides
+    @Singleton
+    fun provideMultimediaController(
+        bluetoothController: BluetoothController,
+        settings: Settings
+    ): MultimediaController = MultimediaController(bluetoothController, settings)
 }

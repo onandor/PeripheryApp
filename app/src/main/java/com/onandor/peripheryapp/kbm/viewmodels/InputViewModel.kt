@@ -15,6 +15,7 @@ import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.KeyboardController
 import com.onandor.peripheryapp.kbm.input.MouseButton
+import com.onandor.peripheryapp.kbm.input.MultimediaController
 import com.onandor.peripheryapp.kbm.input.TouchpadController
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
@@ -39,6 +40,7 @@ data class InputUiState(
 class InputViewModel @Inject constructor(
     private val touchpadController: TouchpadController,
     private val keyboardController: KeyboardController,
+    private val multimediaController: MultimediaController,
     private val bluetoothController: BluetoothController,
     private val settings: Settings,
     private val navManager: INavigationManager
@@ -82,6 +84,7 @@ class InputViewModel @Inject constructor(
     init {
         touchpadController.init()
         keyboardController.init()
+        multimediaController.init()
         _uiState.update { it.copy(hostName = bluetoothController.deviceName) }
     }
 
@@ -110,6 +113,12 @@ class InputViewModel @Inject constructor(
             specialCharacterPressed(event)
             return
         }
+        // Multimedia key codes
+        if (event.keyCode in 0x55..0x5B || event.keyCode in 0x18..0x19) {
+            multimediaController.sendMultimedia(event.keyCode)
+            return
+        }
+
         val modifier = if (event.isShiftPressed) {
             KeyMapping.Modifiers.L_SHIFT
         } else {
@@ -169,5 +178,6 @@ class InputViewModel @Inject constructor(
         super.onCleared()
         touchpadController.release()
         keyboardController.release()
+        multimediaController.release()
     }
 }

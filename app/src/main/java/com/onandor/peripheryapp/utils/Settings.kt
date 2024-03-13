@@ -2,6 +2,7 @@ package com.onandor.peripheryapp.utils
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -15,6 +16,7 @@ import javax.inject.Inject
 object BtSettingKeys {
     val KEYBOARD_LOCALE = intPreferencesKey("keyboard_locale")
     val MOUSE_POLLING_RATE = longPreferencesKey("mouse_polling_rate")
+    val SEND_VOLUME_INPUT = booleanPreferencesKey("send_volume_input")
 }
 
 class Settings @Inject constructor(

@@ -10,6 +10,7 @@ class Constants {
         const val ID_KEYBOARD = 1
         const val ID_MOUSE = 2
         const val ID_BATTERY = 32
+        const val ID_MULTIMEDIA = 3
 
         private val HID_REPORT_DESC = byteArrayOf(
             // Keyboard
@@ -36,6 +37,28 @@ class Constants {
             0x19.toByte(), 0x00.toByte(),           //       Usage Minimum (0)                ; Key codes range between 0-101
             0x29.toByte(),0x65.toByte(),            //       Usage Maximum (101)
             0x81.toByte(),0x00.toByte(),            //       Input (Data, Array)              ; Key array (6 keys)
+            0xC0.toByte(),                          // End Collection
+
+            // Multimedia
+            0x05.toByte(), 0x0C.toByte(),           // Usage Page (Consumer Devices)
+            0x09.toByte(), 0x01.toByte(),           // Usage (Consumer Control)
+            0xA1.toByte(), 0x01.toByte(),           // Collection (Application)
+            0x85.toByte(), ID_MULTIMEDIA.toByte(),  //   Report ID
+            0x05.toByte(), 0x0C.toByte(),           //      Usage Page (Consumer Devices)
+            0x15.toByte(), 0x00.toByte(),           //      Logical Minimum (0)
+            0x25.toByte(), 0x01.toByte(),           //      Logical Maximum (1)
+            0x75.toByte(), 0x01.toByte(),           //      Report Size (1)
+            0x95.toByte(), 0x07.toByte(),           //      Report Count (7)
+            0x09.toByte(), 0xB5.toByte(),           //      Usage (Scan Next Track)
+            0x09.toByte(), 0xB6.toByte(),           //      Usage (Scan Previous Track)
+            0x09.toByte(), 0xB7.toByte(),           //      Usage (Stop)
+            0x09.toByte(), 0xCD.toByte(),           //      Usage (Play / Pause)
+            0x09.toByte(), 0xE2.toByte(),           //      Usage (Mute)
+            0x09.toByte(), 0xE9.toByte(),           //      Usage (Volume Up)
+            0x09.toByte(), 0xEA.toByte(),           //      Usage (Volume Down)
+            0x81.toByte(), 0x02.toByte(),           //      Input (Data, Variable, Absolute)
+            0x95.toByte(), 0x01.toByte(),           //      Report Count (1)
+            0x81.toByte(), 0x01.toByte(),           //      Input (Constant)
             0xC0.toByte(),                          // End Collection
 
             // Mouse

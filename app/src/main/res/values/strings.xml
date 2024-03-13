@@ -10,4 +10,5 @@
     <string name="bt_settings_mouse_polling_rate_automatic">Automatic</string>
     <string name="bt_settings_keyboard_language_en_us">English (US)</string>
     <string name="bt_settings_keyboard_language_hu_hu">Hungarian</string>
+    <string name="bt_settings_control_volume">Control host volume</string>
 </resources>

@@ -1,5 +1,7 @@
 package com.onandor.peripheryapp.kbm.input
 
+import android.view.KeyEvent
+
 data class Key(
     val scanCode: Int,
     val modifier: Int = KeyMapping.Modifiers.NONE
@@ -40,6 +42,17 @@ class KeyMapping {
     }
 
     companion object {
+
+        val multimediaKeyCodeMap = mapOf(
+            KeyEvent.KEYCODE_MEDIA_NEXT to 0xB5,
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS to 0xB6,
+            KeyEvent.KEYCODE_MEDIA_STOP to 0xB7,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE to 0xCD,
+            KeyEvent.KEYCODE_MUTE to 0xE2,
+            KeyEvent.KEYCODE_VOLUME_MUTE to 0xE2,
+            KeyEvent.KEYCODE_VOLUME_UP to 0xE9,
+            KeyEvent.KEYCODE_VOLUME_DOWN to 0xEA
+        )
 
         val BACKSPACE = "BACKSPACE"
 

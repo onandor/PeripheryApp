@@ -14,8 +14,3 @@ data class LongSettingOption(
     val value: Long,
     val resourceId: Int
 )
-
-data class BooleanSettingOption(
-    val value: Boolean,
-    val resourceId: Int
-)

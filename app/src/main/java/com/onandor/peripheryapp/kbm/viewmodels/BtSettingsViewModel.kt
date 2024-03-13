@@ -19,7 +19,8 @@ import javax.inject.Inject
 
 data class BtSettingsUiState(
     val locale: IntSettingOption = SettingOptions.KEYBOARD_LOCALE_DEFAULT,
-    val pollingRate: LongSettingOption = SettingOptions.POLLING_RATE_DEFAULT
+    val pollingRate: LongSettingOption = SettingOptions.POLLING_RATE_DEFAULT,
+    val sendVolume: Boolean = SettingOptions.SEND_VOLUME_DEFAULT
 )
 
 @HiltViewModel
@@ -32,7 +33,7 @@ class BtSettingsViewModel @Inject constructor(
         .observe(BtSettingKeys.KEYBOARD_LOCALE, KeyMapping.Locales.EN_US)
         .map { locale ->
             SettingOptions
-                .keyboardLocales
+                .keyboardLocale
                 .find { option -> option.value == locale }
                 ?: SettingOptions.KEYBOARD_LOCALE_DEFAULT
         }
@@ -40,16 +41,21 @@ class BtSettingsViewModel @Inject constructor(
         .observe(BtSettingKeys.MOUSE_POLLING_RATE, 0)
         .map { pollingRate ->
             SettingOptions
-                .pollingRates
+                .pollingRate
                 .find { option -> option.value == pollingRate }
                 ?: SettingOptions.POLLING_RATE_DEFAULT
         }
+    private val sendVolumeFlow = settings
+        .observe(BtSettingKeys.SEND_VOLUME_INPUT, false)
 
 
-    val uiState = combine(localeFlow, pollingRateFlow) { locale, pollingRate ->
+    val uiState = combine(
+        localeFlow, pollingRateFlow, sendVolumeFlow
+    ) { locale, pollingRate, sendVolume ->
         BtSettingsUiState(
             locale = locale,
-            pollingRate = pollingRate
+            pollingRate = pollingRate,
+            sendVolume = sendVolume
         )
     }
         .stateIn(
@@ -67,6 +73,12 @@ class BtSettingsViewModel @Inject constructor(
     fun onPollingRateChanged(pollingRate: Long) {
         viewModelScope.launch {
             settings.save(BtSettingKeys.MOUSE_POLLING_RATE, pollingRate)
+        }
+    }
+
+    fun onSendVolumeChanged(sendVolume: Boolean) {
+        viewModelScope.launch {
+            settings.save(BtSettingKeys.SEND_VOLUME_INPUT, sendVolume)
         }
     }
 
