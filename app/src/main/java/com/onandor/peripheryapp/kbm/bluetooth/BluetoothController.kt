@@ -91,10 +91,19 @@ class BluetoothController @Inject constructor(
 
         override fun onGetReport(device: BluetoothDevice?, type: Byte, id: Byte, bufferSize: Int) {
             super.onGetReport(device, type, id, bufferSize)
+            if (hidServiceProxy == null) {
+                return
+            }
+            if (type != BluetoothHidDevice.REPORT_TYPE_INPUT) {
+                hidServiceProxy!!.reportError(device, BluetoothHidDevice.ERROR_RSP_UNSUPPORTED_REQ)
+            } else if (!replyReport(device, type, id)) {
+                hidServiceProxy!!.reportError(device, BluetoothHidDevice.ERROR_RSP_INVALID_RPT_ID)
+            }
         }
 
         override fun onSetReport(device: BluetoothDevice?, type: Byte, id: Byte, data: ByteArray?) {
             super.onSetReport(device, type, id, data)
+            hidServiceProxy?.reportError(device, BluetoothHidDevice.ERROR_RSP_SUCCESS)
         }
     }
 
@@ -472,5 +481,29 @@ class BluetoothController @Inject constructor(
             val batteryLevel = level.toFloat() / scale.toFloat()
             sendBatteryLevel(batteryLevel)
         }
+    }
+
+    private fun getReport(id: Byte): ByteArray? {
+        when (id) {
+            Constants.ID_KEYBOARD.toByte() -> {
+                return keyboardReport.getValue()
+            }
+            Constants.ID_MOUSE.toByte() -> {
+                return mouseReport.getValue()
+            }
+            Constants.ID_MULTIMEDIA.toByte() -> {
+                return multimediaReport.getValue()
+            }
+            Constants.ID_BATTERY.toByte() -> {
+                return batteryReport.getValue()
+            }
+        }
+        return null
+    }
+
+    private fun replyReport(device: BluetoothDevice?, type: Byte, id: Byte): Boolean {
+        val report: ByteArray = getReport(id) ?: return false
+        hidServiceProxy?.replyReport(device, type, id, report)
+        return true
     }
 }
