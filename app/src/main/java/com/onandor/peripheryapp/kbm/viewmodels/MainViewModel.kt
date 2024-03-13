@@ -7,13 +7,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewmodel @Inject constructor(
+class MainViewModel @Inject constructor(
     private val navManager: INavigationManager
 ) : ViewModel() {
 
     fun navigateToBtKbmScreen() {
         navManager.navigateTo(NavActions.btConnectionTypeSelect())
-        //navManager.navigateTo(NavActions.input())
     }
 
     fun navigateToWifiWebcamScreen() {

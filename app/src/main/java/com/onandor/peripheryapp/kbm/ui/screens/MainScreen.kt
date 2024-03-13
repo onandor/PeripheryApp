@@ -9,11 +9,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.onandor.peripheryapp.kbm.viewmodels.MainViewmodel
+import com.onandor.peripheryapp.kbm.viewmodels.MainViewModel
 
 @Composable
 fun MainScreen(
-    viewmodel: MainViewmodel = hiltViewModel()
+    viewmodel: MainViewModel = hiltViewModel()
 ) {
     Scaffold { innerPadding ->
         Column(
