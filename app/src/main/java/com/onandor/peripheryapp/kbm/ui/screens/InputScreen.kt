@@ -189,7 +189,7 @@ private fun TouchSurface(
                         if (!inTap) {
                             if (inRightClick && count > 1) {
                                 if (!inDoubleTapHold) {
-                                    onScroll((prevFocusY - focusY) / 10f)
+                                    onScroll((focusY - prevFocusY) / 10f)
                                     //Log.d("MotionEvent", "Scroll")
                                 }
                                 inRightClick = false
