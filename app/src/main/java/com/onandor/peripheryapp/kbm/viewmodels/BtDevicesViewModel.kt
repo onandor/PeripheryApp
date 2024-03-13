@@ -117,7 +117,12 @@ class BtDevicesViewModel @Inject constructor(
                     _uiState.update { it.copy(waitingForDeviceConnecting = device) }
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    _uiState.update { it.copy(connectedDevice = null) }
+                    _uiState.update {
+                        it.copy(
+                            connectedDevice = null,
+                            waitingForDeviceConnecting = null
+                        )
+                    }
                 }
             }
         }
