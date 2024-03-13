@@ -69,7 +69,12 @@ fun InputScreen(
         topBar = {
             InputTopAppBar(
                 hostName = uiState.hostName,
-                onNavigateToSettings = viewModel::navigateToSettings,
+                onNavigateToSettings = {
+                    if (uiState.isKeyboardShown) {
+                        viewModel.toggleKeyboard(context)
+                    }
+                    viewModel.navigateToSettings()
+                },
                 onToggleKeyboard = { viewModel.toggleKeyboard(context) }
             )
         }
