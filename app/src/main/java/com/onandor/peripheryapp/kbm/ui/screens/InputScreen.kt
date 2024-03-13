@@ -27,6 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -35,6 +37,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -53,13 +57,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.kbm.input.MouseButton
 import com.onandor.peripheryapp.kbm.viewmodels.InputViewModel
+import com.onandor.peripheryapp.ui.components.SwipeableSnackbarHost
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InputScreen(
     viewModel: InputViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val deviceDisconnectedText = stringResource(R.string.input_snackbar_device_disconnected)
+    val coroutineScope = rememberCoroutineScope()
 
     BackHandler {
         viewModel.navigateBack()
@@ -77,6 +88,11 @@ fun InputScreen(
                 },
                 onToggleKeyboard = { viewModel.toggleKeyboard(context) }
             )
+        },
+        snackbarHost = {
+            SwipeableSnackbarHost(hostState = snackbarHostState) {
+                SnackbarHost(hostState = snackbarHostState)
+            }
         }
     ) { innerPadding ->
         val isKeyboardShown = WindowInsets.ime.getBottom(LocalDensity.current) > 0
@@ -84,6 +100,12 @@ fun InputScreen(
         LaunchedEffect(isKeyboardShown) {
             if (!isKeyboardShown && uiState.isKeyboardShown) {
                 viewModel.keyboardDismissed()
+            }
+        }
+        
+        LaunchedEffect(uiState.deviceDisconnected) {
+            if (uiState.deviceDisconnected) {
+                coroutineScope.launch { snackbarHostState.showSnackbar(deviceDisconnectedText) }
             }
         }
 

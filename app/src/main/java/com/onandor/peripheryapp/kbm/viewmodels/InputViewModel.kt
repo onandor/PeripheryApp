@@ -1,6 +1,9 @@
 package com.onandor.peripheryapp.kbm.viewmodels
 
 import android.app.Activity
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothHidDevice
+import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.os.Build
@@ -33,7 +36,8 @@ data class InputUiState(
     val hostName: String = "",
     val isKeyboardShown: Boolean = false,
     val keyboardInput: String = "",
-    val keyboardLocale: Int = KeyMapping.Locales.EN_US
+    val keyboardLocale: Int = KeyMapping.Locales.EN_US,
+    val deviceDisconnected: Boolean = false
 )
 
 @HiltViewModel
@@ -70,6 +74,24 @@ class InputViewModel @Inject constructor(
         override fun onFinish() { }
     }
 
+    private val hidProfileListener = object : BluetoothController.HidProfileListener {
+
+        override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
+            println("onConnectionStateChanged: $state")
+            if (state == BluetoothHidDevice.STATE_DISCONNECTED) {
+                _uiState.update { it.copy(deviceDisconnected = true) }
+            }
+        }
+
+        override fun onAppStatusChanged(registered: Boolean) {
+            if (!registered) {
+                _uiState.update { it.copy(deviceDisconnected = true) }
+            }
+        }
+
+        override fun onServiceStateChanged(proxy: BluetoothProfile?) { }
+    }
+
     private val localeFlow = settings.observe(BtSettingKeys.KEYBOARD_LOCALE, -1)
     private val _uiState = MutableStateFlow(InputUiState())
     val uiState = combine(_uiState, localeFlow) { uiState, locale ->
@@ -82,6 +104,7 @@ class InputViewModel @Inject constructor(
         )
 
     init {
+        bluetoothController.registerProfileListener(hidProfileListener)
         touchpadController.init()
         keyboardController.init()
         multimediaController.init()
@@ -176,6 +199,7 @@ class InputViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        bluetoothController.unregisterProfileListener(hidProfileListener)
         touchpadController.release()
         keyboardController.release()
         multimediaController.release()
