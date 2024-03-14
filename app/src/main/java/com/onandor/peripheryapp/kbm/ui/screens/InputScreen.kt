@@ -6,10 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
-import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -56,9 +58,9 @@ import androidx.compose.ui.unit.times
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.kbm.input.MouseButton
+import com.onandor.peripheryapp.kbm.ui.components.ExtendedButtonGrid
 import com.onandor.peripheryapp.kbm.viewmodels.InputViewModel
 import com.onandor.peripheryapp.ui.components.SwipeableSnackbarHost
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,6 +123,19 @@ fun InputScreen(
                 onMove = viewModel::move,
                 onScroll = viewModel::scroll
             )
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                visible = uiState.isKeyboardShown,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                ExtendedButtonGrid(
+                    expanded = uiState.isExtendedKeyboardExpanded,
+                    toggledModifiers = uiState.toggledModifiers,
+                    onToggleExpanded = viewModel::onToggleExtendedKeyboardExpanded,
+                    onButtonClick = viewModel::onExtendedKeyPressed
+                )
+            }
             if (uiState.keyboardInput.isNotEmpty()) {
                 KeyboardInputPreview(
                     modifier = Modifier

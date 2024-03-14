@@ -37,7 +37,9 @@ data class InputUiState(
     val isKeyboardShown: Boolean = false,
     val keyboardInput: String = "",
     val keyboardLocale: Int = KeyMapping.Locales.EN_US,
-    val deviceDisconnected: Boolean = false
+    val deviceDisconnected: Boolean = false,
+    val isExtendedKeyboardExpanded: Boolean = false,
+    val toggledModifiers: Int = 0
 )
 
 @HiltViewModel
@@ -77,7 +79,6 @@ class InputViewModel @Inject constructor(
     private val hidProfileListener = object : BluetoothController.HidProfileListener {
 
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
-            println("onConnectionStateChanged: $state")
             if (state == BluetoothHidDevice.STATE_DISCONNECTED) {
                 _uiState.update { it.copy(deviceDisconnected = true) }
             }
@@ -142,17 +143,20 @@ class InputViewModel @Inject constructor(
             return
         }
 
-        val modifier = if (event.isShiftPressed) {
+        val imeModifier = if (event.isShiftPressed) {
             KeyMapping.Modifiers.L_SHIFT
         } else {
             KeyMapping.Modifiers.NONE
         }
+        val modifier = _uiState.value.toggledModifiers or imeModifier
+
         val character = keyboardController.sendKey(modifier, event.keyCode)
         if (character == KeyMapping.BACKSPACE) {
             _uiState.update { it.copy(keyboardInput = it.keyboardInput.dropLast(1)) }
         } else {
             _uiState.update { it.copy(keyboardInput = it.keyboardInput + character) }
         }
+        _uiState.update { it.copy(toggledModifiers = 0) }
         clearTextTimer.reset()
     }
 
@@ -160,11 +164,33 @@ class InputViewModel @Inject constructor(
         if (event.characters == null) {
             return
         }
-        val character = keyboardController.sendKey(event.characters)
+        val modifiers = _uiState.value.toggledModifiers
+        val character = keyboardController.sendKey(modifiers, event.characters)
         if (character.isNotEmpty()) {
-            _uiState.update { it.copy(keyboardInput = it.keyboardInput + character) }
+            _uiState.update {
+                it.copy(
+                    keyboardInput = it.keyboardInput + character,
+                    toggledModifiers = 0
+                )
+            }
             clearTextTimer.reset()
         }
+    }
+
+    fun onExtendedKeyPressed(scanCode: Int) {
+        val modifiers = _uiState.value.toggledModifiers
+        if (scanCode in KeyMapping.modifiers) {
+            if (modifiers and scanCode != 0) {
+                _uiState.update { it.copy(toggledModifiers = it.toggledModifiers xor scanCode) }
+            } else {
+                _uiState.update { it.copy(toggledModifiers = it.toggledModifiers or scanCode) }
+            }
+            return
+        }
+        // Lazy fix for the F7 == R_ALT modifier situation
+        val _scanCode = if (scanCode == 0x40 + 0x9999) 0x40 else scanCode
+        keyboardController.sendKeyWithScanCode(modifiers, _scanCode)
+        _uiState.update { it.copy(toggledModifiers = 0) }
     }
 
     fun toggleKeyboard(context: Context) {
@@ -186,7 +212,12 @@ class InputViewModel @Inject constructor(
                 inputMethodManager?.hideSoftInputFromWindow(view.applicationWindowToken, 0)
             }
         }
-        _uiState.update { it.copy(isKeyboardShown = shouldShow) }
+        _uiState.update {
+            it.copy(
+                isKeyboardShown = shouldShow,
+                isExtendedKeyboardExpanded = false
+            )
+        }
     }
 
     fun navigateToSettings() {
@@ -195,6 +226,10 @@ class InputViewModel @Inject constructor(
 
     fun navigateBack() {
         navManager.navigateBack()
+    }
+
+    fun onToggleExtendedKeyboardExpanded() {
+        _uiState.update { it.copy(isExtendedKeyboardExpanded = !it.isExtendedKeyboardExpanded) }
     }
 
     override fun onCleared() {

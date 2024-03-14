@@ -26,7 +26,16 @@ class KeyMapping {
         val ESCAPE = 0x29
         val BACKSPACE = 0x2A
         val TAB = 0x2B
+        val CAPS_LOCK = 0x39
+        val PRINT_SCR = 0x46
+        val SCRLK = 0x47
+        val PAUSE = 0x48
+        val INSERT = 0x49
+        val HOME = 0x4A
+        val PAGE_UP = 0x4B
         val DELETE = 0x4C
+        val END = 0x4D
+        val PAGE_DOWN = 0x4E
     }
 
     object ArrowKeys {
@@ -34,6 +43,21 @@ class KeyMapping {
         val LEFT = 0x50
         val DOWN = 0x51
         val UP = 0x52
+    }
+
+    object FRow {
+        val F1 = 0x3A
+        val F2 = 0x3B
+        val F3 = 0x3C
+        val F4 = 0x3D
+        val F5 = 0x3E
+        val F6 = 0x3F
+        val F7 = 0x40
+        val F8 = 0x41
+        val F9 = 0x42
+        val F10 = 0x43
+        val F11 = 0x44
+        val F12 = 0x45
     }
 
     object Locales {
@@ -52,6 +76,17 @@ class KeyMapping {
             KeyEvent.KEYCODE_VOLUME_MUTE to 0xE2,
             KeyEvent.KEYCODE_VOLUME_UP to 0xE9,
             KeyEvent.KEYCODE_VOLUME_DOWN to 0xEA
+        )
+
+        val modifiers = listOf(
+            Modifiers.L_CTRL,
+            Modifiers.L_SHIFT,
+            Modifiers.L_ALT,
+            Modifiers.L_META,
+            Modifiers.R_CTRL,
+            Modifiers.R_SHIFT,
+            Modifiers.R_ALT,
+            Modifiers.R_META
         )
 
         val BACKSPACE = "BACKSPACE"
