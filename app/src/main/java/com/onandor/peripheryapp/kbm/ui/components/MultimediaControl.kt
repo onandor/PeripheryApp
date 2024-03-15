@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -44,7 +45,7 @@ private fun MultimediaButton(
 }
 @Composable
 fun MultimediaControl(onButtonClick: (Int) -> Unit) {
-    Surface {
+    Surface(modifier = Modifier.clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp))) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
