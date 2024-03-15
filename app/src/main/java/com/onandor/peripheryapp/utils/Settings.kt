@@ -17,6 +17,7 @@ object BtSettingKeys {
     val KEYBOARD_LOCALE = intPreferencesKey("keyboard_locale")
     val MOUSE_POLLING_RATE = longPreferencesKey("mouse_polling_rate")
     val SEND_VOLUME_INPUT = booleanPreferencesKey("send_volume_input")
+    val EXTENDED_KEYBOARD_SHOWN = booleanPreferencesKey("extended_keyboard_enabled")
 }
 
 class Settings @Inject constructor(

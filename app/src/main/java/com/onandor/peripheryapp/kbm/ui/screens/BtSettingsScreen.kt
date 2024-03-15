@@ -102,6 +102,15 @@ fun BtSettingsScreen(
                     )
                 }
             )
+            SettingItem(
+                text = stringResource(id = R.string.bt_settings_show_extended_keyboard),
+                action = {
+                    Switch(
+                        checked = uiState.extendedKeyboardShown,
+                        onCheckedChange = { viewModel.onExtendedKeyboardChanged(it) }
+                    )
+                }
+            )
         }
     }
 }

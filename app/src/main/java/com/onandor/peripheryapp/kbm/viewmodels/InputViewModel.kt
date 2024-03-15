@@ -14,6 +14,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.onandor.peripheryapp.kbm.SettingOptions
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.KeyboardController
@@ -39,7 +40,8 @@ data class InputUiState(
     val keyboardLocale: Int = KeyMapping.Locales.EN_US,
     val deviceDisconnected: Boolean = false,
     val isExtendedKeyboardExpanded: Boolean = false,
-    val toggledModifiers: Int = 0
+    val toggledModifiers: Int = 0,
+    val isExtendedKeyboardShown: Boolean = false
 )
 
 @HiltViewModel
@@ -94,9 +96,17 @@ class InputViewModel @Inject constructor(
     }
 
     private val localeFlow = settings.observe(BtSettingKeys.KEYBOARD_LOCALE, -1)
+    private val extendedKeyboardFlow = settings
+        .observe(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN, false)
+
     private val _uiState = MutableStateFlow(InputUiState())
-    val uiState = combine(_uiState, localeFlow) { uiState, locale ->
-        uiState.copy(keyboardLocale = locale)
+    val uiState = combine(
+        _uiState, localeFlow, extendedKeyboardFlow
+    ) { uiState, locale, extendedKeyboardShown ->
+        uiState.copy(
+            keyboardLocale = locale,
+            isExtendedKeyboardShown = extendedKeyboardShown
+        )
     }
         .stateIn(
             scope = viewModelScope,

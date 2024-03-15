@@ -20,7 +20,8 @@ import javax.inject.Inject
 data class BtSettingsUiState(
     val locale: IntSettingOption = SettingOptions.KEYBOARD_LOCALE_DEFAULT,
     val pollingRate: LongSettingOption = SettingOptions.POLLING_RATE_DEFAULT,
-    val sendVolume: Boolean = SettingOptions.SEND_VOLUME_DEFAULT
+    val sendVolume: Boolean = SettingOptions.SEND_VOLUME_DEFAULT,
+    val extendedKeyboardShown: Boolean = SettingOptions.EXTENDED_KEYBOARD_SHOWN_DEFAULT
 )
 
 @HiltViewModel
@@ -47,15 +48,18 @@ class BtSettingsViewModel @Inject constructor(
         }
     private val sendVolumeFlow = settings
         .observe(BtSettingKeys.SEND_VOLUME_INPUT, false)
+    private val extendedKeyboardFlow = settings
+        .observe(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN, false)
 
 
     val uiState = combine(
-        localeFlow, pollingRateFlow, sendVolumeFlow
-    ) { locale, pollingRate, sendVolume ->
+        localeFlow, pollingRateFlow, sendVolumeFlow, extendedKeyboardFlow
+    ) { locale, pollingRate, sendVolume, extendedKeyboardShown ->
         BtSettingsUiState(
             locale = locale,
             pollingRate = pollingRate,
-            sendVolume = sendVolume
+            sendVolume = sendVolume,
+            extendedKeyboardShown = extendedKeyboardShown
         )
     }
         .stateIn(
@@ -79,6 +83,12 @@ class BtSettingsViewModel @Inject constructor(
     fun onSendVolumeChanged(sendVolume: Boolean) {
         viewModelScope.launch {
             settings.save(BtSettingKeys.SEND_VOLUME_INPUT, sendVolume)
+        }
+    }
+
+    fun onExtendedKeyboardChanged(extendedKeyboardShown: Boolean) {
+        viewModelScope.launch {
+            settings.save(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN, extendedKeyboardShown)
         }
     }
 

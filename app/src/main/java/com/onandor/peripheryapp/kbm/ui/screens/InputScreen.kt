@@ -125,7 +125,7 @@ fun InputScreen(
             )
             AnimatedVisibility(
                 modifier = Modifier.align(Alignment.BottomCenter),
-                visible = uiState.isKeyboardShown,
+                visible = uiState.isKeyboardShown && uiState.isExtendedKeyboardShown,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {

@@ -37,5 +37,7 @@ class SettingOptions {
         val POLLING_RATE_DEFAULT = pollingRate[0]
 
         const val SEND_VOLUME_DEFAULT = false
+
+        const val EXTENDED_KEYBOARD_SHOWN_DEFAULT = false
     }
 }
