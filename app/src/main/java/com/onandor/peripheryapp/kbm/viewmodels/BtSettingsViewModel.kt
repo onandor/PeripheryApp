@@ -21,7 +21,8 @@ data class BtSettingsUiState(
     val locale: IntSettingOption = SettingOptions.KEYBOARD_LOCALE_DEFAULT,
     val pollingRate: LongSettingOption = SettingOptions.POLLING_RATE_DEFAULT,
     val sendVolume: Boolean = SettingOptions.SEND_VOLUME_DEFAULT,
-    val extendedKeyboardShown: Boolean = SettingOptions.EXTENDED_KEYBOARD_SHOWN_DEFAULT
+    val extendedKeyboardShown: Boolean = SettingOptions.EXTENDED_KEYBOARD_SHOWN_DEFAULT,
+    val keyboardReportMode: IntSettingOption = SettingOptions.KEYBOARD_REPORT_MODE_DEFAULT
 )
 
 @HiltViewModel
@@ -50,16 +51,25 @@ class BtSettingsViewModel @Inject constructor(
         .observe(BtSettingKeys.SEND_VOLUME_INPUT, false)
     private val extendedKeyboardFlow = settings
         .observe(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN, false)
+    private val keyboardReportModeFlow = settings
+        .observe(BtSettingKeys.KEYBOARD_REPORT_MODE, 0)
+        .map { reportMode ->
+            SettingOptions
+                .keyboardReportMode
+                .find { option -> option.value == reportMode }
+                ?: SettingOptions.KEYBOARD_REPORT_MODE_DEFAULT
+        }
 
 
     val uiState = combine(
-        localeFlow, pollingRateFlow, sendVolumeFlow, extendedKeyboardFlow
-    ) { locale, pollingRate, sendVolume, extendedKeyboardShown ->
+        localeFlow, pollingRateFlow, sendVolumeFlow, extendedKeyboardFlow, keyboardReportModeFlow
+    ) { locale, pollingRate, sendVolume, extendedKeyboardShown, keyboardReportMode ->
         BtSettingsUiState(
             locale = locale,
             pollingRate = pollingRate,
             sendVolume = sendVolume,
-            extendedKeyboardShown = extendedKeyboardShown
+            extendedKeyboardShown = extendedKeyboardShown,
+            keyboardReportMode = keyboardReportMode
         )
     }
         .stateIn(
@@ -89,6 +99,12 @@ class BtSettingsViewModel @Inject constructor(
     fun onExtendedKeyboardChanged(extendedKeyboardShown: Boolean) {
         viewModelScope.launch {
             settings.save(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN, extendedKeyboardShown)
+        }
+    }
+
+    fun onKeyboardReportModeChanged(keyboardReportMode: Int) {
+        viewModelScope.launch {
+            settings.save(BtSettingKeys.KEYBOARD_REPORT_MODE, keyboardReportMode)
         }
     }
 

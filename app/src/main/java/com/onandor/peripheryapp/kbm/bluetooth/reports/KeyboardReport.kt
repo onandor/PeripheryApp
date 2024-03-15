@@ -4,10 +4,31 @@ import java.util.Arrays
 
 class KeyboardReport {
 
-    private val keyboardData: ByteArray = "M0ABCDEF".toByteArray()
+    enum class ReportMode(val value: Int) {
+        KEY_6(0),
+        KEY_5(1);
+
+        companion object {
+
+            fun fromInt(value: Int) = entries.toList().first { it.value == value }
+        }
+    }
+
+    private val keyboardData5: ByteArray = "M0ABCDE".toByteArray()
+    private val keyboardData6: ByteArray = "M0ABCDEF".toByteArray()
+    private var keyboardData: ByteArray = keyboardData6
 
     init {
+        Arrays.fill(keyboardData5, 0.toByte())
+        Arrays.fill(keyboardData6, 0.toByte())
         Arrays.fill(keyboardData, 0.toByte())
+    }
+
+    fun changeMode(mode: ReportMode) {
+        keyboardData = when (mode) {
+            ReportMode.KEY_6 -> keyboardData6
+            ReportMode.KEY_5 -> keyboardData5
+        }
     }
 
     fun setValue(
@@ -26,7 +47,9 @@ class KeyboardReport {
         keyboardData[4] = key3.toByte()
         keyboardData[5] = key4.toByte()
         keyboardData[6] = key5.toByte()
-        keyboardData[7] = key6.toByte()
+        if (keyboardData.size == 8) {
+            keyboardData[7] = key6.toByte()
+        }
         return keyboardData
     }
 

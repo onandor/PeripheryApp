@@ -49,6 +49,15 @@ fun BtSettingsScreen(
             )
         }
 
+    val keyboardReportModeItems = SettingOptions
+        .keyboardReportMode
+        .map { option ->
+            DropdownItem(
+                text = { Text(text = stringResource(id = option.resourceId)) },
+                onClick = { viewModel.onKeyboardReportModeChanged(option.value) }
+            )
+        }
+
     BackHandler {
         viewModel.navigateBack()
     }
@@ -108,6 +117,17 @@ fun BtSettingsScreen(
                     Switch(
                         checked = uiState.extendedKeyboardShown,
                         onCheckedChange = { viewModel.onExtendedKeyboardChanged(it) }
+                    )
+                }
+            )
+            SettingItem(
+                text = stringResource(id = R.string.bt_settings_keyboard_report_mode),
+                action = {
+                    SettingsDropdownMenu(
+                        textToTheLeft = {
+                            Text(stringResource(id = uiState.keyboardReportMode.resourceId))
+                        },
+                        items = keyboardReportModeItems
                     )
                 }
             )

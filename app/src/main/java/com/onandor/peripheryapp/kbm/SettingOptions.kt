@@ -39,5 +39,18 @@ class SettingOptions {
         const val SEND_VOLUME_DEFAULT = false
 
         const val EXTENDED_KEYBOARD_SHOWN_DEFAULT = false
+
+        val keyboardReportMode = listOf(
+            IntSettingOption(
+                value = 0,
+                resourceId = R.string.bt_settings_keyboard_report_mode_6_key
+            ),
+            IntSettingOption(
+                value = 1,
+                resourceId = R.string.bt_settings_keyboard_report_mode_5_key
+            )
+        )
+
+        val KEYBOARD_REPORT_MODE_DEFAULT = keyboardReportMode[0]
     }
 }

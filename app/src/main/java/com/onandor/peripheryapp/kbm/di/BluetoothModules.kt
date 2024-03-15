@@ -30,8 +30,14 @@ object BluetoothControllerModule {
     fun provideBluetoothController(
         @ApplicationContext context: Context,
         hidDeviceProfile: HidDeviceProfile,
-        permissionChecker: PermissionChecker
-    ): BluetoothController = BluetoothController(context, hidDeviceProfile, permissionChecker)
+        permissionChecker: PermissionChecker,
+        settings: Settings
+    ): BluetoothController = BluetoothController(
+        context = context,
+        hidDeviceProfile = hidDeviceProfile,
+        permissionChecker = permissionChecker,
+        settings = settings
+    )
 
     @Provides
     @Singleton

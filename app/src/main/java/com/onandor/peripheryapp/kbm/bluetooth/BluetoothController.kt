@@ -17,11 +17,16 @@ import com.onandor.peripheryapp.kbm.bluetooth.reports.BatteryReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MultimediaReport
+import com.onandor.peripheryapp.utils.BtSettingKeys
 import com.onandor.peripheryapp.utils.PermissionChecker
+import com.onandor.peripheryapp.utils.Settings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,7 +36,8 @@ import javax.inject.Singleton
 class BluetoothController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val hidDeviceProfile: HidDeviceProfile,
-    private val permissionChecker: PermissionChecker
+    private val permissionChecker: PermissionChecker,
+    private val settings: Settings
 ) {
 
     interface HidProfileListener : HidDeviceProfile.ServiceStateListener {
@@ -76,6 +82,8 @@ class BluetoothController @Inject constructor(
 
     var deviceName: String = ""
         private set
+
+    private var keyboardReportModeJob: Job? = null
 
     private val hidServiceProxyCallback = object : BluetoothHidDevice.Callback() {
 
@@ -177,6 +185,13 @@ class BluetoothController @Inject constructor(
                 onBatteryChanged(it)
             }
         }
+    }
+
+    init {
+        keyboardReportModeJob = settings
+            .observe(BtSettingKeys.KEYBOARD_REPORT_MODE, 0)
+            .onEach { mode -> keyboardReport.changeMode(KeyboardReport.ReportMode.fromInt(mode)) }
+            .launchIn(CoroutineScope(Dispatchers.Main))
     }
 
     private fun registerApp(proxy: BluetoothProfile?) {
