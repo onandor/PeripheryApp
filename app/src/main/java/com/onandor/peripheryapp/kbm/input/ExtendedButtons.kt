@@ -15,13 +15,13 @@ class ExtendedButtons {
     }
 
     object Modifiers {
-        val L_CTRL = ButtonData("L Ctrl", KeyMapping.Modifiers.L_CTRL)
-        val R_CTRL = ButtonData("R Ctrl", KeyMapping.Modifiers.R_CTRL)
-        val SHIFT = ButtonData("Shift", KeyMapping.Modifiers.L_SHIFT)
-        val L_META = ButtonData("L Win", KeyMapping.Modifiers.L_META)
-        val L_ALT = ButtonData("L Alt", KeyMapping.Modifiers.L_ALT)
-        val R_ALT = ButtonData("R Alt", KeyMapping.Modifiers.R_ALT)
-        val R_META = ButtonData("R Win", KeyMapping.Modifiers.R_META)
+        val L_CTRL = ButtonData("L Ctrl", KeyMapping.ModifierKeys.L_CTRL)
+        val R_CTRL = ButtonData("R Ctrl", KeyMapping.ModifierKeys.R_CTRL)
+        val SHIFT = ButtonData("Shift", KeyMapping.ModifierKeys.L_SHIFT)
+        val L_META = ButtonData("L Win", KeyMapping.ModifierKeys.L_META)
+        val L_ALT = ButtonData("L Alt", KeyMapping.ModifierKeys.L_ALT)
+        val R_ALT = ButtonData("R Alt", KeyMapping.ModifierKeys.R_ALT)
+        val R_META = ButtonData("R Win", KeyMapping.ModifierKeys.R_META)
     }
 
     object FRow {
@@ -31,8 +31,7 @@ class ExtendedButtons {
         val F4 = ButtonData("F4", KeyMapping.FRow.F4)
         val F5 = ButtonData("F5", KeyMapping.FRow.F5)
         val F6 = ButtonData("F6", KeyMapping.FRow.F6)
-        // The scan code for the key F7 is the same as the modifier bit for R_ALT (0x40), so cheap fix
-        val F7 = ButtonData("F7", KeyMapping.FRow.F7 + 0x9999)
+        val F7 = ButtonData("F7", KeyMapping.FRow.F7)
         val F8 = ButtonData("F8", KeyMapping.FRow.F8)
         val F9 = ButtonData("F9", KeyMapping.FRow.F9)
         val F10 = ButtonData("F10", KeyMapping.FRow.F10)

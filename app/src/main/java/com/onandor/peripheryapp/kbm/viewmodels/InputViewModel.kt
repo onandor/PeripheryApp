@@ -187,19 +187,24 @@ class InputViewModel @Inject constructor(
     }
 
     fun onExtendedKeyPressed(scanCode: Int) {
-        val modifiers = _uiState.value.toggledModifiers
-        if (scanCode in KeyMapping.modifiers) {
-            if (modifiers and scanCode != 0) {
-                _uiState.update { it.copy(toggledModifiers = it.toggledModifiers xor scanCode) }
-            } else {
-                _uiState.update { it.copy(toggledModifiers = it.toggledModifiers or scanCode) }
-            }
+        val toggledModifiers = _uiState.value.toggledModifiers
+        val modifier = KeyMapping.modifierMap[scanCode]
+        if (modifier != null && toggledModifiers and modifier != 0) {
+            _uiState.update { it.copy(toggledModifiers = it.toggledModifiers xor modifier) }
             return
         }
-        // Lazy fix for the F7 == R_ALT modifier situation
-        val _scanCode = if (scanCode == 0x40 + 0x9999) 0x40 else scanCode
-        keyboardController.sendKeyWithScanCode(modifiers, _scanCode)
+        keyboardController.sendKeyWithScanCode(toggledModifiers, scanCode)
         _uiState.update { it.copy(toggledModifiers = 0) }
+    }
+
+    fun onExtendedKeyLongPressed(scanCode: Int) {
+        val toggledModifiers = _uiState.value.toggledModifiers
+        val modifier = KeyMapping.modifierMap[scanCode] ?: return
+        if (toggledModifiers and modifier != 0) {
+            _uiState.update { it.copy(toggledModifiers = it.toggledModifiers xor modifier) }
+        } else {
+            _uiState.update { it.copy(toggledModifiers = it.toggledModifiers or modifier) }
+        }
     }
 
     fun toggleKeyboard(context: Context) {

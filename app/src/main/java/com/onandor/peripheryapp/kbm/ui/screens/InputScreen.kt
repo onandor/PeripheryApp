@@ -139,7 +139,8 @@ fun InputScreen(
                     expanded = uiState.isExtendedKeyboardExpanded,
                     toggledModifiers = uiState.toggledModifiers,
                     onToggleExpanded = viewModel::onToggleExtendedKeyboardExpanded,
-                    onButtonClick = viewModel::onExtendedKeyPressed
+                    onButtonClick = viewModel::onExtendedKeyPressed,
+                    onButtonLongClick = viewModel::onExtendedKeyLongPressed
                 )
             }
             AnimatedVisibility(
