@@ -3,6 +3,7 @@ package com.onandor.peripheryapp.kbm
 import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.TouchpadController
+import com.onandor.peripheryapp.utils.BtSettingKeys
 import com.onandor.peripheryapp.utils.IntSettingOption
 import com.onandor.peripheryapp.utils.LongSettingOption
 
@@ -36,9 +37,9 @@ class SettingOptions {
 
         val POLLING_RATE_DEFAULT = pollingRate[0]
 
-        const val SEND_VOLUME_DEFAULT = false
+        val SEND_VOLUME_DEFAULT = BtSettingKeys.SEND_VOLUME_INPUT.defaultValue
 
-        const val EXTENDED_KEYBOARD_SHOWN_DEFAULT = false
+        val EXTENDED_KEYBOARD_SHOWN_DEFAULT = BtSettingKeys.EXTENDED_KEYBOARD_SHOWN.defaultValue
 
         val keyboardReportMode = listOf(
             IntSettingOption(

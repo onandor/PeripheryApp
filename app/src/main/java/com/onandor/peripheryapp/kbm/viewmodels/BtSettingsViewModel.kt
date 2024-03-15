@@ -32,7 +32,7 @@ class BtSettingsViewModel @Inject constructor(
 ): ViewModel() {
 
     private val localeFlow = settings
-        .observe(BtSettingKeys.KEYBOARD_LOCALE, KeyMapping.Locales.EN_US)
+        .observe(BtSettingKeys.KEYBOARD_LOCALE)
         .map { locale ->
             SettingOptions
                 .keyboardLocale
@@ -40,19 +40,17 @@ class BtSettingsViewModel @Inject constructor(
                 ?: SettingOptions.KEYBOARD_LOCALE_DEFAULT
         }
     private val pollingRateFlow = settings
-        .observe(BtSettingKeys.MOUSE_POLLING_RATE, 0)
+        .observe(BtSettingKeys.MOUSE_POLLING_RATE)
         .map { pollingRate ->
             SettingOptions
                 .pollingRate
                 .find { option -> option.value == pollingRate }
                 ?: SettingOptions.POLLING_RATE_DEFAULT
         }
-    private val sendVolumeFlow = settings
-        .observe(BtSettingKeys.SEND_VOLUME_INPUT, false)
-    private val extendedKeyboardFlow = settings
-        .observe(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN, false)
+    private val sendVolumeFlow = settings.observe(BtSettingKeys.SEND_VOLUME_INPUT)
+    private val extendedKeyboardFlow = settings.observe(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN)
     private val keyboardReportModeFlow = settings
-        .observe(BtSettingKeys.KEYBOARD_REPORT_MODE, 0)
+        .observe(BtSettingKeys.KEYBOARD_REPORT_MODE)
         .map { reportMode ->
             SettingOptions
                 .keyboardReportMode

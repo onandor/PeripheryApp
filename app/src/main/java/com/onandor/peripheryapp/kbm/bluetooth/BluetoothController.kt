@@ -189,7 +189,7 @@ class BluetoothController @Inject constructor(
 
     init {
         keyboardReportModeJob = settings
-            .observe(BtSettingKeys.KEYBOARD_REPORT_MODE, 0)
+            .observe(BtSettingKeys.KEYBOARD_REPORT_MODE)
             .onEach { mode -> keyboardReport.changeMode(KeyboardReport.ReportMode.fromInt(mode)) }
             .launchIn(CoroutineScope(Dispatchers.Main))
     }

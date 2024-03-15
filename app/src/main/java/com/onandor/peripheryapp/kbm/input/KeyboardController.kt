@@ -20,7 +20,7 @@ class KeyboardController @Inject constructor(
 
     fun init() {
         localeJob = settings
-            .observe(BtSettingKeys.KEYBOARD_LOCALE, KeyMapping.Locales.EN_US)
+            .observe(BtSettingKeys.KEYBOARD_LOCALE)
             .onEach { locale = it }
             .launchIn(CoroutineScope(Dispatchers.Main))
     }

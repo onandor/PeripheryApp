@@ -41,7 +41,7 @@ class TouchpadController @Inject constructor(
     fun init() {
         executor = ScheduledThreadPoolExecutor(1)
         pollingRateJob = settings
-            .observe(BtSettingKeys.MOUSE_POLLING_RATE, PollingRates.HIGH)
+            .observe(BtSettingKeys.MOUSE_POLLING_RATE)
             .onEach { resetSendDataTask(it) }
             .launchIn(CoroutineScope(Dispatchers.Main))
     }

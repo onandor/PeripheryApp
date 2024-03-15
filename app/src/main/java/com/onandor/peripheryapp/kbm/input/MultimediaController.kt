@@ -20,7 +20,7 @@ class MultimediaController @Inject constructor(
 
     fun init() {
         volumeJob = settings
-            .observe(BtSettingKeys.SEND_VOLUME_INPUT, false)
+            .observe(BtSettingKeys.SEND_VOLUME_INPUT)
             .onEach { sendVolume = it }
             .launchIn(CoroutineScope(Dispatchers.Main))
     }

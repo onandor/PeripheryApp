@@ -38,7 +38,7 @@ class PeripheryAppActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         volumeJob = settings
-            .observe(BtSettingKeys.SEND_VOLUME_INPUT, false)
+            .observe(BtSettingKeys.SEND_VOLUME_INPUT)
             .onEach { sendVolume = it }
             .launchIn(CoroutineScope(Dispatchers.Main))
 

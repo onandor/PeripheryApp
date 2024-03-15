@@ -95,9 +95,8 @@ class InputViewModel @Inject constructor(
         override fun onServiceStateChanged(proxy: BluetoothProfile?) { }
     }
 
-    private val localeFlow = settings.observe(BtSettingKeys.KEYBOARD_LOCALE, -1)
-    private val extendedKeyboardFlow = settings
-        .observe(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN, false)
+    private val localeFlow = settings.observe(BtSettingKeys.KEYBOARD_LOCALE)
+    private val extendedKeyboardFlow = settings.observe(BtSettingKeys.EXTENDED_KEYBOARD_SHOWN)
 
     private val _uiState = MutableStateFlow(InputUiState())
     val uiState = combine(
