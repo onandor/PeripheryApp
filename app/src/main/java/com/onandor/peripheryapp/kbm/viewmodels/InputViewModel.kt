@@ -14,7 +14,6 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.onandor.peripheryapp.kbm.SettingOptions
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.KeyboardController
@@ -41,7 +40,8 @@ data class InputUiState(
     val deviceDisconnected: Boolean = false,
     val isExtendedKeyboardExpanded: Boolean = false,
     val toggledModifiers: Int = 0,
-    val isExtendedKeyboardShown: Boolean = false
+    val isExtendedKeyboardShown: Boolean = false,
+    val isMultimediaControlShown: Boolean = false
 )
 
 @HiltViewModel
@@ -148,7 +148,7 @@ class InputViewModel @Inject constructor(
         }
         // Multimedia key codes
         if (event.keyCode in 0x55..0x5B || event.keyCode in 0x18..0x19) {
-            multimediaController.sendMultimedia(event.keyCode)
+            multimediaController.sendMultimedia(event.keyCode, false)
             return
         }
 
@@ -239,6 +239,14 @@ class InputViewModel @Inject constructor(
 
     fun onToggleExtendedKeyboardExpanded() {
         _uiState.update { it.copy(isExtendedKeyboardExpanded = !it.isExtendedKeyboardExpanded) }
+    }
+
+    fun toggleMultimediaControl() {
+        _uiState.update { it.copy(isMultimediaControlShown = !it.isMultimediaControlShown) }
+    }
+
+    fun onMultimediaKeyPressed(keyCode: Int) {
+        multimediaController.sendMultimedia(keyCode, true)
     }
 
     override fun onCleared() {

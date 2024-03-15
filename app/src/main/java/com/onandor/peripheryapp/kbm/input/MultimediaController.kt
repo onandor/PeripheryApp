@@ -1,5 +1,6 @@
 package com.onandor.peripheryapp.kbm.input
 
+import android.view.KeyEvent
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.utils.BtSettingKeys
 import com.onandor.peripheryapp.utils.Settings
@@ -25,8 +26,9 @@ class MultimediaController @Inject constructor(
             .launchIn(CoroutineScope(Dispatchers.Main))
     }
 
-    fun sendMultimedia(keyCode: Int) {
-        if (!sendVolume) {
+    fun sendMultimedia(keyCode: Int, softwareKey: Boolean) {
+        if (keyCode in KeyEvent.KEYCODE_VOLUME_UP..KeyEvent.KEYCODE_VOLUME_DOWN &&
+            !(sendVolume || softwareKey)) {
             return
         }
         val scanCode = KeyMapping.multimediaKeyCodeMap[keyCode]

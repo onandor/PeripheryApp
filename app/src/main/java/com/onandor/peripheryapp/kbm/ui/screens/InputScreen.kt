@@ -12,6 +12,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -59,6 +62,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.kbm.input.MouseButton
 import com.onandor.peripheryapp.kbm.ui.components.ExtendedButtonGrid
+import com.onandor.peripheryapp.kbm.ui.components.MultimediaControl
 import com.onandor.peripheryapp.kbm.viewmodels.InputViewModel
 import com.onandor.peripheryapp.ui.components.SwipeableSnackbarHost
 import kotlinx.coroutines.launch
@@ -88,7 +92,8 @@ fun InputScreen(
                     }
                     viewModel.navigateToSettings()
                 },
-                onToggleKeyboard = { viewModel.toggleKeyboard(context) }
+                onToggleKeyboard = { viewModel.toggleKeyboard(context) },
+                onToggleMultimediaControl = viewModel::toggleMultimediaControl
             )
         },
         snackbarHost = {
@@ -98,6 +103,7 @@ fun InputScreen(
         }
     ) { innerPadding ->
         val isKeyboardShown = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+        val density = LocalDensity.current
 
         LaunchedEffect(isKeyboardShown) {
             if (!isKeyboardShown && uiState.isKeyboardShown) {
@@ -135,6 +141,14 @@ fun InputScreen(
                     onToggleExpanded = viewModel::onToggleExtendedKeyboardExpanded,
                     onButtonClick = viewModel::onExtendedKeyPressed
                 )
+            }
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.TopCenter),
+                visible = uiState.isMultimediaControlShown,
+                enter = slideInVertically { with(density) { -60.dp.roundToPx() } },
+                exit = slideOutVertically { with(density) { -60.dp.roundToPx() } }
+            ) {
+                MultimediaControl(onButtonClick = { viewModel.onMultimediaKeyPressed(it) })
             }
             if (uiState.keyboardInput.isNotEmpty()) {
                 KeyboardInputPreview(
@@ -348,22 +362,20 @@ private fun InputReceiver(
 private fun InputTopAppBar(
     hostName: String,
     onNavigateToSettings: () -> Unit,
-    onToggleKeyboard: () -> Unit
+    onToggleKeyboard: () -> Unit,
+    onToggleMultimediaControl: () -> Unit
 ){
     TopAppBar(
         title = { Text(hostName) },
         actions = {
             IconButton(onClick = onNavigateToSettings) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = ""
-                )
+                Icon(Icons.Default.Settings, "")
+            }
+            IconButton(onClick = onToggleMultimediaControl) {
+                Icon(Icons.Default.PlayArrow, "")
             }
             IconButton(onClick = onToggleKeyboard) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_keyboard_filled),
-                    contentDescription = stringResource(id = R.string.input_toggle_keyboard)
-                )
+                Icon(painterResource(id = R.drawable.ic_keyboard_filled), "")
             }
         }
     )

@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">PeripheryApp</string>
-    <string name="input_toggle_keyboard">Toggle keyboard</string>
     <string name="bt_settings_title">Bluetooth Settings</string>
     <string name="bt_settings_mouse_polling_rate">Mouse polling rate</string>
     <string name="bt_settings_keyboard_language">Keyboard language</string>
