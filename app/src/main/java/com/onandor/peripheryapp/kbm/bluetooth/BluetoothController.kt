@@ -17,6 +17,7 @@ import com.onandor.peripheryapp.kbm.bluetooth.reports.BatteryReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MultimediaReport
+import com.onandor.peripheryapp.kbm.bluetooth.services.BtNotificationService
 import com.onandor.peripheryapp.utils.BtSettingKeys
 import com.onandor.peripheryapp.utils.PermissionChecker
 import com.onandor.peripheryapp.utils.Settings
@@ -234,6 +235,7 @@ class BluetoothController @Inject constructor(
                 IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
             )
             context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            updateNotificationService(null, BluetoothProfile.STATE_DISCONNECTED)
         }
         return hidDeviceProfile
     }
@@ -247,6 +249,7 @@ class BluetoothController @Inject constructor(
                 return
             }
 
+            stopNotificationService()
             context.unregisterReceiver(bluetoothStateReceiver)
             context.unregisterReceiver(batteryReceiver)
 
@@ -310,6 +313,9 @@ class BluetoothController @Inject constructor(
                 if (registered && waitingForDevice != null) {
                     requestConnect(waitingForDevice)
                 }
+                if (!registered) {
+                    stopNotificationService()
+                }
             }
         }
     }
@@ -327,11 +333,10 @@ class BluetoothController @Inject constructor(
                 hidProfileListeners.forEach { listener ->
                     listener.onConnectionStateChanged(device, state)
                 }
+                updateNotificationService(device?.name, state)
             }
         }
     }
-
-    fun isConnected() = connectedDevice != null
 
     fun requestConnect(device: BluetoothDevice?) {
         synchronized (lock) {
@@ -344,9 +349,7 @@ class BluetoothController @Inject constructor(
             updateDeviceList()
 
             if (device != null && device == connectedDevice) {
-                hidProfileListeners.forEach { listener ->
-                    listener.onConnectionStateChanged(device, BluetoothProfile.STATE_CONNECTED)
-                }
+                onConnectionStateChanged(device, BluetoothProfile.STATE_CONNECTED)
             }
         }
     }
@@ -453,6 +456,18 @@ class BluetoothController @Inject constructor(
             val report = multimediaReport.setValue(key)
             hidServiceProxy!!.sendReport(connectedDevice, Constants.ID_MULTIMEDIA, report)
         }
+    }
+
+    private fun updateNotificationService(deviceName: String?, connectionState: Int) {
+        val intent = BtNotificationService
+            .buildIntent(deviceName, connectionState)
+            .setClass(context, BtNotificationService::class.java)
+        context.startForegroundService(intent)
+    }
+
+    private fun stopNotificationService() {
+        val intent = Intent().setClass(context, BtNotificationService::class.java)
+        context.stopService(intent)
     }
 
     private fun updateDeviceList() {

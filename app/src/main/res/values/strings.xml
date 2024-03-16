@@ -15,4 +15,13 @@
     <string name="bt_settings_keyboard_report_mode_6_key">6 key</string>
     <string name="bt_settings_keyboard_report_mode_5_key">5 key</string>
     <string name="bt_settings_keyboard_report_mode">Keyboard report mode</string>
+    <string name="bt_state_connected">Connected</string>
+    <string name="bt_state_connecting">Connecting</string>
+    <string name="bt_state_disconnecting">Disconnecting</string>
+    <string name="bt_state_disconnected">Disconnected</string>
+    <string name="bt_state_connected_to">Connected to</string>
+    <string name="bt_state_connecting_to">Connecting to</string>
+    <string name="bt_state_disconnecting_from">Disconnecting from</string>
+    <string name="bt_state_ready_to_connect">Ready to connect</string>
+    <string name="bt_device_name_unavailable">unavailable</string>
 </resources>
