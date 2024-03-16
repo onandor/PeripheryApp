@@ -12,7 +12,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     fun navigateToBtKbmScreen() {
-        navManager.navigateTo(NavActions.btConnectionTypeSelect())
+        navManager.navigateTo(NavActions.btDevices())
     }
 
     fun navigateToWifiWebcamScreen() {

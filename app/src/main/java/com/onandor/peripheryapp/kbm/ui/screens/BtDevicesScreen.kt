@@ -24,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.onandor.peripheryapp.kbm.ui.components.BondedBluetoothDeviceItem
 import com.onandor.peripheryapp.kbm.ui.components.FoundBluetoothDeviceItem
+import com.onandor.peripheryapp.kbm.ui.components.PermissionRequest
 import com.onandor.peripheryapp.kbm.viewmodels.BtDevicesViewModel
 
 @SuppressLint("MissingPermission")
@@ -31,14 +32,6 @@ import com.onandor.peripheryapp.kbm.viewmodels.BtDevicesViewModel
 fun BtDevicesScreen(
     viewModel: BtDevicesViewModel = hiltViewModel()
 ) {
-    val enableBluetoothLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.updateBondedDevices()
-        }
-    }
-
     BackHandler {
         viewModel.navigateBack()
     }
@@ -51,15 +44,12 @@ fun BtDevicesScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            if (uiState.bluetoothState != BluetoothAdapter.STATE_ON) {
-                Text("Bluetooth is disabled. Enable it to access the functionalities.")
-                Button(
-                    onClick = {
-                        enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-                    }
-                ) {
-                    Text(text = "Enable Bluetooth")
-                }
+            if (uiState.bluetoothState != BluetoothAdapter.STATE_ON ||
+                !uiState.arePermissionsGranted) {
+                PermissionRequest(
+                    bluetoothState = uiState.bluetoothState,
+                    onPermissionsGranted = viewModel::onPermissionsGranted
+                )
             } else {
                 LazyColumn {
                     item {

@@ -24,7 +24,8 @@ data class BtDevicesUiState(
     val bluetoothState: Int = BluetoothAdapter.STATE_OFF,
     val waitingForDeviceBonding: BluetoothDevice? = null,
     val waitingForDeviceConnecting: BluetoothDevice? = null,
-    val connectedDevice: BluetoothDevice? = null
+    val connectedDevice: BluetoothDevice? = null,
+    val arePermissionsGranted: Boolean = false
 )
 
 @SuppressLint("MissingPermission")
@@ -158,19 +159,6 @@ class BtDevicesViewModel @Inject constructor(
         }
     }
 
-    init {
-        hidDeviceProfile = bluetoothController.registerProfileListener(hidProfileListener)
-        bluetoothAdapter = hidDeviceProfile.bluetoothAdapter
-        bluetoothController.registerScanListener(bluetoothScanListener)
-        bluetoothController.registerStateListener(bluetoothStateListener)
-
-        _uiState.update {
-            it.copy(bluetoothState = bluetoothAdapter?.state ?: BluetoothAdapter.STATE_OFF)
-        }
-        updateBondedDevices()
-        bluetoothController.startDiscovery()
-    }
-
     fun updateBondedDevices() {
         if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
@@ -236,6 +224,23 @@ class BtDevicesViewModel @Inject constructor(
                 bluetoothController.startDiscovery()
             }
         }
+    }
+
+    fun onPermissionsGranted() {
+        hidDeviceProfile = bluetoothController.registerProfileListener(hidProfileListener)
+        bluetoothAdapter = hidDeviceProfile.bluetoothAdapter
+        bluetoothController.registerScanListener(bluetoothScanListener)
+        bluetoothController.registerStateListener(bluetoothStateListener)
+
+        _uiState.update {
+            it.copy(
+                bluetoothState = bluetoothAdapter?.state ?: BluetoothAdapter.STATE_OFF,
+                arePermissionsGranted = true
+            )
+        }
+
+        updateBondedDevices()
+        bluetoothController.startDiscovery()
     }
 
     fun navigateBack() {

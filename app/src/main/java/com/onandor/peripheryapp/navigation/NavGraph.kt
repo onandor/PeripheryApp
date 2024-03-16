@@ -54,9 +54,6 @@ fun NavGraph(
             composable(NavDestinations.MAIN) {
                 MainScreen()
             }
-            composable(NavDestinations.BT_CONNECTION_TYPE_SELECT) {
-                BtConnectionTypeSelectScreen()
-            }
             composable(NavDestinations.BT_DEVICES) {
                 BtDevicesScreen()
             }
