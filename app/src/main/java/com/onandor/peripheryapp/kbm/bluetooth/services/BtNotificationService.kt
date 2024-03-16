@@ -51,7 +51,6 @@ class BtNotificationService() : Service() {
     }
 
     override fun onDestroy() {
-        println("onDestroy")
         stopSelf()
         super.onDestroy()
     }
@@ -108,7 +107,6 @@ class BtNotificationService() : Service() {
                 .setContentTitle("PeripheryApp")
                 .setContentText(text)
                 .build()
-            println("startForeground")
             ServiceCompat.startForeground(
                 /* service = */ this,
                 /* id = */ NOTIFICATION_ID,

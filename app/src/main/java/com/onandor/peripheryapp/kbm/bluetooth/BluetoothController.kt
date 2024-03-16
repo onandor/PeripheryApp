@@ -235,7 +235,6 @@ class BluetoothController @Inject constructor(
                 IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
             )
             context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            updateNotificationService(null, BluetoothProfile.STATE_DISCONNECTED)
         }
         return hidDeviceProfile
     }
@@ -249,7 +248,6 @@ class BluetoothController @Inject constructor(
                 return
             }
 
-            stopNotificationService()
             context.unregisterReceiver(bluetoothStateReceiver)
             context.unregisterReceiver(batteryReceiver)
 
@@ -313,7 +311,10 @@ class BluetoothController @Inject constructor(
                 if (registered && waitingForDevice != null) {
                     requestConnect(waitingForDevice)
                 }
-                if (!registered) {
+
+                if (registered) {
+                    updateNotificationService(null, BluetoothProfile.STATE_DISCONNECTED)
+                } else {
                     stopNotificationService()
                 }
             }
@@ -333,7 +334,9 @@ class BluetoothController @Inject constructor(
                 hidProfileListeners.forEach { listener ->
                     listener.onConnectionStateChanged(device, state)
                 }
-                updateNotificationService(device?.name, state)
+                if (isAppRegistered) {
+                    updateNotificationService(device?.name, state)
+                }
             }
         }
     }

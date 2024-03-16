@@ -15,7 +15,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.onandor.peripheryapp.kbm.ui.screens.MainScreen
 import com.onandor.peripheryapp.kbm.ui.screens.BtDevicesScreen
-import com.onandor.peripheryapp.kbm.ui.screens.BtConnectionTypeSelectScreen
 import com.onandor.peripheryapp.kbm.ui.screens.BtSettingsScreen
 import com.onandor.peripheryapp.kbm.ui.screens.InputScreen
 import com.onandor.peripheryapp.kbm.viewmodels.NavigationViewModel
