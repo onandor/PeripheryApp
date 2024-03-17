@@ -1,29 +1,44 @@
 package com.onandor.peripheryapp.kbm.ui.components
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.onandor.peripheryapp.R
 
 @Composable
 private fun BluetoothDeviceItem(
-    modifier: Modifier,
     name: String,
-    description: String = "",
-    onClick: () -> Unit
+    description: String = ""
 ) {
     Column(
-        modifier = modifier
-            .clickable { onClick() }
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 16.dp)
     ) {
-        Text(text = name)
+        Text(
+            text = name,
+            fontSize = 18.sp
+        )
         if (description.isNotEmpty()) {
             Text(text = description)
         }
@@ -32,61 +47,82 @@ private fun BluetoothDeviceItem(
 
 @Composable
 fun FoundBluetoothDeviceItem(
-    modifier: Modifier = Modifier,
     name: String,
     bonding: Boolean = false,
     onClick: () -> Unit
 ) {
-    BluetoothDeviceItem(
-        modifier = modifier,
-        name = name,
-        description = if (bonding) "Pairing..." else "",
-        onClick = onClick
-    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        BluetoothDeviceItem(
+            name = name,
+            description = if (bonding) stringResource(id = R.string.bt_found_device_pairing) else ""
+        )
+    }
 }
 
 @Composable
 fun BondedBluetoothDeviceItem(
-    modifier: Modifier = Modifier,
     name: String,
     connecting: Boolean = false,
     connected: Boolean = false,
+    expanded: Boolean,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     onForget: () -> Unit,
-    onUse: () -> Unit
+    onUse: () -> Unit,
+    onClick: () -> Unit
 ) {
     val description = if (connecting) {
-        "Connecting..."
+        stringResource(id = R.string.bt_bonded_device_connecting)
     } else if (connected) {
-        "Connected"
+        stringResource(id = R.string.bt_bonded_device_connected)
     } else {
         ""
     }
-    var expanded by remember { mutableStateOf(false) }
 
-    BluetoothDeviceItem(
-        modifier = modifier,
-        name = name,
-        description = description,
-        onClick = { expanded = !expanded }
-    )
-    if (expanded) {
-        Row {
-            if (!connected) {
-                Button(onClick = onConnect) {
-                    Text(text = "Connect")
-                }
-            } else {
-                Button(onClick = onUse) {
-                    Text(text = "Use")
-                }
-                Button(onClick = onDisconnect) {
-                    Text(text = "Disconnect")
-                }
+    val backgroundAlpha by animateFloatAsState(if (expanded) 1f else 0f, label = "")
+    val arrowAngle by animateFloatAsState(if (expanded) 180f else 0f, label = "")
+
+    Column(
+        modifier = Modifier
+            .clickable { onClick() }
+            .fillMaxWidth()
+            .animateContentSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = backgroundAlpha))
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            BluetoothDeviceItem(
+                name = name,
+                description = description
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Box(modifier = Modifier.rotate(arrowAngle)) {
+                Icon(imageVector = Icons.Default.KeyboardArrowDown, "")
             }
-            Button(onClick = onForget) {
-                Text(text = "Forget")
+            Spacer(modifier = Modifier.width(20.dp))
+        }
+        if (expanded) {
+            Row(modifier = Modifier.padding(start = 16.dp, bottom = 10.dp)) {
+                if (!connected) {
+                    ElevatedButton(onClick = onConnect) {
+                        Text(text = stringResource(id = R.string.bt_bonded_device_connect))
+                    }
+                } else {
+                    ElevatedButton(onClick = onUse) {
+                        Text(text = stringResource(id = R.string.bt_bonded_device_use))
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    ElevatedButton(onClick = onDisconnect) {
+                        Text(text = stringResource(id = R.string.bt_bonded_device_disconnect))
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                ElevatedButton(onClick = onForget) {
+                    Text(text = stringResource(id = R.string.bt_bonded_device_forget))
+                }
             }
         }
     }

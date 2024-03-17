@@ -24,4 +24,15 @@
     <string name="bt_state_disconnecting_from">Disconnecting from</string>
     <string name="bt_state_ready_to_connect">Ready to connect</string>
     <string name="bt_device_name_unavailable">unavailable</string>
+    <string name="bt_devices_title">Manage connection</string>
+    <string name="bt_bonded_device_connect">Connect</string>
+    <string name="bt_bonded_device_use">Use</string>
+    <string name="bt_bonded_device_disconnect">Disconnect</string>
+    <string name="bt_bonded_device_forget">Forget</string>
+    <string name="bt_bonded_device_connecting">Connecting...</string>
+    <string name="bt_bonded_device_connected">Connected</string>
+    <string name="bt_found_device_pairing">Pairing...</string>
+    <string name="bt_devices_paired_devices">Paired devices</string>
+    <string name="bt_devices_available_devices">Available devices</string>
+    <string name="bt_devices_device_discoverable">Device discoverable</string>
 </resources>

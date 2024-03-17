@@ -25,7 +25,8 @@ data class BtDevicesUiState(
     val waitingForDeviceBonding: BluetoothDevice? = null,
     val waitingForDeviceConnecting: BluetoothDevice? = null,
     val connectedDevice: BluetoothDevice? = null,
-    val arePermissionsGranted: Boolean = false
+    val arePermissionsGranted: Boolean = false,
+    val expandedBondedDevice: BluetoothDevice? = null
 )
 
 @SuppressLint("MissingPermission")
@@ -245,6 +246,18 @@ class BtDevicesViewModel @Inject constructor(
 
     fun navigateBack() {
         navManager.navigateBack()
+    }
+
+    fun onBondedDeviceClick(device: BluetoothDevice) {
+        _uiState.update {
+            it.copy(
+                expandedBondedDevice = if (it.expandedBondedDevice == device) {
+                    null
+                } else {
+                    device
+                }
+            )
+        }
     }
 
     override fun onCleared() {

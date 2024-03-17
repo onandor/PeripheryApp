@@ -1,32 +1,42 @@
 package com.onandor.peripheryapp.kbm.ui.screens
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.content.Intent
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.kbm.ui.components.BondedBluetoothDeviceItem
 import com.onandor.peripheryapp.kbm.ui.components.FoundBluetoothDeviceItem
 import com.onandor.peripheryapp.kbm.ui.components.PermissionRequest
 import com.onandor.peripheryapp.kbm.viewmodels.BtDevicesViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MissingPermission")
 @Composable
 fun BtDevicesScreen(
@@ -38,7 +48,18 @@ fun BtDevicesScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold { innerPadding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = stringResource(id = R.string.bt_devices_title)) },
+                navigationIcon = {
+                    IconButton(onClick = viewModel::navigateBack) {
+                        Icon(Icons.AutoMirrored.Default.ArrowBack, "")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -53,7 +74,35 @@ fun BtDevicesScreen(
             } else {
                 LazyColumn {
                     item {
-                        Text(text = "Paired devices:")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(start = 16.dp),
+                                text = stringResource(R.string.bt_devices_device_discoverable),
+                                fontSize = 18.sp
+                            )
+                            Switch(
+                                modifier = Modifier.padding(end = 16.dp),
+                                checked = false,
+                                onCheckedChange = {}
+                            )
+                        }
+                    }
+                    item {
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .padding(top = 10.dp, bottom = 10.dp, start = 16.dp, end = 16.dp)
+                        )
+                    }
+                    item {
+                        Text(
+                            modifier = Modifier.padding(16.dp),
+                            text = stringResource(id = R.string.bt_devices_paired_devices),
+                            fontSize = 18.sp
+                        )
                     }
                     uiState.bondedDevices.forEach { device ->
                         item {
@@ -62,21 +111,30 @@ fun BtDevicesScreen(
                                     uiState.waitingForDeviceConnecting!!.bondState ==
                                         BluetoothDevice.BOND_BONDED
                             BondedBluetoothDeviceItem(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
                                 name = device.name ?: device.address,
                                 connecting = connecting,
                                 connected = uiState.connectedDevice == device,
+                                expanded = uiState.expandedBondedDevice == device,
                                 onConnect = { viewModel.connect(device) },
                                 onDisconnect = { viewModel.disconnect() },
                                 onForget = { viewModel.forget(device) },
-                                onUse = { viewModel.navigateToInput() }
+                                onUse = { viewModel.navigateToInput() },
+                                onClick = { viewModel.onBondedDeviceClick(device) }
                             )
                         }
                     }
                     item {
-                        Text(text = "Available devices:")
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .padding(top = 10.dp, bottom = 10.dp, start = 16.dp, end = 16.dp)
+                        )
+                    }
+                    item {
+                        Text(
+                            modifier = Modifier.padding(16.dp),
+                            text = stringResource(id = R.string.bt_devices_available_devices),
+                            fontSize = 18.sp
+                        )
                     }
                     uiState.foundDevices.forEach { device ->
                         item {
@@ -85,9 +143,6 @@ fun BtDevicesScreen(
                                     uiState.waitingForDeviceBonding!!.bondState ==
                                         BluetoothDevice.BOND_BONDING
                             FoundBluetoothDeviceItem(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
                                 name = device.name ?: device.address,
                                 bonding = bonding,
                                 onClick = { viewModel.pair(device) }
