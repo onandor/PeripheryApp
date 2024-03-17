@@ -37,4 +37,8 @@
     <string name="bt_devices_make_device_discoverable">Make device discoverable</string>
     <string name="bt_devices_device_is_discoverable_for">Device is discoverable for</string>
     <string name="second_short">s</string>
+    <string name="main_bluetooth_kbm_title">Bluetooth keyboard\nand mouse</string>
+    <string name="main_bluetooth_kbm_desc">Connect to any kind of device using Bluetooth and use your Android device as a keyboard and a mouse.</string>
+    <string name="main_wifi_webcam_title">WiFi webcam</string>
+    <string name="main_wifi_webcam_desc">Stream video and audio from your Android device through WiFi to any machine running Windows.</string>
 </resources>
