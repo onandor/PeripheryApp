@@ -3,7 +3,11 @@ package com.onandor.peripheryapp.kbm.ui.screens
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,12 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -60,6 +64,10 @@ fun BtDevicesScreen(
             )
         }
     ) { innerPadding ->
+        val discoverabilityLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) {}
+
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -75,18 +83,35 @@ fun BtDevicesScreen(
                 LazyColumn {
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = uiState.remainingDiscoverable <= 0) {
+                                    val intent =
+                                        Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+                                    discoverabilityLauncher.launch(intent)
+                                },
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
+                            val text = if (uiState.remainingDiscoverable <= 0) {
+                                stringResource(R.string.bt_devices_make_device_discoverable)
+                            } else {
+                                buildString {
+                                    append(stringResource(R.string.bt_devices_device_is_discoverable_for))
+                                    append(" ")
+                                    append(uiState.remainingDiscoverable)
+                                    append(" ")
+                                    append(stringResource(id = R.string.second_short))
+                                }
+                            }
                             Text(
                                 modifier = Modifier.padding(start = 16.dp),
-                                text = stringResource(R.string.bt_devices_device_discoverable),
+                                text = text,
                                 fontSize = 18.sp
                             )
-                            Switch(
-                                modifier = Modifier.padding(end = 16.dp),
-                                checked = false,
+                            Checkbox(
+                                enabled = false,
+                                checked = uiState.remainingDiscoverable > 0,
                                 onCheckedChange = {}
                             )
                         }

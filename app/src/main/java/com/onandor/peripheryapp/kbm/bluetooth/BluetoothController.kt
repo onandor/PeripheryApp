@@ -57,6 +57,8 @@ class BluetoothController @Inject constructor(
     interface BluetoothStateListener {
 
         fun onStateChanged(state: Int)
+
+        fun onScanModeChanged(scanMode: Int)
     }
 
     private val bluetoothManager by lazy {
@@ -171,8 +173,21 @@ class BluetoothController @Inject constructor(
                         BluetoothAdapter.EXTRA_STATE,
                         BluetoothAdapter.ERROR
                     )
-                    bluetoothStateListeners.forEach { listener ->
-                        listener.onStateChanged(state)
+                    if (state != BluetoothAdapter.ERROR) {
+                        bluetoothStateListeners.forEach { listener ->
+                            listener.onStateChanged(state)
+                        }
+                    }
+                }
+                BluetoothAdapter.ACTION_SCAN_MODE_CHANGED -> {
+                    val scanMode = intent.getIntExtra(
+                        BluetoothAdapter.EXTRA_SCAN_MODE,
+                        BluetoothAdapter.ERROR
+                    )
+                    if (scanMode != BluetoothAdapter.ERROR) {
+                        bluetoothStateListeners.forEach { listener ->
+                            listener.onScanModeChanged(scanMode)
+                        }
                     }
                 }
             }
@@ -230,9 +245,12 @@ class BluetoothController @Inject constructor(
             }
 
             hidDeviceProfile.registerServiceListener(hidServiceStateListener)
+            val stateIntentFilter = IntentFilter()
+            stateIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
+            stateIntentFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)
             context.registerReceiver(
-                bluetoothStateReceiver,
-                IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+                /* receiver = */ bluetoothStateReceiver,
+                /* filter = */ stateIntentFilter
             )
             context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         }

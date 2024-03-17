@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothProfile
+import android.os.CountDownTimer
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothUtils
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
@@ -26,7 +27,8 @@ data class BtDevicesUiState(
     val waitingForDeviceConnecting: BluetoothDevice? = null,
     val connectedDevice: BluetoothDevice? = null,
     val arePermissionsGranted: Boolean = false,
-    val expandedBondedDevice: BluetoothDevice? = null
+    val expandedBondedDevice: BluetoothDevice? = null,
+    val remainingDiscoverable: Int = 0
 )
 
 @SuppressLint("MissingPermission")
@@ -42,6 +44,33 @@ class BtDevicesViewModel @Inject constructor(
 
     private lateinit var hidDeviceProfile: HidDeviceProfile
     private var bluetoothAdapter: BluetoothAdapter? = null
+
+    private val discoverabilityTimer = object : CountDownTimer(Long.MAX_VALUE, 1000) {
+        var running = false
+
+        fun reset() {
+            _uiState.update { it.copy(remainingDiscoverable = 120) }
+            if (!running) {
+                running = true
+                this.start()
+            }
+        }
+
+        fun stop() {
+            running = false
+            this.cancel()
+        }
+
+        override fun onTick(millisUntilFinished: Long) {
+            val remaining = _uiState.value.remainingDiscoverable - 1
+            _uiState.update { it.copy(remainingDiscoverable = remaining) }
+            if (remaining == 0) {
+                stop()
+            }
+        }
+
+        override fun onFinish() { }
+    }
 
     private val bluetoothScanListener = object : BluetoothController.BluetoothScanListener {
 
@@ -96,6 +125,17 @@ class BtDevicesViewModel @Inject constructor(
                 BluetoothAdapter.STATE_TURNING_OFF -> {
                     bluetoothController.stopDiscovery()
                 }
+            }
+        }
+
+        override fun onScanModeChanged(scanMode: Int) {
+            val discoverable = scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE
+            if (discoverable) {
+                _uiState.update { it.copy(remainingDiscoverable = 120) }
+                discoverabilityTimer.reset()
+            } else {
+                _uiState.update { it.copy(remainingDiscoverable = 0) }
+                discoverabilityTimer.stop()
             }
         }
     }

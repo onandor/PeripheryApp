@@ -34,5 +34,7 @@
     <string name="bt_found_device_pairing">Pairing...</string>
     <string name="bt_devices_paired_devices">Paired devices</string>
     <string name="bt_devices_available_devices">Available devices</string>
-    <string name="bt_devices_device_discoverable">Device discoverable</string>
+    <string name="bt_devices_make_device_discoverable">Make device discoverable</string>
+    <string name="bt_devices_device_is_discoverable_for">Device is discoverable for</string>
+    <string name="second_short">s</string>
 </resources>
