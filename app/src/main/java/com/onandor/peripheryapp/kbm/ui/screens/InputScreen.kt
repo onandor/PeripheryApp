@@ -48,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -188,7 +187,7 @@ private fun TouchSurface(
     var prevFocusY = 0f
 
     Surface(
-        color = Color.Gray,
+        color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = modifier
             .fillMaxSize()
             .pointerInteropFilter { event ->
@@ -293,7 +292,14 @@ private fun TouchSurface(
                 prevFocusY = focusY
                 true
             }
-    ) { }
+    ) {
+        Surface(
+            modifier = Modifier
+                .padding(10.dp)
+                .clip(RoundedCornerShape(16.dp)),
+            color = MaterialTheme.colorScheme.primary
+        ) {}
+    }
 }
 
 @Composable
