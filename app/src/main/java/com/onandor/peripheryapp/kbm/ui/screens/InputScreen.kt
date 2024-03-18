@@ -379,7 +379,7 @@ private fun InputTopAppBar(
                 Icon(Icons.Default.Settings, "")
             }
             IconButton(onClick = onToggleMultimediaControl) {
-                Icon(Icons.Default.PlayArrow, "")
+                Icon(painterResource(id = R.drawable.ic_media_bluetooth_on), "")
             }
             IconButton(onClick = onToggleKeyboard) {
                 Icon(painterResource(id = R.drawable.ic_keyboard_filled), "")
