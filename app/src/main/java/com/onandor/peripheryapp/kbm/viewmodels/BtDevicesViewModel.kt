@@ -32,8 +32,7 @@ data class BtDevicesUiState(
     val connectedDevice: BluetoothDevice? = null,
     val arePermissionsGranted: Boolean = false,
     val expandedBondedDevice: BluetoothDevice? = null,
-    val remainingDiscoverable: Int = 0,
-    val isAppSettingsOpen: Boolean = false
+    val remainingDiscoverable: Int = 0
 )
 
 @SuppressLint("MissingPermission")
@@ -321,10 +320,6 @@ class BtDevicesViewModel @Inject constructor(
                 }
             )
         }
-    }
-
-    fun onAppSettingsOpenChanged(open: Boolean) {
-        _uiState.update { it.copy(isAppSettingsOpen = open) }
     }
 
     override fun onCleared() {

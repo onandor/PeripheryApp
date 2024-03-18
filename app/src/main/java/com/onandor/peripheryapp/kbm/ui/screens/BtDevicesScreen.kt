@@ -72,10 +72,8 @@ fun BtDevicesScreen(
             if (uiState.bluetoothState != BluetoothAdapter.STATE_ON ||
                 !uiState.arePermissionsGranted) {
                 PermissionRequest(
-                    appSettingsOpen = uiState.isAppSettingsOpen,
                     bluetoothState = uiState.bluetoothState,
                     onPermissionsGranted = viewModel::onPermissionsGranted,
-                    onAppSettingsOpenChanged = viewModel::onAppSettingsOpenChanged
                 )
             } else {
                 LazyColumn {

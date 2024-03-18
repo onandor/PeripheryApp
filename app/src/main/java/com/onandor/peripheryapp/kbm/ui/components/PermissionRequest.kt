@@ -1,6 +1,7 @@
 package com.onandor.peripheryapp.kbm.ui.components
 
 import android.Manifest
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
@@ -51,9 +52,7 @@ import kotlinx.coroutines.flow.update
 @Composable
 fun PermissionRequest(
     bluetoothState: Int,
-    appSettingsOpen: Boolean,
-    onPermissionsGranted: () -> Unit,
-    onAppSettingsOpenChanged: (Boolean) -> Unit
+    onPermissionsGranted: () -> Unit
 ) {
     val context = LocalContext.current
     val _isBluetoothPermissionGranted: MutableStateFlow<Boolean> = MutableStateFlow(
@@ -80,14 +79,12 @@ fun PermissionRequest(
 
     if (!isBluetoothPermissionGranted || !isLocationPermissionGranted) {
         PermissionsMissing(
-            appSettingsOpen = appSettingsOpen,
             onBluetoothPermissionChanged = { granted ->
                 _isBluetoothPermissionGranted.update { granted }
             },
             onLocationPermissionChanged = { granted ->
                 _isLocationPermissionGranted.update { granted }
-            },
-            onAppSettingsOpenChanged = onAppSettingsOpenChanged
+            }
         )
     } else if (bluetoothState != BluetoothAdapter.STATE_ON) {
         BluetoothOff()
@@ -96,14 +93,11 @@ fun PermissionRequest(
 
 @Composable
 private fun PermissionsMissing(
-    appSettingsOpen: Boolean,
     onBluetoothPermissionChanged: (Boolean) -> Unit,
     onLocationPermissionChanged: (Boolean) -> Unit,
-    onAppSettingsOpenChanged: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+    val packageName = context.packageName
 
     val permissionsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -118,33 +112,23 @@ private fun PermissionsMissing(
         onLocationPermissionChanged(locationPermissionGranted)
     }
 
-    LaunchedEffect(lifecycleState) {
-        // Check if permission was granted when returning from the application settings
-        if (appSettingsOpen && lifecycleState == Lifecycle.State.RESUMED) {
-            onAppSettingsOpenChanged(false)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val permissionGranted = ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) == PackageManager.PERMISSION_GRANTED
-                onBluetoothPermissionChanged(permissionGranted)
-            } else {
-                onBluetoothPermissionChanged(true)
-            }
-            val locationPermissionGranted = ContextCompat.checkSelfPermission(
+    val appSettingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val permissionGranted = ContextCompat.checkSelfPermission(
                 context,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.BLUETOOTH_CONNECT
             ) == PackageManager.PERMISSION_GRANTED
-            onLocationPermissionChanged(locationPermissionGranted)
+            onBluetoothPermissionChanged(permissionGranted)
+        } else {
+            onBluetoothPermissionChanged(true)
         }
-    }
-
-    fun Context.openApplicationSettings() {
-        onAppSettingsOpenChanged(true)
-        startActivity(Intent().apply {
-            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-            data = Uri.parse("package:${packageName}")
-        })
+        val locationPermissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        onLocationPermissionChanged(locationPermissionGranted)
     }
 
     Surface {
@@ -189,7 +173,14 @@ private fun PermissionsMissing(
                     Text(stringResource(id = R.string.permission_request_grant_permissions))
                 }
                 Spacer(modifier = Modifier.width(20.dp))
-                Button(onClick = { context.openApplicationSettings() }) {
+                Button(
+                    onClick = {
+                        appSettingsLauncher.launch(Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.parse("package:${packageName}")
+                        })
+                    }
+                ) {
                     Text(text = stringResource(R.string.permission_request_app_settings))
                 }
             }
@@ -218,7 +209,6 @@ private fun BluetoothOff() {
             Icon(
                 modifier = Modifier.size(180.dp),
                 painter = painterResource(R.drawable.ic_bluetooth_disabled),
-                //imageVector = Icons.Default.Settings,
                 contentDescription = ""
             )
             Text(
