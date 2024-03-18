@@ -13,6 +13,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
+import com.onandor.peripheryapp.kbm.bluetooth.events.BluetoothScanEvent
+import com.onandor.peripheryapp.kbm.bluetooth.events.BluetoothStateEvent
 import com.onandor.peripheryapp.kbm.bluetooth.reports.BatteryReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.bluetooth.reports.MouseReport
@@ -26,6 +28,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -47,20 +53,6 @@ class BluetoothController @Inject constructor(
         fun onAppStatusChanged(registered: Boolean)
     }
 
-    interface BluetoothScanListener {
-
-        fun onDeviceFound(device: BluetoothDevice)
-        fun onDeviceNameChanged(device: BluetoothDevice)
-        fun onDeviceBondStateChanged(device: BluetoothDevice)
-    }
-
-    interface BluetoothStateListener {
-
-        fun onStateChanged(state: Int)
-
-        fun onScanModeChanged(scanMode: Int)
-    }
-
     private val bluetoothManager by lazy {
         context.getSystemService(BluetoothManager::class.java)
     }
@@ -71,8 +63,6 @@ class BluetoothController @Inject constructor(
     private val lock: Any = Any()
     private var isAppRegistered: Boolean = false
     private val hidProfileListeners: MutableSet<HidProfileListener> = mutableSetOf()
-    private val bluetoothScanListeners: MutableSet<BluetoothScanListener> = mutableSetOf()
-    private val bluetoothStateListeners: MutableSet<BluetoothStateListener> = mutableSetOf()
     private var connectedDevice: BluetoothDevice? = null
     private var waitingForDevice: BluetoothDevice? = null
 
@@ -121,7 +111,7 @@ class BluetoothController @Inject constructor(
     private val hidServiceStateListener = object : HidDeviceProfile.ServiceStateListener {
 
         override fun onServiceStateChanged(proxy: BluetoothProfile?) {
-            synchronized (lock) {
+            synchronized(lock) {
                 if (proxy == null) {
                     if (isAppRegistered) {
                         onAppStatusChanged(false)
@@ -137,68 +127,16 @@ class BluetoothController @Inject constructor(
         }
     }
 
-    private val bluetoothScanReceiver = object : BroadcastReceiver() {
-
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-            } else {
-                intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            }
-            if (device == null) {
-                return
-            }
-            bluetoothScanListeners.forEach { listener ->
-                when (intent?.action) {
-                    BluetoothDevice.ACTION_FOUND -> {
-                        listener.onDeviceFound(device)
-                    }
-                    BluetoothDevice.ACTION_NAME_CHANGED -> {
-                        listener.onDeviceNameChanged(device)
-                    }
-                    BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
-                        listener.onDeviceBondStateChanged(device)
-                    }
-                }
-            }
-        }
-    }
-
-    private val bluetoothStateReceiver = object : BroadcastReceiver() {
-
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    val state = intent.getIntExtra(
-                        BluetoothAdapter.EXTRA_STATE,
-                        BluetoothAdapter.ERROR
-                    )
-                    if (state != BluetoothAdapter.ERROR) {
-                        bluetoothStateListeners.forEach { listener ->
-                            listener.onStateChanged(state)
-                        }
-                    }
-                }
-                BluetoothAdapter.ACTION_SCAN_MODE_CHANGED -> {
-                    val scanMode = intent.getIntExtra(
-                        BluetoothAdapter.EXTRA_SCAN_MODE,
-                        BluetoothAdapter.ERROR
-                    )
-                    if (scanMode != BluetoothAdapter.ERROR) {
-                        bluetoothStateListeners.forEach { listener ->
-                            listener.onScanModeChanged(scanMode)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private val batteryReceiver = object : BroadcastReceiver() {
 
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let {
-                onBatteryChanged(it)
+                val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                if (level >= 0 && scale > 0) {
+                    val batteryLevel = level.toFloat() / scale.toFloat()
+                    sendBatteryLevel(batteryLevel)
+                }
             }
         }
     }
@@ -235,6 +173,80 @@ class BluetoothController @Inject constructor(
         hidServiceProxy = null
     }
 
+    fun getBluetoothScanEventFlow(): Flow<BluetoothScanEvent> = callbackFlow {
+        val bluetoothScanReceiver = object : BroadcastReceiver() {
+
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                } else {
+                    intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                }
+                if (device == null) {
+                    return
+                }
+                when (intent?.action) {
+                    BluetoothDevice.ACTION_FOUND -> {
+                        trySendBlocking(BluetoothScanEvent.DeviceFound(device))
+                    }
+                    BluetoothDevice.ACTION_NAME_CHANGED -> {
+                        trySendBlocking(BluetoothScanEvent.DeviceNameChanged(device))
+                    }
+                    BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                        trySendBlocking(BluetoothScanEvent.DeviceBondStateChanged(device))
+                    }
+                }
+            }
+        }
+
+        val scanIntentFilter = IntentFilter()
+        scanIntentFilter.addAction(BluetoothDevice.ACTION_FOUND)
+        scanIntentFilter.addAction(BluetoothDevice.ACTION_NAME_CHANGED)
+        scanIntentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+        context.registerReceiver(bluetoothScanReceiver, scanIntentFilter)
+
+        awaitClose {
+            context.unregisterReceiver(bluetoothScanReceiver)
+        }
+    }
+
+    fun getBluetoothStateEventFlow(): Flow<BluetoothStateEvent> = callbackFlow {
+        val bluetoothStateReceiver = object : BroadcastReceiver() {
+
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                        val state = intent.getIntExtra(
+                            BluetoothAdapter.EXTRA_STATE,
+                            BluetoothAdapter.ERROR
+                        )
+                        if (state != BluetoothAdapter.ERROR) {
+                            trySendBlocking(BluetoothStateEvent.StateChanged(state))
+                        }
+                    }
+                    BluetoothAdapter.ACTION_SCAN_MODE_CHANGED -> {
+                        val scanMode = intent.getIntExtra(
+                            BluetoothAdapter.EXTRA_SCAN_MODE,
+                            BluetoothAdapter.ERROR
+                        )
+                        if (scanMode != BluetoothAdapter.ERROR) {
+                            trySendBlocking(BluetoothStateEvent.ScanModeChanged(scanMode))
+                        }
+                    }
+                }
+            }
+        }
+
+        val stateIntentFilter = IntentFilter()
+        stateIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
+        stateIntentFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)
+        context.registerReceiver(bluetoothStateReceiver, stateIntentFilter)
+
+        awaitClose {
+            context.unregisterReceiver(bluetoothStateReceiver)
+        }
+    }
+
     fun registerProfileListener(listener: HidProfileListener): HidDeviceProfile {
         synchronized (lock) {
             if (!hidProfileListeners.add(listener)) {
@@ -245,13 +257,6 @@ class BluetoothController @Inject constructor(
             }
 
             hidDeviceProfile.registerServiceListener(hidServiceStateListener)
-            val stateIntentFilter = IntentFilter()
-            stateIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
-            stateIntentFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)
-            context.registerReceiver(
-                /* receiver = */ bluetoothStateReceiver,
-                /* filter = */ stateIntentFilter
-            )
             context.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         }
         return hidDeviceProfile
@@ -266,7 +271,6 @@ class BluetoothController @Inject constructor(
                 return
             }
 
-            context.unregisterReceiver(bluetoothStateReceiver)
             context.unregisterReceiver(batteryReceiver)
 
             hidDeviceProfile.getConnectedDevices().forEach { device ->
@@ -280,39 +284,6 @@ class BluetoothController @Inject constructor(
             connectedDevice = null
             waitingForDevice = null
         }
-    }
-
-    fun registerScanListener(listener: BluetoothScanListener) {
-        if (!bluetoothScanListeners.add(listener)) {
-            return
-        }
-        if (bluetoothScanListeners.size > 1) {
-            return
-        }
-
-        val scanIntentFilter = IntentFilter()
-        scanIntentFilter.addAction(BluetoothDevice.ACTION_FOUND)
-        scanIntentFilter.addAction(BluetoothDevice.ACTION_NAME_CHANGED)
-        scanIntentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
-        context.registerReceiver(bluetoothScanReceiver, scanIntentFilter)
-    }
-
-    fun unregisterScanListener(listener: BluetoothScanListener) {
-        if (!bluetoothScanListeners.remove(listener)) {
-            return
-        }
-        if (bluetoothScanListeners.isNotEmpty()) {
-            return
-        }
-        context.unregisterReceiver(bluetoothScanReceiver)
-    }
-
-    fun registerStateListener(listener: BluetoothStateListener) {
-        bluetoothStateListeners.add(listener)
-    }
-
-    fun unregisterStateListener(listener: BluetoothStateListener) {
-        bluetoothStateListeners.remove(listener)
     }
 
     private fun onAppStatusChanged(registered: Boolean) {
@@ -522,15 +493,6 @@ class BluetoothController @Inject constructor(
                 connectedDevice = null
                 deviceName = ""
             }
-        }
-    }
-
-    private fun onBatteryChanged(intent: Intent) {
-        val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-        if (level >= 0 && scale > 0) {
-            val batteryLevel = level.toFloat() / scale.toFloat()
-            sendBatteryLevel(batteryLevel)
         }
     }
 

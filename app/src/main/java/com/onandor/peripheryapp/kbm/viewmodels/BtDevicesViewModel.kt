@@ -7,9 +7,12 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothProfile
 import android.os.CountDownTimer
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothUtils
 import com.onandor.peripheryapp.kbm.bluetooth.BluetoothController
 import com.onandor.peripheryapp.kbm.bluetooth.HidDeviceProfile
+import com.onandor.peripheryapp.kbm.bluetooth.events.BluetoothScanEvent
+import com.onandor.peripheryapp.kbm.bluetooth.events.BluetoothStateEvent
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
 import com.onandor.peripheryapp.utils.PermissionChecker
@@ -17,6 +20,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class BtDevicesUiState(
@@ -70,74 +74,6 @@ class BtDevicesViewModel @Inject constructor(
         }
 
         override fun onFinish() { }
-    }
-
-    private val bluetoothScanListener = object : BluetoothController.BluetoothScanListener {
-
-        override fun onDeviceFound(device: BluetoothDevice) {
-            if (hidDeviceProfile.isHidHostProfileSupported(device) &&
-                device.bondState == BluetoothDevice.BOND_NONE) {
-                _uiState.update {
-                    val foundDevices = if (device in it.foundDevices ) {
-                        it.foundDevices
-                    } else {
-                        it.foundDevices + device
-                    }
-                    it.copy(foundDevices = foundDevices)
-                }
-            }
-        }
-
-        override fun onDeviceNameChanged(device: BluetoothDevice) {
-            _uiState.update { uiState ->
-                val foundDevices = if (device in uiState.foundDevices) {
-                    uiState.foundDevices.filterNot { it.address == device.address } + device
-                } else {
-                    uiState.foundDevices + device
-                }
-                uiState.copy(foundDevices = foundDevices)
-            }
-        }
-
-        override fun onDeviceBondStateChanged(device: BluetoothDevice) {
-            this@BtDevicesViewModel.onDeviceBondStateChanged(device)
-        }
-    }
-
-    private val bluetoothStateListener = object : BluetoothController.BluetoothStateListener {
-
-        override fun onStateChanged(state: Int) {
-            _uiState.update { it.copy(bluetoothState = state) }
-            when (state) {
-                BluetoothAdapter.STATE_ON -> {
-                    updateBondedDevices()
-                    bluetoothController.startDiscovery()
-                }
-                BluetoothAdapter.STATE_OFF -> {
-                    _uiState.update {
-                        it.copy(
-                            bluetoothState = BluetoothAdapter.STATE_OFF,
-                            foundDevices = emptyList(),
-                            bondedDevices = emptyList()
-                        )
-                    }
-                }
-                BluetoothAdapter.STATE_TURNING_OFF -> {
-                    bluetoothController.stopDiscovery()
-                }
-            }
-        }
-
-        override fun onScanModeChanged(scanMode: Int) {
-            val discoverable = scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE
-            if (discoverable) {
-                _uiState.update { it.copy(remainingDiscoverable = 120) }
-                discoverabilityTimer.reset()
-            } else {
-                _uiState.update { it.copy(remainingDiscoverable = 0) }
-                discoverabilityTimer.stop()
-            }
-        }
     }
 
     private val hidProfileListener = object : BluetoothController.HidProfileListener {
@@ -200,7 +136,7 @@ class BtDevicesViewModel @Inject constructor(
         }
     }
 
-    fun updateBondedDevices() {
+    private fun updateBondedDevices() {
         if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
         }
@@ -267,11 +203,97 @@ class BtDevicesViewModel @Inject constructor(
         }
     }
 
+    private fun onBluetoothStateEvent(event: BluetoothStateEvent) {
+        when (event) {
+            is BluetoothStateEvent.StateChanged -> {
+                _uiState.update { it.copy(bluetoothState = event.state) }
+                when (event.state) {
+                    BluetoothAdapter.STATE_ON -> {
+                        updateBondedDevices()
+                        bluetoothController.startDiscovery()
+                    }
+                    BluetoothAdapter.STATE_OFF -> {
+                        _uiState.update {
+                            it.copy(
+                                bluetoothState = BluetoothAdapter.STATE_OFF,
+                                foundDevices = emptyList(),
+                                bondedDevices = emptyList()
+                            )
+                        }
+                    }
+                    BluetoothAdapter.STATE_TURNING_OFF -> {
+                        bluetoothController.stopDiscovery()
+                    }
+                }
+            }
+            is BluetoothStateEvent.ScanModeChanged -> {
+                val discoverable =
+                    event.scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE
+                if (discoverable) {
+                    _uiState.update { it.copy(remainingDiscoverable = 120) }
+                    discoverabilityTimer.reset()
+                } else {
+                    _uiState.update { it.copy(remainingDiscoverable = 0) }
+                    discoverabilityTimer.stop()
+                }
+            }
+        }
+    }
+
+    private fun onBluetoothScanEvent(event: BluetoothScanEvent) {
+        when (event) {
+            is BluetoothScanEvent.DeviceFound -> {
+                if (hidDeviceProfile.isHidHostProfileSupported(event.device) &&
+                    event.device.bondState == BluetoothDevice.BOND_NONE) {
+                    _uiState.update {
+                        val foundDevices = if (event.device in it.foundDevices ) {
+                            it.foundDevices
+                        } else {
+                            it.foundDevices + event.device
+                        }
+                        it.copy(foundDevices = foundDevices)
+                    }
+                }
+            }
+            is BluetoothScanEvent.DeviceNameChanged -> {
+                _uiState.update { uiState ->
+                    val foundDevices = if (event.device in uiState.foundDevices) {
+                        uiState.foundDevices.filterNot {
+                            it.address == event.device.address
+                        } + event.device
+                    } else {
+                        uiState.foundDevices + event.device
+                    }
+                    uiState.copy(foundDevices = foundDevices)
+                }
+            }
+            is BluetoothScanEvent.DeviceBondStateChanged -> {
+                onDeviceBondStateChanged(event.device)
+            }
+        }
+    }
+
+    private fun collectBluetoothStateEvents() {
+        viewModelScope.launch {
+            bluetoothController
+                .getBluetoothStateEventFlow()
+                .collect { onBluetoothStateEvent(it)}
+        }
+    }
+
+    private fun collectBluetoothScanEvents() {
+        viewModelScope.launch {
+            bluetoothController
+                .getBluetoothScanEventFlow()
+                .collect { onBluetoothScanEvent(it) }
+        }
+    }
+
     fun onPermissionsGranted() {
         hidDeviceProfile = bluetoothController.registerProfileListener(hidProfileListener)
         bluetoothAdapter = hidDeviceProfile.bluetoothAdapter
-        bluetoothController.registerScanListener(bluetoothScanListener)
-        bluetoothController.registerStateListener(bluetoothStateListener)
+        collectBluetoothScanEvents()
+        collectBluetoothStateEvents()
 
         _uiState.update {
             it.copy(
@@ -303,8 +325,6 @@ class BtDevicesViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         bluetoothController.stopDiscovery()
-        bluetoothController.unregisterScanListener(bluetoothScanListener)
-        bluetoothController.unregisterStateListener(bluetoothStateListener)
         bluetoothController.unregisterProfileListener(hidProfileListener)
     }
 }

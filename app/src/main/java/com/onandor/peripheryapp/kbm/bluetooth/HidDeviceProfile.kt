@@ -80,15 +80,6 @@ class HidDeviceProfile @Inject constructor(
         serviceStateListener = null
     }
 
-    fun getConnectionState(device: BluetoothDevice): Int {
-        if (hidServiceProxy == null ||
-            !permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)
-        ) {
-            return BluetoothProfile.STATE_DISCONNECTED
-        }
-        return hidServiceProxy!!.getConnectionState(device)
-    }
-
     fun connectToHost(device: BluetoothDevice) {
         if (!permissionChecker.isGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
             return
