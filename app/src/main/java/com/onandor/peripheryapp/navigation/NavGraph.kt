@@ -18,6 +18,7 @@ import com.onandor.peripheryapp.kbm.ui.screens.BtDevicesScreen
 import com.onandor.peripheryapp.kbm.ui.screens.BtSettingsScreen
 import com.onandor.peripheryapp.kbm.ui.screens.InputScreen
 import com.onandor.peripheryapp.viewmodels.NavigationViewModel
+import com.onandor.peripheryapp.webcam.ui.screens.CameraScreen
 import com.onandor.peripheryapp.webcam.ui.screens.NewConnectionScreen
 import java.lang.IllegalArgumentException
 
@@ -65,6 +66,9 @@ fun NavGraph(
             }
             composable(NavDestinations.Webcam.NEW_CONNECTION) {
                 NewConnectionScreen()
+            }
+            composable(NavDestinations.Webcam.CAMERA) {
+                CameraScreen()
             }
         }
     }

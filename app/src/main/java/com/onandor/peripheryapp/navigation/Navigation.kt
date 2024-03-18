@@ -5,12 +5,13 @@ import androidx.navigation.NavOptions
 private object Screens {
     const val MAIN_SCREEN = "mainScreen"
     object Kbm {
-        const val BT_DEVICES_SCREEN = "btDevices"
-        const val INPUT_SCREEN = "inputScreen"
-        const val BT_SETTINGS_SCREEN = "btSettingsScreen"
+        const val BT_DEVICES_SCREEN = "KBM_btDevices"
+        const val INPUT_SCREEN = "KBM_inputScreen"
+        const val BT_SETTINGS_SCREEN = "KBM_btSettingsScreen"
     }
     object Webcam {
-        const val NEW_CONNECTION_SCREEN = "newConnectionScreen"
+        const val NEW_CONNECTION_SCREEN = "WEBCAM_newConnectionScreen"
+        const val CAMERA_SCREEN = "WEBCAM_cameraScreen"
     }
 }
 
@@ -21,10 +22,10 @@ object NavDestinations {
         const val BT_DEVICES = Screens.Kbm.BT_DEVICES_SCREEN
         const val INPUT = Screens.Kbm.INPUT_SCREEN
         const val BT_SETTINGS = Screens.Kbm.BT_SETTINGS_SCREEN
-
     }
     object Webcam {
         const val NEW_CONNECTION = Screens.Webcam.NEW_CONNECTION_SCREEN
+        const val CAMERA = Screens.Webcam.CAMERA_SCREEN
     }
 }
 
@@ -55,6 +56,10 @@ object NavActions {
     object Webcam {
         fun newConnection() = object : NavAction {
             override val destination: String = NavDestinations.Webcam.NEW_CONNECTION
+        }
+
+        fun camera() = object : NavAction {
+            override val destination: String = NavDestinations.Webcam.CAMERA
         }
     }
 
