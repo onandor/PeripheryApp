@@ -47,4 +47,6 @@
     <string name="permission_request_grant_permissions">Grant Permissions</string>
     <string name="permission_request_permissions_denied_settings">If the Grant Permissions button doesn\'t work, you can grant the permissions in the application settings.</string>
     <string name="permission_request_app_settings">App Settings</string>
+    <string name="webcam_permission_request_camera_permission_denied">This part of the app requires the camera permission, which is denied. Grant it to continue.</string>
+    <string name="webcam_permission_request_microphone">Additionally, you can grant the microphone permission to be able to transmit audio.</string>
 </resources>
