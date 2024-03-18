@@ -69,12 +69,8 @@ fun PermissionRequest(
 
     if (!isBluetoothPermissionGranted || !isLocationPermissionGranted) {
         PermissionsMissing(
-            onBluetoothPermissionChanged = { granted ->
-                _isBluetoothPermissionGranted.update { granted }
-            },
-            onLocationPermissionChanged = { granted ->
-                _isLocationPermissionGranted.update { granted }
-            }
+            onBluetoothPermissionGranted = { _isBluetoothPermissionGranted.update { true } },
+            onLocationPermissionGranted = { _isLocationPermissionGranted.update { true } }
         )
     } else if (bluetoothState != BluetoothAdapter.STATE_ON) {
         BluetoothOff()
@@ -83,8 +79,8 @@ fun PermissionRequest(
 
 @Composable
 private fun PermissionsMissing(
-    onBluetoothPermissionChanged: (Boolean) -> Unit,
-    onLocationPermissionChanged: (Boolean) -> Unit,
+    onBluetoothPermissionGranted: () -> Unit,
+    onLocationPermissionGranted: () -> Unit,
 ) {
     val context = LocalContext.current
     val packageName = context.packageName
@@ -97,28 +93,32 @@ private fun PermissionsMissing(
         } else {
             true
         }
-        val locationPermissionGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-        onBluetoothPermissionChanged(bluetoothPermissionGranted)
-        onLocationPermissionChanged(locationPermissionGranted)
+        if (bluetoothPermissionGranted) {
+            onBluetoothPermissionGranted()
+        }
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            onLocationPermissionGranted()
+        }
     }
 
     val appSettingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val permissionGranted = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) == PackageManager.PERMISSION_GRANTED
-            onBluetoothPermissionChanged(permissionGranted)
+        val bluetoothPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
+                    PackageManager.PERMISSION_GRANTED
         } else {
-            onBluetoothPermissionChanged(true)
+            true
         }
-        val locationPermissionGranted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        onLocationPermissionChanged(locationPermissionGranted)
+        val locationPermissionGranted =
+            ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED
+        if (bluetoothPermissionGranted) {
+            onBluetoothPermissionGranted()
+        }
+        if (locationPermissionGranted) {
+            onLocationPermissionGranted()
+        }
     }
 
     Surface {
