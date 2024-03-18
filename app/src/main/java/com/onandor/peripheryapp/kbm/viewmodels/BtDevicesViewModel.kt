@@ -173,7 +173,7 @@ class BtDevicesViewModel @Inject constructor(
     }
 
     fun navigateToInput() {
-        navManager.navigateTo(NavActions.input())
+        navManager.navigateTo(NavActions.Kbm.input())
     }
 
     private fun onDeviceBondStateChanged(device: BluetoothDevice) {

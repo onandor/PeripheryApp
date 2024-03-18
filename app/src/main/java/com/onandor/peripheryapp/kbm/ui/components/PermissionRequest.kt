@@ -120,8 +120,6 @@ private fun PermissionsMissing(
 
     LaunchedEffect(lifecycleState) {
         // Check if permission was granted when returning from the application settings
-        println(appSettingsOpen)
-        println(lifecycleState)
         if (appSettingsOpen && lifecycleState == Lifecycle.State.RESUMED) {
             onAppSettingsOpenChanged(false)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

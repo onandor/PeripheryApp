@@ -235,7 +235,7 @@ class InputViewModel @Inject constructor(
     }
 
     fun navigateToSettings() {
-        navManager.navigateTo(NavActions.btSettings())
+        navManager.navigateTo(NavActions.Kbm.btSettings())
     }
 
     fun navigateBack() {

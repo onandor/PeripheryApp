@@ -13,11 +13,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.onandor.peripheryapp.kbm.ui.screens.MainScreen
+import com.onandor.peripheryapp.ui.MainScreen
 import com.onandor.peripheryapp.kbm.ui.screens.BtDevicesScreen
 import com.onandor.peripheryapp.kbm.ui.screens.BtSettingsScreen
 import com.onandor.peripheryapp.kbm.ui.screens.InputScreen
-import com.onandor.peripheryapp.kbm.viewmodels.NavigationViewModel
+import com.onandor.peripheryapp.viewmodels.NavigationViewModel
+import com.onandor.peripheryapp.webcam.ui.screens.NewConnectionScreen
 import java.lang.IllegalArgumentException
 
 @Composable
@@ -53,14 +54,17 @@ fun NavGraph(
             composable(NavDestinations.MAIN) {
                 MainScreen()
             }
-            composable(NavDestinations.BT_DEVICES) {
+            composable(NavDestinations.Kbm.BT_DEVICES) {
                 BtDevicesScreen()
             }
-            composable(NavDestinations.INPUT) {
+            composable(NavDestinations.Kbm.INPUT) {
                 InputScreen()
             }
-            composable(NavDestinations.BT_SETTINGS) {
+            composable(NavDestinations.Kbm.BT_SETTINGS) {
                 BtSettingsScreen()
+            }
+            composable(NavDestinations.Webcam.NEW_CONNECTION) {
+                NewConnectionScreen()
             }
         }
     }

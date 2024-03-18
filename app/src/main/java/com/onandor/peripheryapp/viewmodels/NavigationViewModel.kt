@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm.viewmodels
+package com.onandor.peripheryapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.navigation.INavigationManager

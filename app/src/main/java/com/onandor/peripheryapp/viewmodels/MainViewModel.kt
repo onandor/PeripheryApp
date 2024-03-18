@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm.viewmodels
+package com.onandor.peripheryapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.navigation.INavigationManager
@@ -12,10 +12,10 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     fun navigateToBtKbmScreen() {
-        navManager.navigateTo(NavActions.btDevices())
+        navManager.navigateTo(NavActions.Kbm.btDevices())
     }
 
     fun navigateToWifiWebcamScreen() {
-        // TODO
+        navManager.navigateTo(NavActions.Webcam.newConnection())
     }
 }

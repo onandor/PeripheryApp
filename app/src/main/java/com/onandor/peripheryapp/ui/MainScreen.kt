@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.kbm.ui.screens
+package com.onandor.peripheryapp.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.onandor.peripheryapp.R
-import com.onandor.peripheryapp.kbm.viewmodels.MainViewModel
+import com.onandor.peripheryapp.viewmodels.MainViewModel
 
 @Composable
 fun MainScreen(
