@@ -64,10 +64,6 @@ fun BtDevicesScreen(
             )
         }
     ) { innerPadding ->
-        val discoverabilityLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) {}
-
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -76,45 +72,15 @@ fun BtDevicesScreen(
             if (uiState.bluetoothState != BluetoothAdapter.STATE_ON ||
                 !uiState.arePermissionsGranted) {
                 PermissionRequest(
+                    appSettingsOpen = uiState.isAppSettingsOpen,
                     bluetoothState = uiState.bluetoothState,
-                    onPermissionsGranted = viewModel::onPermissionsGranted
+                    onPermissionsGranted = viewModel::onPermissionsGranted,
+                    onAppSettingsOpenChanged = viewModel::onAppSettingsOpenChanged
                 )
             } else {
                 LazyColumn {
                     item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(enabled = uiState.remainingDiscoverable <= 0) {
-                                    val intent =
-                                        Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
-                                    discoverabilityLauncher.launch(intent)
-                                },
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            val text = if (uiState.remainingDiscoverable <= 0) {
-                                stringResource(R.string.bt_devices_make_device_discoverable)
-                            } else {
-                                buildString {
-                                    append(stringResource(R.string.bt_devices_device_is_discoverable_for))
-                                    append(" ")
-                                    append(uiState.remainingDiscoverable)
-                                    append(" ")
-                                    append(stringResource(id = R.string.second_short))
-                                }
-                            }
-                            Text(
-                                modifier = Modifier.padding(start = 16.dp),
-                                text = text,
-                                fontSize = 18.sp
-                            )
-                            Checkbox(
-                                enabled = false,
-                                checked = uiState.remainingDiscoverable > 0,
-                                onCheckedChange = {}
-                            )
-                        }
+                        EnableDiscoverability(remainingDiscoverable = uiState.remainingDiscoverable)
                     }
                     item {
                         HorizontalDivider(
@@ -177,5 +143,46 @@ fun BtDevicesScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EnableDiscoverability(remainingDiscoverable: Int) {
+    val discoverabilityLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {}
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = remainingDiscoverable <= 0) {
+                val intent =
+                    Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+                discoverabilityLauncher.launch(intent)
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        val text = if (remainingDiscoverable <= 0) {
+            stringResource(R.string.bt_devices_make_device_discoverable)
+        } else {
+            buildString {
+                append(stringResource(R.string.bt_devices_device_is_discoverable_for))
+                append(" ")
+                append(remainingDiscoverable)
+                append(" ")
+                append(stringResource(id = R.string.second_short))
+            }
+        }
+        Text(
+            modifier = Modifier.padding(start = 16.dp),
+            text = text,
+            fontSize = 18.sp
+        )
+        Checkbox(
+            enabled = false,
+            checked = remainingDiscoverable > 0,
+            onCheckedChange = {}
+        )
     }
 }
