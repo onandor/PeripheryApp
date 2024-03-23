@@ -18,6 +18,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.lifecycle.ViewModel
 import com.google.common.util.concurrent.ListenableFuture
 import com.onandor.peripheryapp.navigation.INavigationManager
+import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -34,13 +35,7 @@ class CameraViewModel @Inject constructor(
     val videoCapture = VideoCapture.withOutput(streamVideoOutput)
     private var camera: Camera? = null
     private var mediaCodec: MediaCodec? = null
-
-    private val onFrameRenderedListener = object : MediaCodec.OnFrameRenderedListener {
-
-        override fun onFrameRendered(codec: MediaCodec, presentationTimeUs: Long, nanoTime: Long) {
-            println("onFrameRendered")
-        }
-    }
+    private var encoder: Encoder? = null
 
     fun getCameraProvider(context: Context): ProcessCameraProvider {
         if (cameraProvider != null) {
@@ -65,10 +60,12 @@ class CameraViewModel @Inject constructor(
         this.camera = camera
         mediaCodec = streamVideoOutput.mediaCodec
         mediaCodec?.start()
-        mediaCodec?.setOnFrameRenderedListener(onFrameRenderedListener, null)
+        encoder = Encoder(mediaCodec!!)
+        encoder?.start()
     }
 
     fun navigateBack() {
+        encoder?.stop()
         mediaCodec?.stop()
         mediaCodec?.release()
         streamVideoOutput.release()
