@@ -1,16 +1,24 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
 import android.content.Context
+import android.media.MediaCodec
+import android.provider.MediaStore.Audio.Media
 import android.util.Size
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraProvider
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.VideoCapture
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.lifecycle.ViewModel
+import com.google.common.util.concurrent.ListenableFuture
 import com.onandor.peripheryapp.navigation.INavigationManager
+import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
@@ -21,58 +29,49 @@ class CameraViewModel @Inject constructor(
     private val navManager: INavigationManager
 ) : ViewModel() {
 
-    private var controller: LifecycleCameraController? = null
+    private var cameraProvider: ProcessCameraProvider? = null
+    private val streamVideoOutput = StreamVideoOutput()
+    val videoCapture = VideoCapture.withOutput(streamVideoOutput)
+    private var camera: Camera? = null
+    private var mediaCodec: MediaCodec? = null
 
-    private val imageAnalyzer = object : ImageAnalysis.Analyzer {
+    private val onFrameRenderedListener = object : MediaCodec.OnFrameRenderedListener {
 
-        private var frameSkipCounter = 0
-
-        override fun analyze(image: ImageProxy) {
-            if (frameSkipCounter % 60 != 0) {
-                frameSkipCounter++
-                image.close()
-                return
-            }
-            //println("height: ${image.height}, width: ${image.width}")
-            //println("rotationDegrees: ${image.imageInfo.rotationDegrees}")
-            //println(image.format)
-            frameSkipCounter = 0
-            image.close()
+        override fun onFrameRendered(codec: MediaCodec, presentationTimeUs: Long, nanoTime: Long) {
+            println("onFrameRendered")
         }
     }
 
-    private val resolutionSelector = ResolutionSelector.Builder()
-        .setResolutionStrategy(
-            ResolutionStrategy(
-                Size(1280, 720),
-                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
-            )
-        )
-        .build()
-
-    fun getController(context: Context): LifecycleCameraController {
-        if (controller != null) {
-            return controller!!
+    fun getCameraProvider(context: Context): ProcessCameraProvider {
+        if (cameraProvider != null) {
+            return cameraProvider!!
         }
-        controller = LifecycleCameraController(context).apply {
-            setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
-            setImageAnalysisAnalyzer(Dispatchers.Main.asExecutor(), imageAnalyzer)
-            imageCaptureResolutionSelector = resolutionSelector
-            imageAnalysisResolutionSelector = resolutionSelector
-        }
-        return controller!!
+        cameraProvider = ProcessCameraProvider.getInstance(context).get()
+        return cameraProvider!!
     }
 
     fun onToggleCamera() {
+        /*
         controller?.cameraSelector =
             if (controller?.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
                 CameraSelector.DEFAULT_FRONT_CAMERA
             } else {
                 CameraSelector.DEFAULT_BACK_CAMERA
             }
+         */
+    }
+
+    fun onCameraGot(camera: Camera) {
+        this.camera = camera
+        mediaCodec = streamVideoOutput.mediaCodec
+        mediaCodec?.start()
+        mediaCodec?.setOnFrameRenderedListener(onFrameRenderedListener, null)
     }
 
     fun navigateBack() {
+        mediaCodec?.stop()
+        mediaCodec?.release()
+        streamVideoOutput.release()
         navManager.navigateBack()
     }
 }
