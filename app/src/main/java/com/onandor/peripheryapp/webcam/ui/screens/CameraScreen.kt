@@ -80,7 +80,6 @@ fun CameraPreviewView(
                     /* cameraSelector = */ CameraSelector.DEFAULT_BACK_CAMERA,
                     /* ...useCases = */ preview, videoCapture
                 )
-
                 onCameraGot(camera)
             }
         }

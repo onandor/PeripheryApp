@@ -22,13 +22,13 @@ import kotlinx.coroutines.asExecutor
 
 class StreamVideoOutput : VideoOutput {
 
-    private val I_FRAME_INTERVAL = 5
+    private val I_FRAME_INTERVAL = 2
     private val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
 
     private val resolution: Size = Size(640, 480)
     private val minBitrate = 500
     private val maxBitrate = 2500
-    private val frameRate = 30
+    private val frameRate = 15
 
     private var surface: Surface? = null
     var mediaCodec: MediaCodec? = null
@@ -59,9 +59,7 @@ class StreamVideoOutput : VideoOutput {
         request.provideSurface(
             surface!!,
             Dispatchers.Main.asExecutor()
-        ) { result ->
-            println("resultCode: " + result.resultCode)
-        }
+        ) {}
     }
 
     @SuppressLint("RestrictedApi")
@@ -69,7 +67,7 @@ class StreamVideoOutput : VideoOutput {
         val videoSpec = VideoSpec.builder()
             .setFrameRate(Range(frameRate, frameRate))
             .setBitrate(Range(minBitrate, maxBitrate))
-            .setQualitySelector(QualitySelector.from(Quality.FHD))
+            .setQualitySelector(QualitySelector.from(Quality.SD))
             .build()
         val mediaSpec = MediaSpec.builder().setVideoSpec(videoSpec).build()
         return ConstantObservable.withValue(mediaSpec)
