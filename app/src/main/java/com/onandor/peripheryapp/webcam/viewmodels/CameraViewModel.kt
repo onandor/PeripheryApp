@@ -23,32 +23,8 @@ class CameraViewModel @Inject constructor(
     private val streamVideoOutput = StreamVideoOutput()
     val videoCapture = VideoCapture.withOutput(streamVideoOutput)
     private var camera: Camera? = null
-    private var mediaCodec: MediaCodec? = null
     private var encoder: Encoder? = null
     private val streamer = Streamer()
-
-    private val mediaCodecCallback = object : MediaCodec.Callback() {
-        override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-            println("onInputBufferAvaiable")
-        }
-
-        override fun onOutputBufferAvailable(
-            codec: MediaCodec,
-            index: Int,
-            info: MediaCodec.BufferInfo
-        ) {
-            val data = encoder?.encode(codec, index, info)
-            data?.let { streamer.queueData(it) }
-        }
-
-        override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
-            println("onError")
-        }
-
-        override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
-            println("onOutputFormatChanged")
-        }
-    }
 
     fun getCameraProvider(context: Context): ProcessCameraProvider {
         if (cameraProvider != null) {
@@ -71,23 +47,13 @@ class CameraViewModel @Inject constructor(
 
     fun onCameraGot(camera: Camera) {
         this.camera = camera
-        mediaCodec = streamVideoOutput.mediaCodec
-        mediaCodec?.setCallback(mediaCodecCallback)
-        mediaCodec?.start()
-        encoder = Encoder(mediaCodec!!) { onDataEncoded(it) }
+        encoder = Encoder(streamVideoOutput.mediaCodec!!) { streamer.queueData(it) }
         streamer.startStream("192.168.0.47", 7220)
-        //encoder?.start()
-    }
-
-    private fun onDataEncoded(data: ByteArray) {
-        streamer.queueData(data)
     }
 
     fun navigateBack() {
-        //encoder?.stop()
         streamer.stopStream()
-        mediaCodec?.stop()
-        mediaCodec?.release()
+        encoder?.release()
         streamVideoOutput.release()
         navManager.navigateBack()
     }
