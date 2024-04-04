@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.ByteBuffer
 
 class Encoder(
@@ -18,13 +19,10 @@ class Encoder(
 
     private var spsPpsInfo: ByteArray? = null
     private val outputStream = ByteArrayOutputStream()
-    private lateinit var muxer: MediaMuxer
-    private var trackIndex = -1
+    private var spsPps: ByteArray? = null
 
     private val mediaCodecCallback = object : MediaCodec.Callback() {
-        override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-            println("onInputBufferAvaiable")
-        }
+        override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {}
 
         override fun onOutputBufferAvailable(
             codec: MediaCodec,
@@ -36,21 +34,23 @@ class Encoder(
         }
 
         override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
+            // TODO
             println("onError")
         }
 
         override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
-            //trackIndex = muxer.addTrack(format)
-            //muxer.start()
+            val sps = format.getByteBuffer("csd-0")
+            val pps = format.getByteBuffer("csd-1")
+            outputStream.write(sps?.array())
+            outputStream.write(pps?.array())
+            onDataEncoded(outputStream.toByteArray())
+            outputStream.reset()
         }
     }
 
     init {
         mediaCodec.setCallback(mediaCodecCallback)
         mediaCodec.start()
-
-        //val outputPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "test.mp4").toString()
-        //muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
     }
 
     fun encode(mediaCodec: MediaCodec, index: Int, bufferInfo: MediaCodec.BufferInfo): ByteArray? {
@@ -82,21 +82,24 @@ class Encoder(
         mediaCodec.releaseOutputBuffer(index, false)
 
         var ret = outputStream.toByteArray()
+        /*
         if (ret.size > 5 && ret[4] == 0x65.toByte()) {
+            println("insert SPS PPS info")
             outputStream.reset()
             outputStream.write(spsPpsInfo)
             outputStream.write(ret)
             ret = outputStream.toByteArray()
         }
-        //muxer.writeSampleData(trackIndex, outputBuffer, bufferInfo)
+         */
+        //println("bufferInfo.size: " + bufferInfo.size + ", bufferInfo.offset: " + bufferInfo.offset)
+        //muxer.writeSampleData(trackIndex, ByteBuffer.wrap(outData), bufferInfo)
+        //fos.write(outData)
         outputStream.reset()
-        return ret
+        return outData
     }
 
     fun release() {
         mediaCodec.stop()
         mediaCodec.release()
-        //muxer.stop()
-        //muxer.release()
     }
 }

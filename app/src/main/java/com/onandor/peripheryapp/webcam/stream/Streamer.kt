@@ -52,7 +52,6 @@ class Streamer {
     private suspend fun sendData() {
         var dataAvailable: Boolean
         var data = ByteArray(0)
-        var totalSent = 0
         while (true) {
             synchronized(dataQueue) {
                 if (dataQueue.isEmpty()) {
@@ -64,8 +63,6 @@ class Streamer {
 
                 if (dataAvailable) {
                     try {
-                        totalSent += data.size
-                        println("total sent: $totalSent")
                         dos.write(data.size.to2ByteArray())
                         dos.write(data)
                     } catch (e: IOException) {
