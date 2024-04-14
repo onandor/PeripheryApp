@@ -1,14 +1,13 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -37,7 +36,7 @@ class NewConnectionViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             val previousAddress = settings.get(WebcamSettingKeys.PREVIOUS_ADDRESS)
             val previousPort = settings.get(WebcamSettingKeys.PREVIOUS_PORT)
             val canConnect = previousAddress.isNotEmpty() && previousPort.isNotEmpty()
@@ -49,7 +48,7 @@ class NewConnectionViewModel @Inject constructor(
                 )
             }
         }
-        CoroutineScope(Dispatchers.Default).launch {
+        viewModelScope.launch {
             streamer.connectionEventFlow.collect {
                 onConnectionEvent(it)
             }
@@ -99,7 +98,7 @@ class NewConnectionViewModel @Inject constructor(
     private fun onConnectionEvent(event: Streamer.ConnectionEvent) {
         when (event) {
             Streamer.ConnectionEvent.CONNECTION_SUCCESS ->  {
-                CoroutineScope(Dispatchers.IO).launch {
+                viewModelScope.launch {
                     settings.save(WebcamSettingKeys.PREVIOUS_ADDRESS, uiState.value.address)
                     settings.save(WebcamSettingKeys.PREVIOUS_PORT, uiState.value.port)
                 }
