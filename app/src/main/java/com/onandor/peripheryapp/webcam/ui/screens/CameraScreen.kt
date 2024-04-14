@@ -1,5 +1,10 @@
 package com.onandor.peripheryapp.webcam.ui.screens
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -15,36 +20,47 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 import com.onandor.peripheryapp.webcam.viewmodels.CameraViewModel
 
+@SuppressLint("SourceLockedOrientationActivity")
 @Composable
 fun CameraScreen(
     viewModel: CameraViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val cameraProvider = remember { ProcessCameraProvider.getInstance(context).get() }
+
+    DisposableEffect(Unit) {
+        val activity = context.findActivity() ?: return@DisposableEffect onDispose {}
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        onDispose {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+    }
 
     Scaffold { innerPadding ->
         Box(modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
         ) {
-            CameraPreviewView(
-                modifier = Modifier.fillMaxSize(),
-                cameraProvider = cameraProvider,
-                videoCapture = viewModel.videoCapture,
-                onCameraGot = viewModel::onCameraGot
-            )
+            Box(modifier = Modifier.padding(150.dp)){
+                CameraPreviewView(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraProvider = viewModel.getCameraProvider(context),
+                    videoCapture = viewModel.videoCapture,
+                    onCameraGot = viewModel::onCameraGot
+                )
+            }
             IconButton(
                 modifier = Modifier.align(Alignment.BottomEnd),
                 onClick = viewModel::onToggleCamera
@@ -86,4 +102,10 @@ fun CameraPreviewView(
             }
         }
     )
+}
+
+fun Context.findActivity(): Activity? = when(this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

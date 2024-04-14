@@ -70,7 +70,9 @@ class Encoder(
     }
 
     fun release() {
-        mediaCodec.stop()
+        try {
+            mediaCodec.stop()
+        } catch (_: Exception) {}
         mediaCodec.release()
     }
 }

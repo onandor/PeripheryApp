@@ -1,8 +1,6 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
 import android.content.Context
-import android.media.MediaCodec
-import android.media.MediaFormat
 import androidx.camera.core.Camera
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.VideoCapture
@@ -19,11 +17,20 @@ class CameraViewModel @Inject constructor(
     private val navManager: INavigationManager
 ) : ViewModel() {
 
+    private var cameraProvider: ProcessCameraProvider? = null
     private val streamVideoOutput = StreamVideoOutput()
     val videoCapture = VideoCapture.withOutput(streamVideoOutput)
     private var camera: Camera? = null
     private var encoder: Encoder? = null
     private val streamer = Streamer()
+
+    fun getCameraProvider(context: Context): ProcessCameraProvider {
+        if (cameraProvider != null) {
+            return cameraProvider!!
+        }
+        cameraProvider = ProcessCameraProvider.getInstance(context).get()
+        return cameraProvider!!
+    }
 
     fun onToggleCamera() {
         /*
@@ -37,6 +44,9 @@ class CameraViewModel @Inject constructor(
     }
 
     fun onCameraGot(camera: Camera) {
+        if (this.camera != null) {
+            return
+        }
         this.camera = camera
         encoder = Encoder(streamVideoOutput.mediaCodec!!) { streamer.queueData(it) }
         streamer.startStream("192.168.0.47", 7220)

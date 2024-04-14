@@ -36,7 +36,10 @@ class StreamVideoOutput : VideoOutput {
 
     override fun onSurfaceRequested(request: SurfaceRequest) {
         if (surface != null) {
-            request.willNotProvideSurface()
+            request.provideSurface(
+                surface!!,
+                Dispatchers.Main.asExecutor()
+            ) {}
             return
         }
 
