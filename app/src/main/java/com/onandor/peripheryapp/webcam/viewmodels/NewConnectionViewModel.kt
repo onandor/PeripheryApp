@@ -10,13 +10,17 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 data class NewConnectionUiState(
-    val isCameraPermissionGranted: Boolean = false
+    val isCameraPermissionGranted: Boolean = false,
+    val address: String = "",
+    val port: String = ""
 )
 
 @HiltViewModel
 class NewConnectionViewModel @Inject constructor(
     private val navManager: INavigationManager
 ) : ViewModel() {
+
+    private val portPattern = Regex("^\\d+\$")
 
     private val _uiState = MutableStateFlow(NewConnectionUiState())
     val uiState = _uiState.asStateFlow()
@@ -31,5 +35,15 @@ class NewConnectionViewModel @Inject constructor(
 
     fun navigateToCamera() {
         navManager.navigateTo(NavActions.Webcam.camera())
+    }
+
+    fun onAddressChanged(value: String) {
+        _uiState.update { it.copy(address = value) }
+    }
+
+    fun onPortChanged(value: String) {
+        if (value.isEmpty() || value.matches(portPattern)) {
+            _uiState.update { it.copy(port = value) }
+        }
     }
 }

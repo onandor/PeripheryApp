@@ -49,4 +49,8 @@
     <string name="permission_request_app_settings">App Settings</string>
     <string name="webcam_permission_request_camera_permission_denied">This part of the app requires the camera permission, which is denied. Grant it to continue.</string>
     <string name="webcam_permission_request_microphone">Additionally, you can grant the microphone permission to be able to transmit audio.</string>
+    <string name="webcam_establish_connection">Establish connection</string>
+    <string name="webcam_ip_address">IP Address</string>
+    <string name="webcam_port">Port</string>
+    <string name="webcam_connect">Connect</string>
 </resources>

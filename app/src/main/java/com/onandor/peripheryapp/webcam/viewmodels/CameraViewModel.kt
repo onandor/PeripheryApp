@@ -1,6 +1,7 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
 import android.content.Context
+import android.util.Range
 import androidx.camera.core.Camera
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.VideoCapture
@@ -19,10 +20,12 @@ class CameraViewModel @Inject constructor(
 
     private var cameraProvider: ProcessCameraProvider? = null
     private val streamVideoOutput = StreamVideoOutput()
-    val videoCapture = VideoCapture.withOutput(streamVideoOutput)
     private var camera: Camera? = null
     private var encoder: Encoder? = null
     private val streamer = Streamer()
+    val videoCapture = VideoCapture.Builder(streamVideoOutput)
+        .setTargetFrameRate(Range(15, 15))
+        .build()
 
     fun getCameraProvider(context: Context): ProcessCameraProvider {
         if (cameraProvider != null) {
