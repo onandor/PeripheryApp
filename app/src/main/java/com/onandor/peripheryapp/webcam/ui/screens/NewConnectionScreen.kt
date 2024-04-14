@@ -54,11 +54,11 @@ fun NewConnectionScreen(
 
     if (uiState.connectionEvent != null) {
         val toastText = when(uiState.connectionEvent) {
-            Streamer.ConnectionEvent.TimeoutFailure ->
+            Streamer.ConnectionEvent.TIMEOUT_FAILURE ->
                 stringResource(R.string.webcam_timeout)
-            Streamer.ConnectionEvent.UnknownHostFailure ->
+            Streamer.ConnectionEvent.UNKNOWN_HOST_FAILURE ->
                 stringResource(R.string.webcam_unknown_host)
-            Streamer.ConnectionEvent.HostUnreachableFailure ->
+            Streamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE ->
                 stringResource(R.string.webcam_host_unreachable)
             else -> ""
         }

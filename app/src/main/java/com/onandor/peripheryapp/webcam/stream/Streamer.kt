@@ -33,10 +33,10 @@ class Streamer {
     val connectionEventFlow = _connectionEventFlow.asSharedFlow()
 
     enum class ConnectionEvent {
-        ConnectionSuccess,
-        UnknownHostFailure,
-        TimeoutFailure,
-        HostUnreachableFailure
+        CONNECTION_SUCCESS,
+        UNKNOWN_HOST_FAILURE,
+        TIMEOUT_FAILURE,
+        HOST_UNREACHABLE_FAILURE
     }
 
     fun connect(ipAddress: String, port: Int): CompletableFuture<ConnectionEvent> {
@@ -47,11 +47,11 @@ class Streamer {
 
                 socket = Socket(ipAddress, port)
                 dos = DataOutputStream(socket?.getOutputStream())
-                ConnectionEvent.ConnectionSuccess
+                ConnectionEvent.CONNECTION_SUCCESS
             } catch (e: ConnectException) {
-                ConnectionEvent.TimeoutFailure
+                ConnectionEvent.TIMEOUT_FAILURE
             } catch (e: UnknownHostException) {
-                ConnectionEvent.UnknownHostFailure
+                ConnectionEvent.UNKNOWN_HOST_FAILURE
             }
         }
     }
@@ -91,7 +91,7 @@ class Streamer {
                         dos?.write(data)
                     } catch (e: IOException) {
                         CoroutineScope(Dispatchers.IO).launch {
-                            _connectionEventFlow.emit(ConnectionEvent.HostUnreachableFailure)
+                            _connectionEventFlow.emit(ConnectionEvent.HOST_UNREACHABLE_FAILURE)
                         }
                         stopStream()
                     }

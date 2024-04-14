@@ -33,7 +33,7 @@ class CameraViewModel @Inject constructor(
     init {
         CoroutineScope(Dispatchers.Default).launch {
             streamer.connectionEventFlow.collect {
-                if (it != Streamer.ConnectionEvent.ConnectionSuccess) {
+                if (it != Streamer.ConnectionEvent.CONNECTION_SUCCESS) {
                     navigateBack()
                 }
             }

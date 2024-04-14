@@ -3,7 +3,6 @@ package com.onandor.peripheryapp.webcam.viewmodels
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
-import com.onandor.peripheryapp.navigation.NavDestinations
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.Streamer
@@ -99,20 +98,20 @@ class NewConnectionViewModel @Inject constructor(
 
     private fun onConnectionEvent(event: Streamer.ConnectionEvent) {
         when (event) {
-            Streamer.ConnectionEvent.ConnectionSuccess ->  {
+            Streamer.ConnectionEvent.CONNECTION_SUCCESS ->  {
                 CoroutineScope(Dispatchers.IO).launch {
                     settings.save(WebcamSettingKeys.PREVIOUS_ADDRESS, uiState.value.address)
                     settings.save(WebcamSettingKeys.PREVIOUS_PORT, uiState.value.port)
                 }
                 navManager.navigateTo(NavActions.Webcam.camera())
             }
-            Streamer.ConnectionEvent.UnknownHostFailure -> {
+            Streamer.ConnectionEvent.UNKNOWN_HOST_FAILURE -> {
                 _uiState.update { it.copy(connectionEvent = event) }
             }
-            Streamer.ConnectionEvent.TimeoutFailure -> {
+            Streamer.ConnectionEvent.TIMEOUT_FAILURE -> {
                 _uiState.update { it.copy(connectionEvent = event) }
             }
-            Streamer.ConnectionEvent.HostUnreachableFailure -> {
+            Streamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE -> {
                 _uiState.update { it.copy(connectionEvent = event) }
             }
         }
