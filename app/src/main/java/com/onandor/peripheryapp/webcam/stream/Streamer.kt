@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.DataOutputStream
 import java.io.IOException
+import java.net.ConnectException
 import java.net.InetAddress
 import java.net.Socket
 import java.net.SocketException
@@ -21,8 +22,8 @@ class Streamer {
     private var sendDataJob: Job? = null
     private var dataQueue: Queue<ByteArray> = LinkedList()
 
-    private lateinit var socket: Socket
-    private lateinit var dos: DataOutputStream
+    private var socket: Socket? = null
+    private var dos: DataOutputStream? = null
 
     fun startStream(ipAddress: String, port: Int) {
         sendDataJob = CoroutineScope(Dispatchers.IO).launch {
@@ -31,10 +32,13 @@ class Streamer {
                 this@Streamer.port = port
 
                 socket = Socket(ipAddress, port)
-                dos = DataOutputStream(socket.getOutputStream())
+                dos = DataOutputStream(socket?.getOutputStream())
             } catch (e: SocketException) {
+                // TODO
                 e.printStackTrace()
             } catch (e: UnknownHostException) {
+                e.printStackTrace()
+            } catch (e: ConnectException) {
                 e.printStackTrace()
             }
             sendData()
@@ -42,11 +46,9 @@ class Streamer {
     }
 
     fun stopStream() {
-        if (sendDataJob != null) {
-            dos.close()
-            sendDataJob!!.cancel()
-            sendDataJob = null
-        }
+        dos?.close()
+        sendDataJob?.cancel()
+        sendDataJob = null
     }
 
     private suspend fun sendData() {
@@ -63,8 +65,8 @@ class Streamer {
 
                 if (dataAvailable) {
                     try {
-                        dos.write(data.size.to2ByteArray())
-                        dos.write(data)
+                        dos?.write(data.size.to2ByteArray())
+                        dos?.write(data)
                     } catch (e: IOException) {
                         e.printStackTrace()
                     }
