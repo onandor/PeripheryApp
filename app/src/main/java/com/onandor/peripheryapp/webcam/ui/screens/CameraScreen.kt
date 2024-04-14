@@ -12,13 +12,21 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.VideoCapture
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
@@ -49,27 +57,33 @@ fun CameraScreen(
     }
 
     Scaffold { innerPadding ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)
-        ) {
-            Box(modifier = Modifier.padding(150.dp)){
+        Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
+            Row(
+                modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = viewModel::navigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = null
+                    )
+                }
                 CameraPreviewView(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(4 / 3f),
                     cameraProvider = viewModel.getCameraProvider(context),
                     videoCapture = viewModel.videoCapture,
                     onCameraGot = viewModel::onCameraGot
                 )
-            }
-            IconButton(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                onClick = viewModel::onToggleCamera
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_cameraswitch),
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.surface
-                )
+                Column {
+                    IconButton(onClick = viewModel::onToggleCamera) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_cameraswitch),
+                            contentDescription = null
+                        )
+                    }
+                }
             }
         }
     }
