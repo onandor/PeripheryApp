@@ -3,6 +3,8 @@ package com.onandor.peripheryapp.webcam.viewmodels
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
+import com.onandor.peripheryapp.utils.Settings
+import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +27,8 @@ data class NewConnectionUiState(
 @HiltViewModel
 class NewConnectionViewModel @Inject constructor(
     private val navManager: INavigationManager,
-    private val streamer: Streamer
+    private val streamer: Streamer,
+    private val settings: Settings
 ) : ViewModel() {
 
     private val portPattern = Regex("^\\d+\$")
@@ -34,6 +37,18 @@ class NewConnectionViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
+        CoroutineScope(Dispatchers.IO).launch {
+            val previousAddress = settings.get(WebcamSettingKeys.PREVIOUS_ADDRESS)
+            val previousPort = settings.get(WebcamSettingKeys.PREVIOUS_PORT)
+            val canConnect = previousAddress.isNotEmpty() && previousPort.isNotEmpty()
+            _uiState.update {
+                it.copy(
+                    address = previousAddress,
+                    port = previousPort,
+                    canConnect = canConnect
+                )
+            }
+        }
         CoroutineScope(Dispatchers.Default).launch {
             streamer.connectionEventFlow.collect {
                 onConnectionEvent(it)
@@ -75,8 +90,8 @@ class NewConnectionViewModel @Inject constructor(
         _uiState.update { it.copy(connecting = true) }
         streamer.connect(uiState.value.address, uiState.value.port.toInt())
             .thenAccept { result ->
-                onConnectionEvent(result)
                 _uiState.update { it.copy(connecting = false) }
+                onConnectionEvent(result)
             }
     }
 
@@ -84,6 +99,10 @@ class NewConnectionViewModel @Inject constructor(
     private fun onConnectionEvent(event: Streamer.ConnectionEvent) {
         when (event) {
             Streamer.ConnectionEvent.ConnectionSuccess ->  {
+                CoroutineScope(Dispatchers.IO).launch {
+                    settings.save(WebcamSettingKeys.PREVIOUS_ADDRESS, uiState.value.address)
+                    settings.save(WebcamSettingKeys.PREVIOUS_PORT, uiState.value.port)
+                }
                 navManager.navigateTo(NavActions.Webcam.camera())
             }
             Streamer.ConnectionEvent.UnknownHostFailure -> {

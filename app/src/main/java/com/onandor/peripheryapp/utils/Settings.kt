@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.TouchpadController
@@ -41,6 +42,17 @@ object BtSettingKeys {
     val KEYBOARD_REPORT_MODE = SettingKey(
         intPreferencesKey("keyboard_report_mode"),
         defaultValue = KeyboardReport.ReportMode.KEY_6.value
+    )
+}
+
+object WebcamSettingKeys {
+    val PREVIOUS_ADDRESS = SettingKey(
+        preferenceKey = stringPreferencesKey("webcam_previous_address"),
+        defaultValue = ""
+    )
+    val PREVIOUS_PORT = SettingKey(
+        preferenceKey = stringPreferencesKey("webcam_previous_port"),
+        defaultValue = ""
     )
 }
 
