@@ -26,7 +26,7 @@ class StreamVideoOutput : VideoOutput {
     private val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
 
     private val resolution: Size = Size(640, 480)
-    private val minBitrate = 500
+    private val minBitrate = 1500
     private val maxBitrate = 2500
     private val frameRate = 15
 

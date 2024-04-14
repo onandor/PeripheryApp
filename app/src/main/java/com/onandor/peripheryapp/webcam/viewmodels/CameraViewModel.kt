@@ -19,20 +19,11 @@ class CameraViewModel @Inject constructor(
     private val navManager: INavigationManager
 ) : ViewModel() {
 
-    private var cameraProvider: ProcessCameraProvider? = null
     private val streamVideoOutput = StreamVideoOutput()
     val videoCapture = VideoCapture.withOutput(streamVideoOutput)
     private var camera: Camera? = null
     private var encoder: Encoder? = null
     private val streamer = Streamer()
-
-    fun getCameraProvider(context: Context): ProcessCameraProvider {
-        if (cameraProvider != null) {
-            return cameraProvider!!
-        }
-        cameraProvider = ProcessCameraProvider.getInstance(context).get()
-        return cameraProvider!!
-    }
 
     fun onToggleCamera() {
         /*

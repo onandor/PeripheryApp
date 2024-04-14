@@ -15,6 +15,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,6 +32,7 @@ fun CameraScreen(
     viewModel: CameraViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val cameraProvider = remember { ProcessCameraProvider.getInstance(context).get() }
 
     Scaffold { innerPadding ->
         Box(modifier = Modifier
@@ -39,7 +41,7 @@ fun CameraScreen(
         ) {
             CameraPreviewView(
                 modifier = Modifier.fillMaxSize(),
-                cameraProvider = viewModel.getCameraProvider(context),
+                cameraProvider = cameraProvider,
                 videoCapture = viewModel.videoCapture,
                 onCameraGot = viewModel::onCameraGot
             )
@@ -77,7 +79,7 @@ fun CameraPreviewView(
                 cameraProvider.unbindAll()
                 val camera = cameraProvider.bindToLifecycle(
                     /* lifecycleOwner = */ lifecycleOwner,
-                    /* cameraSelector = */ CameraSelector.DEFAULT_BACK_CAMERA,
+                    /* cameraSelector = */ CameraSelector.DEFAULT_FRONT_CAMERA,
                     /* ...useCases = */ preview, videoCapture
                 )
                 onCameraGot(camera)
