@@ -11,6 +11,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.TouchpadController
+import com.onandor.peripheryapp.webcam.stream.CameraSelection
+import com.onandor.peripheryapp.webcam.stream.Encoder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -40,7 +42,7 @@ object BtSettingKeys {
         defaultValue = false
     )
     val KEYBOARD_REPORT_MODE = SettingKey(
-        intPreferencesKey("keyboard_report_mode"),
+        preferenceKey = intPreferencesKey("keyboard_report_mode"),
         defaultValue = KeyboardReport.ReportMode.KEY_6.value
     )
 }
@@ -53,6 +55,18 @@ object WebcamSettingKeys {
     val PREVIOUS_PORT = SettingKey(
         preferenceKey = stringPreferencesKey("webcam_previous_port"),
         defaultValue = ""
+    )
+    val RESOLUTION = SettingKey(
+        preferenceKey = intPreferencesKey("webcam_resolution"),
+        defaultValue = Encoder.Resolutions.LOW
+    )
+    val FRAME_RATE = SettingKey(
+        preferenceKey = intPreferencesKey("webcam_frame_rate"),
+        defaultValue = Encoder.FrameRates.LOW
+    )
+    val CAMERA = SettingKey(
+        preferenceKey = intPreferencesKey("webcam_camera"),
+        defaultValue = CameraSelection.FRONT.value
     )
 }
 

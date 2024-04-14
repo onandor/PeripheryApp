@@ -3,6 +3,7 @@ package com.onandor.peripheryapp.webcam.viewmodels
 import androidx.lifecycle.ViewModel
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
+import com.onandor.peripheryapp.navigation.NavDestinations
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.Streamer
@@ -119,5 +120,9 @@ class NewConnectionViewModel @Inject constructor(
 
     fun onToastShown() {
         _uiState.update { it.copy(connectionEvent = null) }
+    }
+
+    fun navigateToSettings() {
+        navManager.navigateTo(NavActions.Webcam.settings())
     }
 }

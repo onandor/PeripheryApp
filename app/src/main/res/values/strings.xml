@@ -57,4 +57,15 @@
     <string name="webcam_host_unreachable">Disconnection from host</string>
     <string name="webcam_unknown_host">Unknown host</string>
     <string name="webcam_timeout">The connection has timed out</string>
+    <string name="webcam_settings_resolution">Resolution</string>
+    <string name="webcam_settings_resolution_low">Low (640x480)</string>
+    <string name="webcam_settings_resolution_medium">Medium (720x540)</string>
+    <string name="webcam_settings_resolution_high">High (960x720)</string>
+    <string name="webcam_settings_frame_rate">Frame rate</string>
+    <string name="webcam_settings_frame_rate_low">Low (15 FPS)</string>
+    <string name="webcam_settings_frame_rate_high">High (25 FPS)</string>
+    <string name="webcam_settings">Webcam Settings</string>
+    <string name="webcam_settings_camera">Camera</string>
+    <string name="webcam_settings_camera_front">Front</string>
+    <string name="webcam_settings_camera_back">Back</string>
 </resources>

@@ -20,6 +20,7 @@ import com.onandor.peripheryapp.kbm.ui.screens.InputScreen
 import com.onandor.peripheryapp.viewmodels.NavigationViewModel
 import com.onandor.peripheryapp.webcam.ui.screens.CameraScreen
 import com.onandor.peripheryapp.webcam.ui.screens.NewConnectionScreen
+import com.onandor.peripheryapp.webcam.ui.screens.WebcamSettingsScreen
 import java.lang.IllegalArgumentException
 
 @Composable
@@ -69,6 +70,9 @@ fun NavGraph(
             }
             composable(NavDestinations.Webcam.CAMERA) {
                 CameraScreen()
+            }
+            composable(NavDestinations.Webcam.SETTINGS) {
+                WebcamSettingsScreen()
             }
         }
     }
