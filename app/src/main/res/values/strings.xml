@@ -53,4 +53,8 @@
     <string name="webcam_ip_address">IP Address</string>
     <string name="webcam_port">Port</string>
     <string name="webcam_connect">Connect</string>
+    <string name="webcam_connecting">Connecting...</string>
+    <string name="webcam_host_unreachable">Disconnection from host</string>
+    <string name="webcam_unknown_host">Unknown host</string>
+    <string name="webcam_timeout">The connection has timed out</string>
 </resources>

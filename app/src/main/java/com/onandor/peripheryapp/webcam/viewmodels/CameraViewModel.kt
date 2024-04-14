@@ -11,21 +11,34 @@ import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class CameraViewModel @Inject constructor(
-    private val navManager: INavigationManager
+    private val navManager: INavigationManager,
+    private val streamer: Streamer
 ) : ViewModel() {
 
     private var cameraProvider: ProcessCameraProvider? = null
     private val streamVideoOutput = StreamVideoOutput()
     private var camera: Camera? = null
     private var encoder: Encoder? = null
-    private val streamer = Streamer()
     val videoCapture = VideoCapture.Builder(streamVideoOutput)
         .setTargetFrameRate(Range(15, 15))
         .build()
+
+    init {
+        CoroutineScope(Dispatchers.Default).launch {
+            streamer.connectionEventFlow.collect {
+                if (it != Streamer.ConnectionEvent.ConnectionSuccess) {
+                    navigateBack()
+                }
+            }
+        }
+    }
 
     fun getCameraProvider(context: Context): ProcessCameraProvider {
         if (cameraProvider != null) {
@@ -52,11 +65,11 @@ class CameraViewModel @Inject constructor(
         }
         this.camera = camera
         encoder = Encoder(streamVideoOutput.mediaCodec!!) { streamer.queueData(it) }
-        streamer.startStream("192.168.0.47", 7220)
+        streamer.startStream()
     }
 
     fun navigateBack() {
-        streamer.stopStream()
+        streamer.disconnect()
         encoder?.release()
         streamVideoOutput.release()
         navManager.navigateBack()

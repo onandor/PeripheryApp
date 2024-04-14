@@ -4,17 +4,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.io.DataOutputStream
 import java.io.IOException
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.Socket
-import java.net.SocketException
 import java.net.UnknownHostException
 import java.util.LinkedList
 import java.util.Queue
+import java.util.concurrent.CompletableFuture
+import javax.inject.Singleton
 
+@Singleton
 class Streamer {
 
     private var address: InetAddress? = null
@@ -25,30 +29,48 @@ class Streamer {
     private var socket: Socket? = null
     private var dos: DataOutputStream? = null
 
-    fun startStream(ipAddress: String, port: Int) {
-        sendDataJob = CoroutineScope(Dispatchers.IO).launch {
+    private val _connectionEventFlow = MutableSharedFlow<ConnectionEvent>()
+    val connectionEventFlow = _connectionEventFlow.asSharedFlow()
+
+    enum class ConnectionEvent {
+        ConnectionSuccess,
+        UnknownHostFailure,
+        TimeoutFailure,
+        HostUnreachableFailure
+    }
+
+    fun connect(ipAddress: String, port: Int): CompletableFuture<ConnectionEvent> {
+        return CompletableFuture.supplyAsync {
             try {
                 address = InetAddress.getByName(ipAddress)
                 this@Streamer.port = port
 
                 socket = Socket(ipAddress, port)
                 dos = DataOutputStream(socket?.getOutputStream())
-            } catch (e: SocketException) {
-                // TODO
-                e.printStackTrace()
-            } catch (e: UnknownHostException) {
-                e.printStackTrace()
+                ConnectionEvent.ConnectionSuccess
             } catch (e: ConnectException) {
-                e.printStackTrace()
+                ConnectionEvent.TimeoutFailure
+            } catch (e: UnknownHostException) {
+                ConnectionEvent.UnknownHostFailure
             }
+        }
+    }
+
+    fun disconnect() {
+        stopStream()
+        dos?.close()
+    }
+
+    fun startStream() {
+        sendDataJob = CoroutineScope(Dispatchers.IO).launch {
             sendData()
         }
     }
 
-    fun stopStream() {
-        dos?.close()
+    private fun stopStream() {
         sendDataJob?.cancel()
         sendDataJob = null
+        dataQueue.clear()
     }
 
     private suspend fun sendData() {
@@ -68,7 +90,10 @@ class Streamer {
                         dos?.write(data.size.to2ByteArray())
                         dos?.write(data)
                     } catch (e: IOException) {
-                        e.printStackTrace()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            _connectionEventFlow.emit(ConnectionEvent.HostUnreachableFailure)
+                        }
+                        stopStream()
                     }
                 }
             }
