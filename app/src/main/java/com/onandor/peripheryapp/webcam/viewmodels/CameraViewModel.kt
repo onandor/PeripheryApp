@@ -3,6 +3,7 @@ package com.onandor.peripheryapp.webcam.viewmodels
 import android.content.Context
 import android.util.Range
 import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.VideoCapture
 import androidx.lifecycle.ViewModel
@@ -15,8 +16,15 @@ import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class CameraUiState(
+    val cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+)
 
 @HiltViewModel
 class CameraViewModel @Inject constructor(
@@ -33,13 +41,22 @@ class CameraViewModel @Inject constructor(
 
     private var resolutionIdx: Int = StreamVideoOutput.Resolutions.LOW
     private var frameRate: Int = StreamVideoOutput.FrameRates.LOW
-    private var cameraSelection: CameraSelection = CameraSelection.FRONT
+
+    private val _uiState = MutableStateFlow(CameraUiState())
+    val uiState = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             resolutionIdx = settings.get(WebcamSettingKeys.RESOLUTION)
             frameRate = settings.get(WebcamSettingKeys.FRAME_RATE)
-            cameraSelection = CameraSelection.fromInt(settings.get(WebcamSettingKeys.CAMERA))
+            //cameraSelection = CameraSelection.fromInt(settings.get(WebcamSettingKeys.CAMERA))
+            _uiState.update {
+                it.copy(
+                    cameraSelector = getCameraSelector(
+                        CameraSelection.fromInt(settings.get(WebcamSettingKeys.CAMERA))
+                    )
+                )
+            }
 
             streamVideoOutput = StreamVideoOutput(resolutionIdx, frameRate)
             videoCapture = VideoCapture.Builder(streamVideoOutput!!)
@@ -73,7 +90,7 @@ class CameraViewModel @Inject constructor(
          */
     }
 
-    fun onCameraGot(camera: Camera) {
+    fun onCameraCreated(camera: Camera) {
         if (this.camera != null) {
             return
         }
@@ -87,5 +104,12 @@ class CameraViewModel @Inject constructor(
         encoder?.release()
         streamVideoOutput?.release()
         navManager.navigateBack()
+    }
+
+    fun getCameraSelector(selection: CameraSelection): CameraSelector {
+        return when (selection) {
+            CameraSelection.FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
+            CameraSelection.BACK -> CameraSelector.DEFAULT_BACK_CAMERA
+        }
     }
 }

@@ -13,7 +13,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.VideoCapture
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -29,12 +28,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.onandor.peripheryapp.R
@@ -47,6 +46,7 @@ fun CameraScreen(
     viewModel: CameraViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
 
     DisposableEffect(Unit) {
         val activity = context.findActivity() ?: return@DisposableEffect onDispose {}
@@ -59,7 +59,9 @@ fun CameraScreen(
     Scaffold { innerPadding ->
         Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
             Row(
-                modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(onClick = viewModel::navigateBack) {
@@ -75,7 +77,8 @@ fun CameraScreen(
                             .aspectRatio(4 / 3f),
                         cameraProvider = viewModel.getCameraProvider(context),
                         videoCapture = viewModel.videoCapture!!,
-                        onCameraGot = viewModel::onCameraGot
+                        cameraSelector = uiState.cameraSelector,
+                        onCameraCreated = viewModel::onCameraCreated
                     )
                 }
                 Column {
@@ -99,7 +102,8 @@ fun CameraPreviewView(
     modifier: Modifier = Modifier,
     cameraProvider: ProcessCameraProvider,
     videoCapture: VideoCapture<StreamVideoOutput>,
-    onCameraGot: (Camera) -> Unit
+    cameraSelector: CameraSelector,
+    onCameraCreated: (Camera) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     AndroidView(
@@ -111,10 +115,10 @@ fun CameraPreviewView(
                 cameraProvider.unbindAll()
                 val camera = cameraProvider.bindToLifecycle(
                     /* lifecycleOwner = */ lifecycleOwner,
-                    /* cameraSelector = */ CameraSelector.DEFAULT_FRONT_CAMERA,
+                    /* cameraSelector = */ cameraSelector,
                     /* ...useCases = */ preview, videoCapture
                 )
-                onCameraGot(camera)
+                onCameraCreated(camera)
             }
         }
     )
