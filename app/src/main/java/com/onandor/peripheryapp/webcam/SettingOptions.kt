@@ -4,6 +4,7 @@ import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.utils.IntSettingOption
 import com.onandor.peripheryapp.webcam.stream.CameraSelection
 import com.onandor.peripheryapp.webcam.stream.Encoder
+import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 
 class SettingOptions {
 
@@ -11,15 +12,11 @@ class SettingOptions {
 
         val resolution = listOf(
             IntSettingOption(
-                value = Encoder.Resolutions.LOW,
+                value = StreamVideoOutput.Resolutions.LOW,
                 resourceId = R.string.webcam_settings_resolution_low
             ),
             IntSettingOption(
-                value = Encoder.Resolutions.MEDIUM,
-                resourceId = R.string.webcam_settings_resolution_medium
-            ),
-            IntSettingOption(
-                value = Encoder.Resolutions.HIGH,
+                value = StreamVideoOutput.Resolutions.HIGH,
                 resourceId = R.string.webcam_settings_resolution_high
             )
         )
@@ -28,11 +25,11 @@ class SettingOptions {
 
         val frameRate = listOf(
             IntSettingOption(
-                value = Encoder.FrameRates.LOW,
+                value = StreamVideoOutput.FrameRates.LOW,
                 resourceId = R.string.webcam_settings_frame_rate_low
             ),
             IntSettingOption(
-                value = Encoder.FrameRates.HIGH,
+                value = StreamVideoOutput.FrameRates.HIGH,
                 resourceId = R.string.webcam_settings_frame_rate_high
             )
         )

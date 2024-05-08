@@ -20,19 +20,36 @@ import androidx.camera.video.VideoSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 
-class StreamVideoOutput : VideoOutput {
+class StreamVideoOutput(
+    resolutionIdx: Int,
+    val frameRate: Int
+) : VideoOutput {
+
+    object Resolutions {
+        const val LOW = 0
+        const val HIGH = 1
+    }
+
+    object FrameRates {
+        const val LOW = 15
+        const val HIGH = 30
+    }
 
     private val I_FRAME_INTERVAL = 2
     private val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
 
-    private val resolution: Size = Size(640, 480)
+    private var resolution: Size = Size(640, 480)
+    private var qualitySelection: Quality = Quality.SD
     private val minBitrate = 1500
     private val maxBitrate = 2500
-    private val frameRate = 15
 
     private var surface: Surface? = null
     var mediaCodec: MediaCodec? = null
         private set
+
+    init {
+        setResolution(resolutionIdx)
+    }
 
     override fun onSurfaceRequested(request: SurfaceRequest) {
         if (surface != null) {
@@ -70,7 +87,7 @@ class StreamVideoOutput : VideoOutput {
         val videoSpec = VideoSpec.builder()
             .setFrameRate(Range(frameRate, frameRate))
             .setBitrate(Range(minBitrate, maxBitrate))
-            .setQualitySelector(QualitySelector.from(Quality.SD))
+            .setQualitySelector(QualitySelector.from(qualitySelection))
             .build()
         val mediaSpec = MediaSpec.builder().setVideoSpec(videoSpec).build()
         return ConstantObservable.withValue(mediaSpec)
@@ -99,5 +116,18 @@ class StreamVideoOutput : VideoOutput {
     fun release() {
         surface?.release()
         surface = null
+    }
+
+    private fun setResolution(idx: Int) {
+        when(idx) {
+            Resolutions.LOW -> {
+                resolution = Size(640, 480)
+                qualitySelection = Quality.SD
+            }
+            Resolutions.HIGH -> {
+                resolution = Size(1280, 720)
+                qualitySelection = Quality.HD
+            }
+        }
     }
 }

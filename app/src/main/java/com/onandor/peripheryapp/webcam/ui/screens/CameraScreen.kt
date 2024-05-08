@@ -68,14 +68,16 @@ fun CameraScreen(
                         contentDescription = null
                     )
                 }
-                CameraPreviewView(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(4 / 3f),
-                    cameraProvider = viewModel.getCameraProvider(context),
-                    videoCapture = viewModel.videoCapture,
-                    onCameraGot = viewModel::onCameraGot
-                )
+                if (viewModel.videoCapture != null) {
+                    CameraPreviewView(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(4 / 3f),
+                        cameraProvider = viewModel.getCameraProvider(context),
+                        videoCapture = viewModel.videoCapture!!,
+                        onCameraGot = viewModel::onCameraGot
+                    )
+                }
                 Column {
                     IconButton(onClick = viewModel::onToggleCamera) {
                         Icon(
