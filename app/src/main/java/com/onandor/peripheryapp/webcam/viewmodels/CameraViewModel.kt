@@ -49,7 +49,6 @@ class CameraViewModel @Inject constructor(
         viewModelScope.launch {
             resolutionIdx = settings.get(WebcamSettingKeys.RESOLUTION)
             frameRate = settings.get(WebcamSettingKeys.FRAME_RATE)
-            //cameraSelection = CameraSelection.fromInt(settings.get(WebcamSettingKeys.CAMERA))
             _uiState.update {
                 it.copy(
                     cameraSelector = getCameraSelector(
@@ -77,17 +76,6 @@ class CameraViewModel @Inject constructor(
         }
         cameraProvider = ProcessCameraProvider.getInstance(context).get()
         return cameraProvider!!
-    }
-
-    fun onToggleCamera() {
-        /*
-        controller?.cameraSelector =
-            if (controller?.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-                CameraSelector.DEFAULT_FRONT_CAMERA
-            } else {
-                CameraSelector.DEFAULT_BACK_CAMERA
-            }
-         */
     }
 
     fun onCameraCreated(camera: Camera) {
