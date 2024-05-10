@@ -15,11 +15,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.math.RoundingMode
+import java.text.DecimalFormat
 import javax.inject.Inject
 
 data class CameraUiState(
-    val width: Int = 640,
-    val height: Int = 480
+    val previewAspectRatio: Float = 1f,
+    val showControls: Boolean = false,
+    val zoom: Float = 1f,
+    val zoomRange: ClosedFloatingPointRange<Float> = 1f..1f
 )
 
 @HiltViewModel
@@ -36,7 +40,6 @@ class CameraViewModel @Inject constructor(
     private val camera: CameraOption
     private val resolution: Size
     private val frameRateRange: Range<Int>
-
     private var previewSurface: Surface? = null
 
     private val encoder: Encoder
@@ -55,7 +58,13 @@ class CameraViewModel @Inject constructor(
             frameRateRange = camera.frameRateRanges.first()
         }
 
-        _uiState.update { it.copy(width = resolution.width, height = resolution.height) }
+        _uiState.update {
+            it.copy(
+                previewAspectRatio = resolution.width.toFloat() / resolution.height.toFloat(),
+                zoomRange = camera.zoomRange.lower..camera.zoomRange.upper
+            )
+        }
+        println(camera.zoomRange)
 
         encoder = Encoder(resolution.width, resolution.height, 2500, frameRateRange.upper) {
             streamer.queueData(it)
@@ -68,6 +77,24 @@ class CameraViewModel @Inject constructor(
         cameraController.start(camera, frameRateRange)
         encoder.start()
         streamer.startStream()
+    }
+
+    fun onShowControls() {
+        _uiState.update { it.copy(showControls = true) }
+    }
+
+    fun onHideControls() {
+        _uiState.update { it.copy(showControls = false) }
+    }
+
+    fun onZoomChanged(value: Float) {
+        _uiState.update { it.copy(zoom = roundTo1Decimal(value)) }
+    }
+
+    private fun roundTo1Decimal(value: Float): Float {
+        val df = DecimalFormat("#.#")
+        df.roundingMode = RoundingMode.HALF_UP
+        return df.format(value).toFloat()
     }
 
     fun navigateBack() {

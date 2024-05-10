@@ -20,7 +20,7 @@ class CameraOption(
     init {
         lensFacing = characteristics[CameraCharacteristics.LENS_FACING]!!
         zoomRange = Range(
-            0f,
+            1f,
             characteristics[CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM]!!
         )
         aeRange = characteristics[CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE]!!

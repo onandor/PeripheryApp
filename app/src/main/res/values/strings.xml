@@ -64,4 +64,6 @@
     <string name="webcam_settings_camera_front">Front</string>
     <string name="webcam_settings_camera_back">Back</string>
     <string name="webcam_settings_camera_configuration">Camera configuration</string>
+    <string name="webcam_camera_zoom">Zoom</string>
+    <string name="webcam_camera_exposure_compensation">Exposure Compensation</string>
 </resources>

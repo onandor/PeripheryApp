@@ -9,29 +9,38 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.webcam.viewmodels.CameraViewModel
 
 @Composable
@@ -71,12 +80,24 @@ fun CameraScreen(
                 CameraSurfaceView(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .aspectRatio(uiState.width.toFloat() / uiState.height.toFloat()),
+                        .aspectRatio(uiState.previewAspectRatio),
                     onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
                 )
-                Spacer(modifier = Modifier.width(48.dp))
+                IconButton(onClick = viewModel::onShowControls) {
+                    Icon(
+                        painterResource(id = R.drawable.ic_tune),
+                        contentDescription = null
+                    )
+                }
             }
         }
+        ControlsSheet(
+            show = uiState.showControls,
+            onDismissRequest = viewModel::onHideControls,
+            zoom = uiState.zoom,
+            zoomRange = uiState.zoomRange,
+            onZoomChanged = viewModel::onZoomChanged
+        )
     }
 }
 
@@ -109,6 +130,54 @@ fun CameraSurfaceView(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ControlsSheet(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    zoom: Float,
+    zoomRange: ClosedFloatingPointRange<Float>,
+    onZoomChanged: (Float) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    if (show) {
+        ModalBottomSheet(
+            onDismissRequest = onDismissRequest,
+            sheetState = sheetState,
+            sheetMaxWidth = 400.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                Text(text = stringResource(id = R.string.webcam_camera_zoom))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Slider(
+                        modifier = Modifier
+                            .weight(0.87f)
+                            .padding(end = 5.dp),
+                        value = zoom,
+                        steps = (zoomRange.endInclusive.toInt() - zoomRange.start.toInt()) * 10 - 1,
+                        valueRange = zoomRange,
+                        onValueChange = onZoomChanged,
+                        enabled = zoomRange.endInclusive.toInt() - zoomRange.start.toInt() != 0
+                    )
+                    Text(
+                        modifier = Modifier.weight(0.13f),
+                        text = "${zoom}x"
+                    )
+                }
+            }
+        }
+    }
 }
 
 fun Context.findActivity(): Activity? = when(this) {
