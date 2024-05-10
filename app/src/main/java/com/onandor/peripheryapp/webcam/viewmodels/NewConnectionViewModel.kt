@@ -1,11 +1,11 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
-import android.util.Range
-import android.util.Size
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
+import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.CameraController
@@ -112,7 +112,12 @@ class NewConnectionViewModel @Inject constructor(
                 onConnectionEvent(result)
             }
          */
-        navManager.navigateTo(NavActions.Webcam.camera())
+        val navArgs = CameraNavArgs(
+            cameraId = uiState.value.cameraId,
+            resolutionIdx = uiState.value.resolutionIdx,
+            frameRateIdx = uiState.value.frameRateRangeIdx
+        )
+        navManager.navigateTo(NavActions.Webcam.camera(navArgs))
     }
 
 
@@ -123,7 +128,12 @@ class NewConnectionViewModel @Inject constructor(
                     settings.save(WebcamSettingKeys.PREVIOUS_ADDRESS, uiState.value.address)
                     settings.save(WebcamSettingKeys.PREVIOUS_PORT, uiState.value.port)
                 }
-                navManager.navigateTo(NavActions.Webcam.camera())
+                val navArgs = CameraNavArgs(
+                    cameraId = uiState.value.cameraId,
+                    resolutionIdx = uiState.value.resolutionIdx,
+                    frameRateIdx = uiState.value.frameRateRangeIdx
+                )
+                navManager.navigateTo(NavActions.Webcam.camera(navArgs))
             }
             Streamer.ConnectionEvent.UNKNOWN_HOST_FAILURE -> {
                 _uiState.update { it.copy(connectionEvent = event) }

@@ -53,4 +53,11 @@ class NavigationManager : INavigationManager {
     override fun getCurrentRoute(): String {
         return currentRoute
     }
+
+    override fun getCurrentNavAction(): NavAction? {
+        if (backStack.isEmpty()) {
+            return null
+        }
+        return backStack.peek()
+    }
 }

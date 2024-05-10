@@ -8,4 +8,5 @@ interface INavigationManager {
     fun navigateTo(navAction: NavAction?)
     fun navigateBack()
     fun getCurrentRoute(): String
+    fun getCurrentNavAction(): NavAction?
 }

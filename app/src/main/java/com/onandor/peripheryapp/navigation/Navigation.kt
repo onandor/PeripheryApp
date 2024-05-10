@@ -1,6 +1,7 @@
 package com.onandor.peripheryapp.navigation
 
 import androidx.navigation.NavOptions
+import com.onandor.peripheryapp.navigation.navargs.NavArgs
 
 private object Screens {
     const val MAIN_SCREEN = "mainScreen"
@@ -38,6 +39,8 @@ interface NavAction {
         get() = NavOptions.Builder()
             .setLaunchSingleTop(true)
             .build()
+    val navArgs: NavArgs?
+        get() = null
 }
 
 object NavActions {
@@ -60,8 +63,9 @@ object NavActions {
             override val destination: String = NavDestinations.Webcam.NEW_CONNECTION
         }
 
-        fun camera() = object : NavAction {
+        fun camera(navArgs: NavArgs) = object : NavAction {
             override val destination: String = NavDestinations.Webcam.CAMERA
+            override val navArgs: NavArgs = navArgs
         }
 
         fun settings() = object : NavAction {
