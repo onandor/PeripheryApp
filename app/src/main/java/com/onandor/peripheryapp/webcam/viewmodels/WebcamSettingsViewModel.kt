@@ -15,18 +15,20 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/*
 data class WebcamSettingsUiState(
     val resolution: IntSettingOption = SettingOptions.RESOLUTION_DEFAULT,
     val frameRate: IntSettingOption = SettingOptions.FRAME_RATE_DEFAULT,
     val cameraSelection: IntSettingOption = SettingOptions.CAMERA_SELECTION_DEFAULT
 )
+ */
 
 @HiltViewModel
 class WebcamSettingsViewModel @Inject constructor(
     private val settings: Settings,
     private val navManager: INavigationManager
 ): ViewModel() {
-
+/*
     private val resolutionFlow = settings
         .observe(WebcamSettingKeys.RESOLUTION)
         .map { resolution ->
@@ -84,6 +86,7 @@ class WebcamSettingsViewModel @Inject constructor(
             settings.save(WebcamSettingKeys.CAMERA, cameraSelection)
         }
     }
+ */
 
     fun navigateBack() {
         navManager.navigateBack()

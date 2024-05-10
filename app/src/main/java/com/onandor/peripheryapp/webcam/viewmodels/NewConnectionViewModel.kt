@@ -94,7 +94,7 @@ class NewConnectionViewModel @Inject constructor(
                 onConnectionEvent(result)
             }
          */
-        navManager.navigateTo(NavActions.Webcam.camera2())
+        navManager.navigateTo(NavActions.Webcam.camera())
     }
 
 
@@ -105,7 +105,7 @@ class NewConnectionViewModel @Inject constructor(
                     settings.save(WebcamSettingKeys.PREVIOUS_ADDRESS, uiState.value.address)
                     settings.save(WebcamSettingKeys.PREVIOUS_PORT, uiState.value.port)
                 }
-                navManager.navigateTo(NavActions.Webcam.camera2())
+                navManager.navigateTo(NavActions.Webcam.camera())
             }
             Streamer.ConnectionEvent.UNKNOWN_HOST_FAILURE -> {
                 _uiState.update { it.copy(connectionEvent = event) }

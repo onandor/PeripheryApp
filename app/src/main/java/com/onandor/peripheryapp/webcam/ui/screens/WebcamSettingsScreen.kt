@@ -30,7 +30,7 @@ import com.onandor.peripheryapp.webcam.viewmodels.WebcamSettingsViewModel
 fun WebcamSettingsScreen(
     viewModel: WebcamSettingsViewModel = hiltViewModel()
 ) {
-
+/*
     val resolutionItems = SettingOptions
         .resolution
         .map { option ->
@@ -56,7 +56,7 @@ fun WebcamSettingsScreen(
                 onClick = { viewModel.onCameraSelectionChanged(option.value) }
             )
         }
-
+*/
     BackHandler {
         viewModel.navigateBack()
     }
@@ -76,6 +76,7 @@ fun WebcamSettingsScreen(
             )
         }
     ) { innerPadding ->
+        /*
         val uiState by viewModel.uiState.collectAsState()
         
         Column(
@@ -117,5 +118,6 @@ fun WebcamSettingsScreen(
                 }
             )
         }
+         */
     }
 }

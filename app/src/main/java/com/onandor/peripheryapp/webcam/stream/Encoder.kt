@@ -1,13 +1,24 @@
 package com.onandor.peripheryapp.webcam.stream
 
 import android.media.MediaCodec
+import android.media.MediaCodecInfo
 import android.media.MediaFormat
-import android.util.Size
+import android.view.Surface
+import java.lang.Exception
 
 class Encoder(
-    private val mediaCodec: MediaCodec,
-    private val onDataEncoded: (ByteArray) -> Unit,
+    val width: Int,
+    val height: Int,
+    val bitRate: Int,
+    val frameRate: Int,
+    val onDataEncoded: (ByteArray) -> Unit
 ) {
+
+    private val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
+    private val I_FRAME_INTERVAL = 1
+
+    private val mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE)
+    var inputSurface: Surface? = null
 
     private var spsPpsNalu: ByteArray? = null
 
@@ -40,8 +51,16 @@ class Encoder(
     }
 
     init {
-        mediaCodec.setCallback(mediaCodecCallback)
-        mediaCodec.start()
+        val format = MediaFormat
+            .createVideoFormat(MIME_TYPE, width, height)
+            .apply {
+                setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
+                setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, I_FRAME_INTERVAL)
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+            }
+        mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        inputSurface = mediaCodec.createInputSurface()
     }
 
     fun encode(mediaCodec: MediaCodec, index: Int, bufferInfo: MediaCodec.BufferInfo): ByteArray? {
@@ -69,10 +88,16 @@ class Encoder(
         }
     }
 
+    fun start() {
+        mediaCodec.setCallback(mediaCodecCallback)
+        mediaCodec.start()
+    }
+
     fun release() {
         try {
             mediaCodec.stop()
         } catch (_: Exception) {}
         mediaCodec.release()
+        inputSurface?.release()
     }
 }

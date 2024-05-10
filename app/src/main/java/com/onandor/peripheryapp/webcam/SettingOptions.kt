@@ -2,14 +2,13 @@ package com.onandor.peripheryapp.webcam
 
 import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.utils.IntSettingOption
-import com.onandor.peripheryapp.webcam.stream.CameraSelection
 import com.onandor.peripheryapp.webcam.stream.Encoder
-import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 
 class SettingOptions {
 
     companion object {
 
+        /*
         val resolution = listOf(
             IntSettingOption(
                 value = StreamVideoOutput.Resolutions.LOW,
@@ -48,5 +47,6 @@ class SettingOptions {
         )
 
         val CAMERA_SELECTION_DEFAULT = cameraSelection[0]
+         */
     }
 }

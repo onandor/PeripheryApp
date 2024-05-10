@@ -1,19 +1,14 @@
 package com.onandor.peripheryapp.webcam.ui.screens
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
+import android.view.Surface
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 import androidx.activity.compose.BackHandler
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.VideoCapture
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -34,16 +29,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.onandor.peripheryapp.R
-import com.onandor.peripheryapp.webcam.stream.StreamVideoOutput
 import com.onandor.peripheryapp.webcam.viewmodels.CameraViewModel
 
-@SuppressLint("SourceLockedOrientationActivity")
 @Composable
 fun CameraScreen(
     viewModel: CameraViewModel = hiltViewModel()
@@ -59,12 +49,17 @@ fun CameraScreen(
         }
     }
 
+    BackHandler {
+        viewModel.navigateBack()
+    }
+
     Scaffold { innerPadding ->
-        Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
+        Surface(
+            modifier = Modifier.padding(innerPadding),
+            color = MaterialTheme.colorScheme.surfaceVariant
+        ) {
             Row(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(onClick = viewModel::navigateBack) {
@@ -73,48 +68,44 @@ fun CameraScreen(
                         contentDescription = null
                     )
                 }
-                if (viewModel.videoCapture != null) {
-                    CameraPreviewView(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(4 / 3f),
-                        cameraProvider = viewModel.getCameraProvider(context),
-                        videoCapture = viewModel.videoCapture!!,
-                        cameraSelector = uiState.cameraSelector,
-                        onCameraCreated = viewModel::onCameraCreated
-                    )
-                }
+                CameraSurfaceView(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(uiState.width.toFloat() / uiState.height.toFloat()),
+                    onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
+                )
                 Spacer(modifier = Modifier.width(48.dp))
             }
         }
     }
-    BackHandler {
-        viewModel.navigateBack()
-    }
 }
 
 @Composable
-fun CameraPreviewView(
+fun CameraSurfaceView(
     modifier: Modifier = Modifier,
-    cameraProvider: ProcessCameraProvider,
-    videoCapture: VideoCapture<StreamVideoOutput>,
-    cameraSelector: CameraSelector,
-    onCameraCreated: (Camera) -> Unit
+    onPreviewSurfaceCreated: (Surface) -> Unit
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
     AndroidView(
         modifier = modifier,
         factory = {
-            PreviewView(it).apply {
-                val preview = Preview.Builder().build()
-                preview.setSurfaceProvider(this.surfaceProvider)
-                cameraProvider.unbindAll()
-                val camera = cameraProvider.bindToLifecycle(
-                    /* lifecycleOwner = */ lifecycleOwner,
-                    /* cameraSelector = */ cameraSelector,
-                    /* ...useCases = */ preview, videoCapture
-                )
-                onCameraCreated(camera)
+            SurfaceView(it).apply {
+                this.holder.addCallback(object : SurfaceHolder.Callback {
+                    override fun surfaceCreated(holder: SurfaceHolder) {
+                        val orientation = it.findActivity()?.resources?.configuration?.orientation
+                        if (orientation == ActivityInfo.SCREEN_ORIENTATION_USER) {
+                            onPreviewSurfaceCreated(holder.surface)
+                        }
+                    }
+
+                    override fun surfaceChanged(
+                        holder: SurfaceHolder,
+                        format: Int,
+                        width: Int,
+                        height: Int
+                    ) {}
+
+                    override fun surfaceDestroyed(holder: SurfaceHolder) {}
+                })
             }
         }
     )
