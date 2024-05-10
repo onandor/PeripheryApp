@@ -58,13 +58,10 @@
     <string name="webcam_unknown_host">Unknown host</string>
     <string name="webcam_timeout">The connection has timed out</string>
     <string name="webcam_settings_resolution">Resolution</string>
-    <string name="webcam_settings_resolution_low">Low (640x480)</string>
-    <string name="webcam_settings_resolution_high">High (1280x720)</string>
     <string name="webcam_settings_frame_rate">Frame rate</string>
-    <string name="webcam_settings_frame_rate_low">Low (15 FPS)</string>
-    <string name="webcam_settings_frame_rate_high">High (30 FPS)</string>
     <string name="webcam_settings">Webcam Settings</string>
     <string name="webcam_settings_camera">Camera</string>
     <string name="webcam_settings_camera_front">Front</string>
     <string name="webcam_settings_camera_back">Back</string>
+    <string name="webcam_settings_camera_configuration">Camera configuration</string>
 </resources>

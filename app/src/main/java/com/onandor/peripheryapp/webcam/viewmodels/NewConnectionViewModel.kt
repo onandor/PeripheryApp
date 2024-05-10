@@ -1,11 +1,15 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
+import android.util.Range
+import android.util.Size
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.NavActions
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
+import com.onandor.peripheryapp.webcam.stream.CameraController
+import com.onandor.peripheryapp.webcam.stream.CameraOption
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,14 +24,20 @@ data class NewConnectionUiState(
     val port: String = "",
     val connecting: Boolean = false,
     val canConnect: Boolean = false,
-    val connectionEvent: Streamer.ConnectionEvent? = null
+    val connectionEvent: Streamer.ConnectionEvent? = null,
+
+    val cameraOptions: List<CameraOption> = emptyList(),
+    val cameraId: String = "",
+    val resolutionIdx: Int = 0,
+    val frameRateRangeIdx: Int = 0
 )
 
 @HiltViewModel
 class NewConnectionViewModel @Inject constructor(
     private val navManager: INavigationManager,
     private val streamer: Streamer,
-    private val settings: Settings
+    private val settings: Settings,
+    private val cameraController: CameraController
 ) : ViewModel() {
 
     private val portPattern = Regex("^\\d+\$")
@@ -52,6 +62,14 @@ class NewConnectionViewModel @Inject constructor(
             streamer.connectionEventFlow.collect {
                 onConnectionEvent(it)
             }
+        }
+
+        val cameraOptions = cameraController.getCameraOptions()
+        _uiState.update {
+            it.copy(
+                cameraOptions = cameraOptions,
+                cameraId = cameraOptions.first().id,
+            )
         }
     }
 
@@ -121,6 +139,24 @@ class NewConnectionViewModel @Inject constructor(
 
     fun onToastShown() {
         _uiState.update { it.copy(connectionEvent = null) }
+    }
+
+    fun onCameraIdChanged(id: String) {
+        _uiState.update {
+            it.copy(
+                cameraId = id,
+                resolutionIdx = 0,
+                frameRateRangeIdx = 0
+            )
+        }
+    }
+
+    fun onResolutionIdxChanged(idx: Int) {
+        _uiState.update { it.copy(resolutionIdx = idx) }
+    }
+
+    fun onFrameRateRangeIdxChanged(idx: Int) {
+        _uiState.update { it.copy(frameRateRangeIdx = idx) }
     }
 
     fun navigateToSettings() {
