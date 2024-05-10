@@ -86,12 +86,15 @@ class NewConnectionViewModel @Inject constructor(
     }
 
     fun onConnect() {
+        /*
         _uiState.update { it.copy(connecting = true) }
         streamer.connect(uiState.value.address, uiState.value.port.toInt())
             .thenAccept { result ->
                 _uiState.update { it.copy(connecting = false) }
                 onConnectionEvent(result)
             }
+         */
+        navManager.navigateTo(NavActions.Webcam.camera2())
     }
 
 

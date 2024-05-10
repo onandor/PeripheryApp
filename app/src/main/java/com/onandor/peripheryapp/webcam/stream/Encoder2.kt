@@ -6,12 +6,13 @@ import android.media.MediaFormat
 import android.view.Surface
 import java.lang.Exception
 
-class Encoder2(private val onDataEncoded: (ByteArray) -> Unit,) {
-
-    private val width = 640
-    private val height = 480
-    private val bitRate = 2500
-    val frameRate = 30
+class Encoder2(
+    val width: Int,
+    val height: Int,
+    val bitRate: Int,
+    val frameRate: Int,
+    val onDataEncoded: (ByteArray) -> Unit
+) {
 
     private val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
     private val I_FRAME_INTERVAL = 1

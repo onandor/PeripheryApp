@@ -3,26 +3,34 @@ package com.onandor.peripheryapp.webcam.ui.screens
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.hardware.camera2.CameraManager
-import android.view.LayoutInflater
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.webcam.viewmodels.CameraViewModel2
 
 @Composable
@@ -30,6 +38,7 @@ fun CameraScreen2(
     viewModel: CameraViewModel2 = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
 
     DisposableEffect(Unit) {
         val activity = context.findActivity() ?: return@DisposableEffect onDispose {}
@@ -48,11 +57,27 @@ fun CameraScreen2(
             modifier = Modifier.padding(innerPadding),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
-            CameraSurfaceView(modifier = Modifier.fillMaxHeight()) { surface ->
-                viewModel.onPreviewSurfaceCreated(
-                    previewSurface = surface,
-                    cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-                )
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = viewModel::navigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = null
+                    )
+                }
+                CameraSurfaceView(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(uiState.width.toFloat() / uiState.height.toFloat())
+                ) { surface ->
+                    viewModel.onPreviewSurfaceCreated(
+                        previewSurface = surface,
+                        cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+                    )
+                }
+                Spacer(modifier = Modifier.width(48.dp))
             }
         }
     }

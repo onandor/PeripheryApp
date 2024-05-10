@@ -3,7 +3,9 @@ package com.onandor.peripheryapp.webcam.viewmodels
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.ColorSpace
+import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
@@ -20,10 +22,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.utils.Settings
+import com.onandor.peripheryapp.webcam.stream.CameraOption
 import com.onandor.peripheryapp.webcam.stream.Encoder2
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.lang.RuntimeException
@@ -34,12 +39,20 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+data class CameraUiState2(
+    val width: Int = 640,
+    val height: Int = 480
+)
+
 @HiltViewModel
 class CameraViewModel2 @Inject constructor(
     private val navManager: INavigationManager,
     private val streamer: Streamer,
     private val settings: Settings
 ): ViewModel() {
+
+    private val _uiState = MutableStateFlow(CameraUiState2())
+    val uiState = _uiState.asStateFlow()
 
     private class HandlerExecutor(_handler: Handler): Executor {
         private val handler = _handler
@@ -57,26 +70,49 @@ class CameraViewModel2 @Inject constructor(
     private var captureSession: CameraCaptureSession? = null
     private var camera: CameraDevice? = null
     private var previewSurface: Surface? = null
+    private val cameraOptions: MutableList<CameraOption> = mutableListOf()
 
-    private val encoder: Encoder2 = Encoder2 { streamer.queueData(it) }
+    private val encoder: Encoder2 = Encoder2(640, 480, 2500, 30) { streamer.queueData(it) }
 
     fun onPreviewSurfaceCreated(previewSurface: Surface, cameraManager: CameraManager) {
         this.cameraManager = cameraManager
         this.previewSurface = previewSurface
+        if (!getCameraCharacteristics()) {
+            // TODO: error
+        }
         initializeCamera()
     }
 
+    private fun getCameraCharacteristics(): Boolean {
+        val cameraIdList = try {
+            cameraManager!!.cameraIdList
+        } catch (e: CameraAccessException) {
+            return false
+        }
+        if (cameraIdList.isEmpty()) {
+            return false
+        }
+
+        cameraIdList.forEach { id ->
+            val cameraChars = cameraManager!!.getCameraCharacteristics(id)
+            cameraOptions.add(CameraOption(id, cameraChars))
+        }
+        return true
+    }
+
     private fun initializeCamera() = viewModelScope.launch {
-        camera = openCamera(cameraManager!!.cameraIdList[1], cameraHandler)
+        camera = openCamera(cameraManager!!.cameraIdList[0], cameraHandler)
 
         val previewTargets = listOf(previewSurface!!, encoder.inputSurface!!)
         captureSession = createCaptureSession(camera!!, previewTargets, cameraHandler)
 
-        val recordRequest = createRecordRequest()
+        // TODO: error
+        //val recordRequest = createRecordRequest()
+        val recordRequest = createPreviewRequest()
         captureSession!!.setRepeatingRequest(recordRequest!!, null, cameraHandler)
 
-        encoder.start()
-        streamer.startStream()
+        //encoder.start()
+        //streamer.startStream()
     }
 
     @SuppressLint("MissingPermission")
@@ -116,14 +152,13 @@ class CameraViewModel2 @Inject constructor(
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             val outputConfigs = mutableListOf<OutputConfiguration>()
             for (target in targets) {
-                println("valid: ${target.isValid}")
                 val outputConfig = OutputConfiguration(target)
                 outputConfig.dynamicRangeProfile = DynamicRangeProfiles.STANDARD
                 outputConfigs.add(outputConfig)
             }
 
             val sessionConfig = SessionConfiguration(
-                /* sessionType = */SessionConfiguration.SESSION_REGULAR,
+                /* sessionType = */ SessionConfiguration.SESSION_REGULAR,
                 /* outputs = */ outputConfigs,
                 /* executor = */ HandlerExecutor(handler),
                 /* cb = */ stateCallback
@@ -155,8 +190,11 @@ class CameraViewModel2 @Inject constructor(
     }
 
     fun navigateBack() {
-        streamer.disconnect()
-        encoder.release()
+        //streamer.disconnect()
+        //encoder.release()
+        captureSession?.stopRepeating()
+        captureSession?.close()
+        camera?.close()
         cameraThread.quitSafely()
         navManager.navigateBack()
     }
