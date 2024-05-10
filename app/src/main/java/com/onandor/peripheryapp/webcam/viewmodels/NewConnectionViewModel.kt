@@ -115,7 +115,7 @@ class NewConnectionViewModel @Inject constructor(
         val navArgs = CameraNavArgs(
             cameraId = uiState.value.cameraId,
             resolutionIdx = uiState.value.resolutionIdx,
-            frameRateIdx = uiState.value.frameRateRangeIdx
+            frameRateRangeIdx = uiState.value.frameRateRangeIdx
         )
         navManager.navigateTo(NavActions.Webcam.camera(navArgs))
     }
@@ -131,7 +131,7 @@ class NewConnectionViewModel @Inject constructor(
                 val navArgs = CameraNavArgs(
                     cameraId = uiState.value.cameraId,
                     resolutionIdx = uiState.value.resolutionIdx,
-                    frameRateIdx = uiState.value.frameRateRangeIdx
+                    frameRateRangeIdx = uiState.value.frameRateRangeIdx
                 )
                 navManager.navigateTo(NavActions.Webcam.camera(navArgs))
             }

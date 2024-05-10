@@ -8,6 +8,7 @@ import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.webcam.stream.CameraController
+import com.onandor.peripheryapp.webcam.stream.CameraOption
 import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,35 +33,39 @@ class CameraViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CameraUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val cameraId: String
+    private val camera: CameraOption
     private val resolution: Size
-    private val frameRate: Range<Int>
+    private val frameRateRange: Range<Int>
 
     private var previewSurface: Surface? = null
 
-    private val encoder: Encoder = Encoder(640, 480, 2500, 15) { streamer.queueData(it) }
+    private val encoder: Encoder
 
     init {
         val cameraOptions = cameraController.getCameraOptions()
+
         val navArgs = navManager.getCurrentNavAction()?.navArgs as CameraNavArgs?
         if (navArgs != null) {
-            cameraId = navArgs.cameraId
-            resolution = cameraOptions.first { it.id == cameraId }
-                .resolutions[navArgs.resolutionIdx]
-            frameRate = cameraOptions.first { it.id == cameraId }
-                .frameRateRanges[navArgs.frameRateIdx]
+            camera = cameraOptions.first { it.id == navArgs.cameraId }
+            resolution = camera.resolutions[navArgs.resolutionIdx]
+            frameRateRange = camera.frameRateRanges[navArgs.frameRateRangeIdx]
         } else {
-            cameraId = cameraOptions.first().id
-            resolution = cameraOptions.first().resolutions.first()
-            frameRate = cameraOptions.first().frameRateRanges.first()
+            camera = cameraOptions.first()
+            resolution = camera.resolutions.first()
+            frameRateRange = camera.frameRateRanges.first()
+        }
+
+        _uiState.update { it.copy(width = resolution.width, height = resolution.height) }
+
+        encoder = Encoder(resolution.width, resolution.height, 2500, frameRateRange.upper) {
+            streamer.queueData(it)
         }
     }
 
     fun onPreviewSurfaceCreated(previewSurface: Surface) {
         this.previewSurface = previewSurface
-        val cameraOptions = cameraController.getCameraOptions()
         cameraController.addCaptureTargets(listOf(previewSurface, encoder.inputSurface!!))
-        cameraController.start(cameraOptions[1], 0)
+        cameraController.start(camera, frameRateRange)
         encoder.start()
         streamer.startStream()
     }

@@ -62,7 +62,7 @@ class CameraController @Inject constructor(context: Context) {
         }
     }
 
-    fun start(cameraOption: CameraOption, frameRateIdx: Int) = CoroutineScope(Dispatchers.IO).launch {
+    fun start(cameraOption: CameraOption, frameRateRange: Range<Int>) = CoroutineScope(Dispatchers.IO).launch {
         mCameraThread = HandlerThread("CameraThread").apply { start() }
         mCameraHandler = Handler(mCameraThread!!.looper)
 
@@ -73,7 +73,7 @@ class CameraController @Inject constructor(context: Context) {
         // TODO: handle error
         mCaptureSession = createCaptureSession()
 
-        val captureRequest = createCaptureRequest(cameraOption.frameRateRanges[frameRateIdx])
+        val captureRequest = createCaptureRequest(frameRateRange)
         mCaptureSession!!.setRepeatingRequest(captureRequest, null, mCameraHandler)
     }
 
