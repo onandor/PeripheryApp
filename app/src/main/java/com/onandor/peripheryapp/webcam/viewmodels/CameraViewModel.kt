@@ -88,7 +88,9 @@ class CameraViewModel @Inject constructor(
     }
 
     fun onZoomChanged(value: Float) {
-        _uiState.update { it.copy(zoom = roundTo1Decimal(value)) }
+        val newZoom = roundTo1Decimal(value)
+        _uiState.update { it.copy(zoom = newZoom) }
+        cameraController.zoom(newZoom)
     }
 
     private fun roundTo1Decimal(value: Float): Float {

@@ -43,6 +43,8 @@ class CameraController @Inject constructor(context: Context) {
     private var mCameraHandler: Handler? = null
     private var mCamera: CameraDevice? = null
     private var mCaptureSession: CameraCaptureSession? = null
+    private var mCameraOption: CameraOption? = null
+    private var mFrameRateRange: Range<Int> = Range(15, 15)
 
     private val mCaptureTargets: MutableList<Surface> = mutableListOf()
     private val mCameraOptions: MutableList<CameraOption> = mutableListOf()
@@ -65,16 +67,18 @@ class CameraController @Inject constructor(context: Context) {
     fun start(cameraOption: CameraOption, frameRateRange: Range<Int>) = CoroutineScope(Dispatchers.IO).launch {
         mCameraThread = HandlerThread("CameraThread").apply { start() }
         mCameraHandler = Handler(mCameraThread!!.looper)
+        mCameraOption = cameraOption
+        mFrameRateRange = frameRateRange
 
         if (mCaptureTargets.isEmpty()) {
             return@launch
         }
-        mCamera = openCamera(cameraOption.id)
+        mCamera = openCamera()
         // TODO: handle error
         mCaptureSession = createCaptureSession()
 
-        val captureRequest = createCaptureRequest(frameRateRange)
-        mCaptureSession!!.setRepeatingRequest(captureRequest, null, mCameraHandler)
+        val crb = createCaptureRequestBuilder()
+        mCaptureSession!!.setRepeatingRequest(crb.build(), null, mCameraHandler)
     }
 
     fun stop() {
@@ -86,6 +90,8 @@ class CameraController @Inject constructor(context: Context) {
 
         mCamera?.close()
         mCamera = null
+
+        mCameraOption = null
 
         mCameraThread?.quitSafely()
         mCameraThread = null
@@ -103,8 +109,8 @@ class CameraController @Inject constructor(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    private suspend fun openCamera(cameraId: String) = suspendCancellableCoroutine { continuation ->
-        mCameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
+    private suspend fun openCamera() = suspendCancellableCoroutine { continuation ->
+        mCameraManager.openCamera(mCameraOption!!.id, object : CameraDevice.StateCallback() {
             override fun onOpened(device: CameraDevice) = continuation.resume(device)
 
             override fun onDisconnected(device: CameraDevice) {
@@ -113,7 +119,7 @@ class CameraController @Inject constructor(context: Context) {
 
             override fun onError(device: CameraDevice, error: Int) {
                 // TODO
-                val exception = RuntimeException("Camera $cameraId error: $error")
+                val exception = RuntimeException("Camera ${mCameraOption!!.id} error: $error")
                 if (continuation.isActive) {
                     continuation.resumeWithException(exception)
                 }
@@ -153,12 +159,36 @@ class CameraController @Inject constructor(context: Context) {
         }
     }
 
-    private fun createCaptureRequest(frameRateRange: Range<Int>): CaptureRequest {
+    private fun createCaptureRequestBuilder(): CaptureRequest.Builder {
         return mCaptureSession!!.device.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
             mCaptureTargets.forEach { surface ->
                 addTarget(surface)
             }
-            set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, frameRateRange)
+            set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mFrameRateRange)
+        }
+    }
+
+    fun zoom(value: Float) {
+        val newZoom = mCameraOption!!.zoomRange.clamp(value)
+        val zoomRequest = createCaptureRequestBuilder().apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                set(CaptureRequest.CONTROL_ZOOM_RATIO, newZoom)
+            } else {
+                val centerX = mCameraOption!!.sensorSize.width() / 2
+                val centerY = mCameraOption!!.sensorSize.height() / 2
+                val deltaX = (0.5f * mCameraOption!!.sensorSize.width() / newZoom).toInt()
+                val deltaY = (0.5f * mCameraOption!!.sensorSize.height() / newZoom).toInt()
+
+                mCameraOption!!.cropRegion.set(
+                    /* left = */ centerX - deltaX,
+                    /* top = */ centerY - deltaY,
+                    /* right = */ centerX + deltaX,
+                    /* bottom = */ centerY + deltaY
+                )
+                set(CaptureRequest.SCALER_CROP_REGION, mCameraOption!!.cropRegion)
+            }
         }.build()
+        mCaptureSession!!.setRepeatingRequest(zoomRequest, null, mCameraHandler)
+
     }
 }
