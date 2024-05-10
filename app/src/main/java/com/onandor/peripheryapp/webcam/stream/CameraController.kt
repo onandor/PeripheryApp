@@ -43,11 +43,11 @@ class CameraController @Inject constructor(context: Context) {
     private var mCameraHandler: Handler? = null
     private var mCamera: CameraDevice? = null
     private var mCaptureSession: CameraCaptureSession? = null
-    private var mCameraOption: CameraOption? = null
+    private var mCameraInfo: CameraInfo? = null
     private var mFrameRateRange: Range<Int> = Range(15, 15)
 
     private val mCaptureTargets: MutableList<Surface> = mutableListOf()
-    private val mCameraOptions: MutableList<CameraOption> = mutableListOf()
+    private val mCameraInfos: MutableList<CameraInfo> = mutableListOf()
 
     init {
         mCameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -60,14 +60,14 @@ class CameraController @Inject constructor(context: Context) {
         }
         cameraIdList.forEach { id ->
             val cameraChars = mCameraManager.getCameraCharacteristics(id)
-            mCameraOptions.add(CameraOption(id, cameraChars))
+            mCameraInfos.add(CameraInfo(id, cameraChars))
         }
     }
 
-    fun start(cameraOption: CameraOption, frameRateRange: Range<Int>) = CoroutineScope(Dispatchers.IO).launch {
+    fun start(cameraInfo: CameraInfo, frameRateRange: Range<Int>) = CoroutineScope(Dispatchers.IO).launch {
         mCameraThread = HandlerThread("CameraThread").apply { start() }
         mCameraHandler = Handler(mCameraThread!!.looper)
-        mCameraOption = cameraOption
+        mCameraInfo = cameraInfo
         mFrameRateRange = frameRateRange
 
         if (mCaptureTargets.isEmpty()) {
@@ -91,7 +91,7 @@ class CameraController @Inject constructor(context: Context) {
         mCamera?.close()
         mCamera = null
 
-        mCameraOption = null
+        mCameraInfo = null
 
         mCameraThread?.quitSafely()
         mCameraThread = null
@@ -104,13 +104,13 @@ class CameraController @Inject constructor(context: Context) {
         mCaptureTargets.addAll(targets)
     }
 
-    fun getCameraOptions(): List<CameraOption> {
-        return mCameraOptions.toList()
+    fun getCameraInfos(): List<CameraInfo> {
+        return mCameraInfos.toList()
     }
 
     @SuppressLint("MissingPermission")
     private suspend fun openCamera() = suspendCancellableCoroutine { continuation ->
-        mCameraManager.openCamera(mCameraOption!!.id, object : CameraDevice.StateCallback() {
+        mCameraManager.openCamera(mCameraInfo!!.id, object : CameraDevice.StateCallback() {
             override fun onOpened(device: CameraDevice) = continuation.resume(device)
 
             override fun onDisconnected(device: CameraDevice) {
@@ -119,7 +119,7 @@ class CameraController @Inject constructor(context: Context) {
 
             override fun onError(device: CameraDevice, error: Int) {
                 // TODO
-                val exception = RuntimeException("Camera ${mCameraOption!!.id} error: $error")
+                val exception = RuntimeException("Camera ${mCameraInfo!!.id} error: $error")
                 if (continuation.isActive) {
                     continuation.resumeWithException(exception)
                 }
@@ -169,26 +169,33 @@ class CameraController @Inject constructor(context: Context) {
     }
 
     fun zoom(value: Float) {
-        val newZoom = mCameraOption!!.zoomRange.clamp(value)
+        val newZoom = mCameraInfo!!.zoomRange.clamp(value)
         val zoomRequest = createCaptureRequestBuilder().apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 set(CaptureRequest.CONTROL_ZOOM_RATIO, newZoom)
             } else {
-                val centerX = mCameraOption!!.sensorSize.width() / 2
-                val centerY = mCameraOption!!.sensorSize.height() / 2
-                val deltaX = (0.5f * mCameraOption!!.sensorSize.width() / newZoom).toInt()
-                val deltaY = (0.5f * mCameraOption!!.sensorSize.height() / newZoom).toInt()
+                val centerX = mCameraInfo!!.sensorSize.width() / 2
+                val centerY = mCameraInfo!!.sensorSize.height() / 2
+                val deltaX = (0.5f * mCameraInfo!!.sensorSize.width() / newZoom).toInt()
+                val deltaY = (0.5f * mCameraInfo!!.sensorSize.height() / newZoom).toInt()
 
-                mCameraOption!!.cropRegion.set(
+                mCameraInfo!!.cropRegion.set(
                     /* left = */ centerX - deltaX,
                     /* top = */ centerY - deltaY,
                     /* right = */ centerX + deltaX,
                     /* bottom = */ centerY + deltaY
                 )
-                set(CaptureRequest.SCALER_CROP_REGION, mCameraOption!!.cropRegion)
+                set(CaptureRequest.SCALER_CROP_REGION, mCameraInfo!!.cropRegion)
             }
         }.build()
         mCaptureSession!!.setRepeatingRequest(zoomRequest, null, mCameraHandler)
+    }
 
+    fun adjustExposure(value: Int) {
+        val aeCompensation = mCameraInfo!!.aeRange.clamp(value)
+        val aeCompRequest = createCaptureRequestBuilder().apply {
+            set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, aeCompensation)
+        }.build()
+        mCaptureSession!!.setRepeatingRequest(aeCompRequest, null, mCameraHandler)
     }
 }

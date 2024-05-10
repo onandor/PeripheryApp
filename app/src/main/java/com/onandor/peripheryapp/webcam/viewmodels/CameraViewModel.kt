@@ -8,7 +8,7 @@ import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.webcam.stream.CameraController
-import com.onandor.peripheryapp.webcam.stream.CameraOption
+import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +23,10 @@ data class CameraUiState(
     val previewAspectRatio: Float = 1f,
     val showControls: Boolean = false,
     val zoom: Float = 1f,
-    val zoomRange: ClosedFloatingPointRange<Float> = 1f..1f
+    val zoomRange: ClosedFloatingPointRange<Float> = 1f..1f,
+    val aeCompensation: Float = 0f,
+    val aeRange: ClosedFloatingPointRange<Float> = 1f..1f,
+    val aeCompensationEV: Float = 0f
 )
 
 @HiltViewModel
@@ -37,7 +40,7 @@ class CameraViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CameraUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val camera: CameraOption
+    private val camera: CameraInfo
     private val resolution: Size
     private val frameRateRange: Range<Int>
     private var previewSurface: Surface? = null
@@ -45,15 +48,15 @@ class CameraViewModel @Inject constructor(
     private val encoder: Encoder
 
     init {
-        val cameraOptions = cameraController.getCameraOptions()
+        val cameraInfos = cameraController.getCameraInfos()
 
         val navArgs = navManager.getCurrentNavAction()?.navArgs as CameraNavArgs?
         if (navArgs != null) {
-            camera = cameraOptions.first { it.id == navArgs.cameraId }
+            camera = cameraInfos.first { it.id == navArgs.cameraId }
             resolution = camera.resolutions[navArgs.resolutionIdx]
             frameRateRange = camera.frameRateRanges[navArgs.frameRateRangeIdx]
         } else {
-            camera = cameraOptions.first()
+            camera = cameraInfos.first()
             resolution = camera.resolutions.first()
             frameRateRange = camera.frameRateRanges.first()
         }
@@ -61,10 +64,10 @@ class CameraViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 previewAspectRatio = resolution.width.toFloat() / resolution.height.toFloat(),
-                zoomRange = camera.zoomRange.lower..camera.zoomRange.upper
+                zoomRange = camera.zoomRange.lower..camera.zoomRange.upper,
+                aeRange = camera.aeRange.lower.toFloat()..camera.aeRange.upper.toFloat()
             )
         }
-        println(camera.zoomRange)
 
         encoder = Encoder(resolution.width, resolution.height, 2500, frameRateRange.upper) {
             streamer.queueData(it)
@@ -93,8 +96,25 @@ class CameraViewModel @Inject constructor(
         cameraController.zoom(newZoom)
     }
 
+    fun onAeCompensationChanged(value: Float) {
+        val newAeCompensation = roundTo1Decimal(value)
+        _uiState.update {
+            it.copy(
+                aeCompensation = newAeCompensation,
+                aeCompensationEV = roundTo2Decimals(newAeCompensation * 0.16666667f)
+            )
+        }
+        cameraController.adjustExposure(newAeCompensation.toInt())
+    }
+
     private fun roundTo1Decimal(value: Float): Float {
         val df = DecimalFormat("#.#")
+        df.roundingMode = RoundingMode.HALF_UP
+        return df.format(value).toFloat()
+    }
+
+    private fun roundTo2Decimals(value: Float): Float {
+        val df = DecimalFormat("#.##")
         df.roundingMode = RoundingMode.HALF_UP
         return df.format(value).toFloat()
     }

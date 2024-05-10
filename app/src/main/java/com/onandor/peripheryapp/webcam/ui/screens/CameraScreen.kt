@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -96,7 +98,11 @@ fun CameraScreen(
             onDismissRequest = viewModel::onHideControls,
             zoom = uiState.zoom,
             zoomRange = uiState.zoomRange,
-            onZoomChanged = viewModel::onZoomChanged
+            onZoomChanged = viewModel::onZoomChanged,
+            aeCompensation = uiState.aeCompensation,
+            aeCompensationEV = uiState.aeCompensationEV,
+            aeRange = uiState.aeRange,
+            onAeCompensationChanged = viewModel::onAeCompensationChanged
         )
     }
 }
@@ -139,9 +145,13 @@ fun ControlsSheet(
     onDismissRequest: () -> Unit,
     zoom: Float,
     zoomRange: ClosedFloatingPointRange<Float>,
-    onZoomChanged: (Float) -> Unit
+    onZoomChanged: (Float) -> Unit,
+    aeCompensation: Float,
+    aeCompensationEV: Float,
+    aeRange: ClosedFloatingPointRange<Float>,
+    onAeCompensationChanged: (Float) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     if (show) {
         ModalBottomSheet(
             onDismissRequest = onDismissRequest,
@@ -153,28 +163,40 @@ fun ControlsSheet(
                     .fillMaxWidth()
                     .padding(20.dp)
             ) {
-                Text(text = stringResource(id = R.string.webcam_camera_zoom))
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Slider(
-                        modifier = Modifier
-                            .weight(0.87f)
-                            .padding(end = 5.dp),
-                        value = zoom,
-                        steps = (zoomRange.endInclusive.toInt() - zoomRange.start.toInt()) * 10 - 1,
-                        valueRange = zoomRange,
-                        onValueChange = onZoomChanged,
-                        enabled = zoomRange.endInclusive.toInt() - zoomRange.start.toInt() != 0
-                    )
-                    Text(
-                        modifier = Modifier.weight(0.13f),
-                        text = "${zoom}x"
-                    )
+                    Text(text = stringResource(id = R.string.webcam_camera_zoom))
+                    Text(text = "${zoom}x")
                 }
+                Slider(
+                    value = zoom,
+                    steps = (zoomRange.endInclusive.toInt() - zoomRange.start.toInt()) * 10 - 1,
+                    valueRange = zoomRange,
+                    onValueChange = onZoomChanged,
+                    enabled = zoomRange.endInclusive.toInt() - zoomRange.start.toInt() != 0
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = stringResource(id = R.string.webcam_camera_exposure_compensation))
+                    Text(text = "$aeCompensationEV EV")
+                }
+                Slider(
+                    value = aeCompensation,
+                    steps = (aeRange.endInclusive.toInt() - aeRange.start.toInt()) - 1,
+                    valueRange = aeRange,
+                    onValueChange = onAeCompensationChanged,
+                    enabled = aeRange.start.toInt() != 0 && aeRange.endInclusive.toInt() != 0
+                )
             }
         }
     }

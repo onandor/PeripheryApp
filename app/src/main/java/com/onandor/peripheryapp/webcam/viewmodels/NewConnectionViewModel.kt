@@ -9,7 +9,7 @@ import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.CameraController
-import com.onandor.peripheryapp.webcam.stream.CameraOption
+import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +26,7 @@ data class NewConnectionUiState(
     val canConnect: Boolean = false,
     val connectionEvent: Streamer.ConnectionEvent? = null,
 
-    val cameraOptions: List<CameraOption> = emptyList(),
+    val cameraInfos: List<CameraInfo> = emptyList(),
     val cameraId: String = "",
     val resolutionIdx: Int = 0,
     val frameRateRangeIdx: Int = 0
@@ -64,11 +64,11 @@ class NewConnectionViewModel @Inject constructor(
             }
         }
 
-        val cameraOptions = cameraController.getCameraOptions()
+        val cameraInfos = cameraController.getCameraInfos()
         _uiState.update {
             it.copy(
-                cameraOptions = cameraOptions,
-                cameraId = cameraOptions.first().id,
+                cameraInfos = cameraInfos,
+                cameraId = cameraInfos.first().id,
             )
         }
     }

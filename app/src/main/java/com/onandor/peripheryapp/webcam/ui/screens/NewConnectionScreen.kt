@@ -31,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -44,7 +43,7 @@ import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.ui.components.SettingItem
 import com.onandor.peripheryapp.ui.components.SettingsDropdownMenu
 import com.onandor.peripheryapp.utils.DropdownItem
-import com.onandor.peripheryapp.webcam.stream.CameraOption
+import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import com.onandor.peripheryapp.webcam.ui.components.PermissionRequest
 import com.onandor.peripheryapp.webcam.viewmodels.NewConnectionViewModel
@@ -121,7 +120,7 @@ fun NewConnectionScreen(
                     onConnect = viewModel::onConnect
                 )
                 CameraSettings(
-                    cameraOptions = uiState.cameraOptions,
+                    cameraInfos = uiState.cameraInfos,
                     cameraId = uiState.cameraId,
                     resolutionIdx = uiState.resolutionIdx,
                     frameRateRangeIdx = uiState.frameRateRangeIdx,
@@ -190,7 +189,7 @@ fun ConnectionSettings(
 
 @Composable
 fun CameraSettings(
-    cameraOptions: List<CameraOption>,
+    cameraInfos: List<CameraInfo>,
     cameraId: String,
     resolutionIdx: Int,
     frameRateRangeIdx: Int,
@@ -212,8 +211,8 @@ fun CameraSettings(
             )
         }
 
-        val selectedCamera = cameraOptions.find { it.id == cameraId }!!
-        val cameraItems: List<DropdownItem> = cameraOptions.map { option ->
+        val selectedCamera = cameraInfos.find { it.id == cameraId }!!
+        val cameraItems: List<DropdownItem> = cameraInfos.map { option ->
             DropdownItem(
                 onClick = { onCameraIdChanged(option.id) },
                 text = { Text(text = getCameraIdText(lensFacing = option.lensFacing)) }
