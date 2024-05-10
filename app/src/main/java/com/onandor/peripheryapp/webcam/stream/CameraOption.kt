@@ -12,6 +12,7 @@ class CameraOption(
     val zoomRange: Range<Float>
     val aeRange: Range<Int>
     val aeStep: Float
+    val frameRateRanges: Array<Range<Int>>
 
     init {
         lensFacing = characteristics[CameraCharacteristics.LENS_FACING]!!
@@ -21,6 +22,7 @@ class CameraOption(
         )
         aeRange = characteristics[CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE]!!
         aeStep = characteristics[CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP]!!.toFloat()
+        frameRateRanges = characteristics[CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES]!!
         //characteristics[CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES]
     }
 }

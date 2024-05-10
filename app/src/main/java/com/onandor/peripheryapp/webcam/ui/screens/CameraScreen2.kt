@@ -70,13 +70,9 @@ fun CameraScreen2(
                 CameraSurfaceView(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .aspectRatio(uiState.width.toFloat() / uiState.height.toFloat())
-                ) { surface ->
-                    viewModel.onPreviewSurfaceCreated(
-                        previewSurface = surface,
-                        cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-                    )
-                }
+                        .aspectRatio(uiState.width.toFloat() / uiState.height.toFloat()),
+                    onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
+                )
                 Spacer(modifier = Modifier.width(48.dp))
             }
         }
