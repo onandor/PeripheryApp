@@ -94,8 +94,7 @@ class CameraController @Inject constructor(private val context: Context) {
         startNotificationService()
     }
 
-    fun stop() {
-        stopNotificationService()
+    fun reset() {
         mCaptureTargets.clear()
 
         mZoom = DEFAULT_ZOOM
@@ -114,6 +113,11 @@ class CameraController @Inject constructor(private val context: Context) {
         mCameraThread = null
         mCameraHandler?.looper?.quitSafely()
         mCameraHandler = null
+    }
+
+    fun stop() {
+        stopNotificationService()
+        reset()
     }
 
     fun updateCaptureTargets(targets: List<Surface>) = CoroutineScope(Dispatchers.IO).launch {

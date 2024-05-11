@@ -1,5 +1,6 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
+import android.hardware.camera2.CameraMetadata
 import android.util.Range
 import android.util.Size
 import android.view.Surface
@@ -27,6 +28,8 @@ data class CameraUiState(
     val aeCompensation: Float = CameraController.DEFAULT_AE_COMPENSATION.toFloat(),
     val aeRange: ClosedFloatingPointRange<Float> = aeCompensation..aeCompensation,
     val aeCompensationEV: Float = CameraController.DEFAULT_AE_COMPENSATION.toFloat(),
+    val currentCamera: CameraViewModel.CameraOption = CameraViewModel.CameraOption(),
+    val cameras: List<CameraViewModel.CameraOption> = emptyList()
 )
 
 @HiltViewModel
@@ -37,20 +40,24 @@ class CameraViewModel @Inject constructor(
     private val cameraController: CameraController
 ): ViewModel() {
 
+    data class CameraOption(
+        val id: String = "",
+        val lensFacing: Int = -1
+    )
+
     private val _uiState = MutableStateFlow(CameraUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val camera: CameraInfo
+    private var camera: CameraInfo
     private val resolution: Size
     private val frameRateRange: Range<Int>
     private val bitRate: Int
     private var previewSurface: Surface? = null
+    private val cameraInfos: List<CameraInfo> = cameraController.getCameraInfos()
 
     private val encoder: Encoder
 
     init {
-        val cameraInfos = cameraController.getCameraInfos()
-
         val navArgs = navManager.getCurrentNavAction()?.navArgs as CameraNavArgs?
         if (navArgs != null) {
             camera = cameraInfos.first { it.id == navArgs.cameraId }
@@ -64,11 +71,23 @@ class CameraViewModel @Inject constructor(
             bitRate = Encoder.DEFAULT_BIT_RATE
         }
 
+        val compatibleCameras = cameraInfos
+            .filter {
+                it.frameRateRanges.contains(frameRateRange) && it.resolutions.contains(resolution)
+            }.map {
+                CameraOption(
+                    id = it.id,
+                    lensFacing = it.lensFacing
+                )
+            }
+
         _uiState.update {
             it.copy(
                 previewAspectRatio = resolution.width.toFloat() / resolution.height.toFloat(),
                 zoomRange = camera.zoomRange.lower..camera.zoomRange.upper,
-                aeRange = camera.aeRange.lower.toFloat()..camera.aeRange.upper.toFloat()
+                aeRange = camera.aeRange.lower.toFloat()..camera.aeRange.upper.toFloat(),
+                currentCamera = compatibleCameras.first { option -> option.id == camera.id },
+                cameras = compatibleCameras
             )
         }
 
@@ -117,6 +136,23 @@ class CameraViewModel @Inject constructor(
             )
         }
         cameraController.adjustExposure(newAeCompensation.toInt())
+    }
+
+    fun onCameraChanged(option: CameraOption) {
+        camera = cameraInfos.first { it.id == option.id }
+        _uiState.update {
+            it.copy(
+                zoom = CameraController.DEFAULT_ZOOM,
+                zoomRange = camera.zoomRange.lower..camera.zoomRange.upper,
+                aeCompensation = CameraController.DEFAULT_AE_COMPENSATION.toFloat(),
+                aeCompensationEV = CameraController.DEFAULT_AE_COMPENSATION.toFloat(),
+                aeRange = camera.aeRange.lower.toFloat()..camera.aeRange.upper.toFloat(),
+                currentCamera = option
+            )
+        }
+        cameraController.reset()
+        cameraController.start(
+            camera, frameRateRange, listOf(previewSurface!!, encoder.inputSurface!!))
     }
 
     private fun roundTo1Decimal(value: Float): Float {

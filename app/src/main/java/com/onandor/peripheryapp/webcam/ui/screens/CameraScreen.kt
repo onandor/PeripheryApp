@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
+import android.hardware.camera2.CameraMetadata
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,7 +49,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.onandor.peripheryapp.R
+import com.onandor.peripheryapp.ui.components.SettingsDropdownMenu
+import com.onandor.peripheryapp.utils.DropdownItem
 import com.onandor.peripheryapp.webcam.viewmodels.CameraViewModel
+import kotlinx.coroutines.launch
 
 @SuppressLint("SourceLockedOrientationActivity")
 @Composable
@@ -122,7 +127,10 @@ fun CameraScreen(
             aeCompensation = uiState.aeCompensation,
             aeCompensationEV = uiState.aeCompensationEV,
             aeRange = uiState.aeRange,
-            onAeCompensationChanged = viewModel::onAeCompensationChanged
+            onAeCompensationChanged = viewModel::onAeCompensationChanged,
+            currentCamera = uiState.currentCamera,
+            cameras = uiState.cameras,
+            onCameraChanged = viewModel::onCameraChanged
         )
     }
 }
@@ -169,9 +177,13 @@ fun ControlsSheet(
     aeCompensation: Float,
     aeCompensationEV: Float,
     aeRange: ClosedFloatingPointRange<Float>,
-    onAeCompensationChanged: (Float) -> Unit
+    onAeCompensationChanged: (Float) -> Unit,
+    currentCamera: CameraViewModel.CameraOption,
+    cameras: List<CameraViewModel.CameraOption>,
+    onCameraChanged: (CameraViewModel.CameraOption) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope = rememberCoroutineScope()
     if (show) {
         ModalBottomSheet(
             onDismissRequest = onDismissRequest,
@@ -183,10 +195,33 @@ fun ControlsSheet(
                     .fillMaxWidth()
                     .padding(20.dp)
             ) {
-
+                if (cameras.size > 1) {
+                    val cameraItems = cameras.map {
+                        val text = getCameraName(it)
+                        DropdownItem(
+                            onClick = {
+                                coroutineScope.launch { sheetState.hide(); onDismissRequest() }
+                                onCameraChanged(it)
+                            },
+                            text = { Text(text = text) }
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = stringResource(id = R.string.webcam_camera_change_camera))
+                        SettingsDropdownMenu(
+                            textToTheLeft = { Text(text = getCameraName(currentCamera)) },
+                            items = cameraItems
+                        )
+                    }
+                }
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -200,10 +235,8 @@ fun ControlsSheet(
                     onValueChange = onZoomChanged,
                     enabled = zoomRange.endInclusive.toInt() - zoomRange.start.toInt() != 0
                 )
-
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -219,6 +252,15 @@ fun ControlsSheet(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun getCameraName(cameraOption: CameraViewModel.CameraOption): String {
+    return if (cameraOption.lensFacing == CameraMetadata.LENS_FACING_FRONT) {
+        stringResource(id = R.string.webcam_settings_camera_front)
+    } else {
+        stringResource(id = R.string.webcam_settings_camera_back)
     }
 }
 
