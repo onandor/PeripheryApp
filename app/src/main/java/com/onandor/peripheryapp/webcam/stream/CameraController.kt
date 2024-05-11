@@ -54,6 +54,7 @@ class CameraController @Inject constructor(private val context: Context) {
     private var mCaptureSession: CameraCaptureSession? = null
     private var mCameraInfo: CameraInfo? = null
     private var mFrameRateRange: Range<Int> = Range(15, 15)
+    private var mBuilder: CaptureRequest.Builder? = null
 
     private val mCaptureTargets: MutableList<Surface> = mutableListOf()
     private val mCameraInfos: MutableList<CameraInfo> = mutableListOf()
@@ -87,8 +88,8 @@ class CameraController @Inject constructor(private val context: Context) {
         mCamera = openCamera()
         mCaptureSession = createCaptureSession() // TODO: handle error
 
-        val crb = createBuilder()
-        mCaptureSession!!.setRepeatingRequest(crb.build(), null, mCameraHandler)
+        mBuilder = createBuilder()
+        mCaptureSession!!.setRepeatingRequest(mBuilder!!.build(), null, mCameraHandler)
 
         startNotificationService()
     }
@@ -128,15 +129,14 @@ class CameraController @Inject constructor(private val context: Context) {
 
         mCaptureSession = createCaptureSession() // TODO: handle error
 
-        val builder = createBuilder()
+        mBuilder = createBuilder()
         if (mZoom != DEFAULT_ZOOM) {
-            mCameraInfo!!.sensorSize.set(Rect())
-            builder.setZoom(mZoom)
+            mBuilder!!.setZoom(mZoom)
         }
         if (mAeCompensation != DEFAULT_AE_COMPENSATION) {
-            builder.setAeCompensation(mAeCompensation)
+            mBuilder!!.setAeCompensation(mAeCompensation)
         }
-        mCaptureSession!!.setRepeatingRequest(builder.build(), null, mCameraHandler)
+        mCaptureSession!!.setRepeatingRequest(mBuilder!!.build(), null, mCameraHandler)
     }
 
     fun getCameraInfos(): List<CameraInfo> {
@@ -216,19 +216,19 @@ class CameraController @Inject constructor(private val context: Context) {
 
     fun zoom(value: Float) {
         mZoom = mCameraInfo!!.zoomRange.clamp(value)
-        val zoomRequest = createBuilder().setZoom(value).build()
-        mCaptureSession!!.setRepeatingRequest(zoomRequest, null, mCameraHandler)
+        mBuilder!!.setZoom(value)
+        mCaptureSession!!.setRepeatingRequest(mBuilder!!.build(), null, mCameraHandler)
     }
 
     fun adjustExposure(value: Int) {
         mAeCompensation = mCameraInfo!!.aeRange.clamp(value)
-        val aeCompRequest = createBuilder().setAeCompensation(mAeCompensation).build()
-        mCaptureSession!!.setRepeatingRequest(aeCompRequest, null, mCameraHandler)
+        mBuilder!!.setAeCompensation(mAeCompensation)
+        mCaptureSession!!.setRepeatingRequest(mBuilder!!.build(), null, mCameraHandler)
     }
 
     private fun Builder.setZoom(zoom: Float): Builder {
         return this.apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
                 set(CaptureRequest.CONTROL_ZOOM_RATIO, zoom)
             } else {
                 val centerX = mCameraInfo!!.sensorSize.width() / 2
