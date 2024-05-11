@@ -9,10 +9,25 @@ import java.lang.Exception
 class Encoder(
     val width: Int,
     val height: Int,
-    val bitRate: Int,
-    val frameRate: Int,
+    private val bitRate: Int,
+    private val frameRate: Int,
     val onDataEncoded: (ByteArray) -> Unit
 ) {
+
+    companion object {
+        val BIT_RATES = listOf(
+            500_000,
+            1_000_000,
+            1_500_000,
+            2_000_000,
+            2_500_000,
+            3_000_000,
+            3_500_000,
+            4_000_000,
+            4_500_000
+        )
+        const val DEFAULT_BIT_RATE = 2_500_000
+    }
 
     private val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
     private val I_FRAME_INTERVAL = 1

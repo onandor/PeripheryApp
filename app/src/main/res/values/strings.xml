@@ -67,4 +67,5 @@
     <string name="webcam_camera_zoom">Zoom</string>
     <string name="webcam_camera_exposure_compensation">Exposure Compensation</string>
     <string name="webcam_notif_address_unavailable">Unavailable</string>
+    <string name="webcam_settings_bit_rate">Bit rate</string>
 </resources>

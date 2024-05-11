@@ -43,6 +43,7 @@ class CameraViewModel @Inject constructor(
     private val camera: CameraInfo
     private val resolution: Size
     private val frameRateRange: Range<Int>
+    private val bitRate: Int
     private var previewSurface: Surface? = null
 
     private val encoder: Encoder
@@ -55,10 +56,12 @@ class CameraViewModel @Inject constructor(
             camera = cameraInfos.first { it.id == navArgs.cameraId }
             resolution = camera.resolutions[navArgs.resolutionIdx]
             frameRateRange = camera.frameRateRanges[navArgs.frameRateRangeIdx]
+            bitRate = navArgs.bitRate
         } else {
             camera = cameraInfos.first()
             resolution = camera.resolutions.first()
             frameRateRange = camera.frameRateRanges.first()
+            bitRate = Encoder.DEFAULT_BIT_RATE
         }
 
         _uiState.update {
@@ -69,7 +72,7 @@ class CameraViewModel @Inject constructor(
             )
         }
 
-        encoder = Encoder(resolution.width, resolution.height, 2500, frameRateRange.upper) {
+        encoder = Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
             streamer.queueData(it)
         }
     }

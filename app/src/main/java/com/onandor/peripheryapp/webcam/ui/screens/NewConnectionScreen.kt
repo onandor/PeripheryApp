@@ -118,7 +118,10 @@ fun NewConnectionScreen(
                     frameRateRangeIdx = uiState.frameRateRangeIdx,
                     onCameraIdChanged = viewModel::onCameraIdChanged,
                     onResolutionIdxChanged = viewModel::onResolutionIdxChanged,
-                    onFrameRateRangeIdxChanged = viewModel::onFrameRateRangeIdxChanged
+                    onFrameRateRangeIdxChanged = viewModel::onFrameRateRangeIdxChanged,
+                    bitRate = uiState.bitRate,
+                    bitRates = uiState.bitRates,
+                    onBitRateChanged = viewModel::onBitRateChanged
                 )
             }
         }
@@ -187,7 +190,10 @@ fun CameraSettings(
     frameRateRangeIdx: Int,
     onCameraIdChanged: (String) -> Unit,
     onResolutionIdxChanged: (Int) -> Unit,
-    onFrameRateRangeIdxChanged: (Int) -> Unit
+    onFrameRateRangeIdxChanged: (Int) -> Unit,
+    bitRate: Int,
+    bitRates: List<Int>,
+    onBitRateChanged: (Int) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -232,6 +238,12 @@ fun CameraSettings(
                     text = { Text(text = text) }
                 )
             }
+        val bitRateItems: List<DropdownItem> = bitRates.map {
+            DropdownItem(
+                onClick = { onBitRateChanged(it) },
+                text = { Text(text = "${it / 1000} Kbps") }
+            )
+        }
 
 
         SettingItem(text = stringResource(id = R.string.webcam_settings_camera)) {
@@ -257,6 +269,12 @@ fun CameraSettings(
                         selectedCamera.frameRateRanges[frameRateRangeIdx]))
                 },
                 items = frameRateRangeItems
+            )
+        }
+        SettingItem(text = stringResource(id = R.string.webcam_settings_bit_rate) ) {
+            SettingsDropdownMenu(
+                textToTheLeft = { Text(text = "${bitRate / 1000} Kbps") },
+                items = bitRateItems
             )
         }
     }

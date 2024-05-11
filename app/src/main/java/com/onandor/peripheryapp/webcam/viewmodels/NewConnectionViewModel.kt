@@ -10,6 +10,7 @@ import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.CameraController
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
+import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,9 @@ data class NewConnectionUiState(
     val cameraInfos: List<CameraInfo> = emptyList(),
     val cameraId: String = "",
     val resolutionIdx: Int = 0,
-    val frameRateRangeIdx: Int = 0
+    val frameRateRangeIdx: Int = 0,
+    val bitRate: Int = Encoder.DEFAULT_BIT_RATE,
+    val bitRates: List<Int> = Encoder.BIT_RATES
 )
 
 @HiltViewModel
@@ -78,12 +81,14 @@ class NewConnectionViewModel @Inject constructor(
             }
             val resolutionIdx = settings.get(WebcamSettingKeys.RESOLUTION_IDX)
             val frameRateRangeIdx = settings.get(WebcamSettingKeys.FRAME_RATE_IDX)
+            val bitRate = settings.get(WebcamSettingKeys.BIT_RATE)
 
             _uiState.update {
                 it.copy(
                     cameraId = cameraId,
                     resolutionIdx = resolutionIdx,
-                    frameRateRangeIdx = frameRateRangeIdx
+                    frameRateRangeIdx = frameRateRangeIdx,
+                    bitRate = bitRate
                 )
             }
         }
@@ -120,20 +125,21 @@ class NewConnectionViewModel @Inject constructor(
     }
 
     fun onConnect() {
-        /*
         _uiState.update { it.copy(connecting = true) }
         streamer.connect(uiState.value.address, uiState.value.port.toInt())
             .thenAccept { result ->
                 _uiState.update { it.copy(connecting = false) }
                 onConnectionEvent(result)
             }
-         */
+        /*
         val navArgs = CameraNavArgs(
             cameraId = uiState.value.cameraId,
             resolutionIdx = uiState.value.resolutionIdx,
-            frameRateRangeIdx = uiState.value.frameRateRangeIdx
+            frameRateRangeIdx = uiState.value.frameRateRangeIdx,
+            bitRate = uiState.value.bitRate
         )
         navManager.navigateTo(NavActions.Webcam.camera(navArgs))
+         */
     }
 
 
@@ -147,7 +153,8 @@ class NewConnectionViewModel @Inject constructor(
                 val navArgs = CameraNavArgs(
                     cameraId = uiState.value.cameraId,
                     resolutionIdx = uiState.value.resolutionIdx,
-                    frameRateRangeIdx = uiState.value.frameRateRangeIdx
+                    frameRateRangeIdx = uiState.value.frameRateRangeIdx,
+                    bitRate = uiState.value.bitRate
                 )
                 navManager.navigateTo(NavActions.Webcam.camera(navArgs))
             }
@@ -188,11 +195,17 @@ class NewConnectionViewModel @Inject constructor(
         saveCameraSettings()
     }
 
+    fun onBitRateChanged(bitRate: Int) {
+        _uiState.update { it.copy(bitRate = bitRate) }
+        saveCameraSettings()
+    }
+
     private fun saveCameraSettings() {
         viewModelScope.launch {
             settings.save(WebcamSettingKeys.CAMERA_ID, uiState.value.cameraId)
             settings.save(WebcamSettingKeys.RESOLUTION_IDX, uiState.value.resolutionIdx)
             settings.save(WebcamSettingKeys.FRAME_RATE_IDX, uiState.value.frameRateRangeIdx)
+            settings.save(WebcamSettingKeys.BIT_RATE, uiState.value.bitRate)
         }
     }
 }

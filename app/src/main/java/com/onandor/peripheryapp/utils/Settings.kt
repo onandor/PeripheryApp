@@ -66,6 +66,10 @@ object WebcamSettingKeys {
         preferenceKey = intPreferencesKey("webcam_frame_rate_idx"),
         defaultValue = -1
     )
+    val BIT_RATE = SettingKey(
+        preferenceKey = intPreferencesKey("webcam_bit_rate"),
+        defaultValue = -1
+    )
 }
 
 class Settings @Inject constructor(
