@@ -34,6 +34,8 @@ class Encoder(
 
     private val mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE)
     var inputSurface: Surface? = null
+        private set
+    private var flushing: Boolean = false
 
     private var spsPpsNalu: ByteArray? = null
 
@@ -45,6 +47,9 @@ class Encoder(
             index: Int,
             info: MediaCodec.BufferInfo
         ) {
+            if (flushing) {
+                return
+            }
             val data = encode(codec, index, info)
             data?.let(onDataEncoded)
         }
@@ -101,6 +106,13 @@ class Encoder(
         } else {
             outData
         }
+    }
+
+    fun flush(){
+        flushing = true
+        mediaCodec.flush()
+        mediaCodec.start()
+        flushing = false
     }
 
     fun start() {

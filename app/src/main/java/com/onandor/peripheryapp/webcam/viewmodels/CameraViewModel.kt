@@ -150,6 +150,7 @@ class CameraViewModel @Inject constructor(
                 currentCamera = option
             )
         }
+        encoder.flush()
         cameraController.reset()
         cameraController.start(
             camera, frameRateRange, listOf(previewSurface!!, encoder.inputSurface!!))
