@@ -42,8 +42,8 @@ class CameraController @Inject constructor(private val context: Context) {
     }
 
     companion object {
-        private const val DEFAULT_ZOOM = 1f
-        private const val DEFAULT_AE_COMPENSATION = 0
+        const val DEFAULT_ZOOM = 1f
+        const val DEFAULT_AE_COMPENSATION = 0
     }
 
     private val mCameraManager: CameraManager =

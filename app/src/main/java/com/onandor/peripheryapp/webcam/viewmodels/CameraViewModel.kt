@@ -22,11 +22,11 @@ import javax.inject.Inject
 data class CameraUiState(
     val previewAspectRatio: Float = 1f,
     val showControls: Boolean = false,
-    val zoom: Float = 1f,
-    val zoomRange: ClosedFloatingPointRange<Float> = 1f..1f,
-    val aeCompensation: Float = 0f,
-    val aeRange: ClosedFloatingPointRange<Float> = 1f..1f,
-    val aeCompensationEV: Float = 0f
+    val zoom: Float = CameraController.DEFAULT_ZOOM,
+    val zoomRange: ClosedFloatingPointRange<Float> = zoom..zoom,
+    val aeCompensation: Float = CameraController.DEFAULT_AE_COMPENSATION.toFloat(),
+    val aeRange: ClosedFloatingPointRange<Float> = aeCompensation..aeCompensation,
+    val aeCompensationEV: Float = CameraController.DEFAULT_AE_COMPENSATION.toFloat(),
 )
 
 @HiltViewModel
