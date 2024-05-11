@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.hardware.camera2.CameraMetadata
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -98,18 +100,21 @@ fun CameraScreen(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                val configuration = LocalConfiguration.current
                 IconButton(onClick = viewModel::navigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
                         contentDescription = null
                     )
                 }
-                CameraSurfaceView(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(uiState.previewAspectRatio),
-                    onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
-                )
+                if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    CameraSurfaceView(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(uiState.previewAspectRatio),
+                        onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
+                    )
+                }
                 IconButton(onClick = viewModel::onShowControls) {
                     Icon(
                         painterResource(id = R.drawable.ic_tune),
@@ -146,10 +151,7 @@ fun CameraSurfaceView(
             SurfaceView(it).apply {
                 this.holder.addCallback(object : SurfaceHolder.Callback {
                     override fun surfaceCreated(holder: SurfaceHolder) {
-                        val orientation = it.findActivity()?.resources?.configuration?.orientation
-                        if (orientation == ActivityInfo.SCREEN_ORIENTATION_USER) {
-                            onPreviewSurfaceCreated(holder.surface)
-                        }
+                        onPreviewSurfaceCreated(holder.surface)
                     }
 
                     override fun surfaceChanged(
