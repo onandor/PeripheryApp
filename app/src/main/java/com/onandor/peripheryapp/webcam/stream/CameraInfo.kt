@@ -35,7 +35,7 @@ class CameraInfo(
 
         val cameraConfig = characteristics[CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP]!!
         resolutions = cameraConfig.getOutputSizes(MediaRecorder::class.java)
-            .filter { size -> size.width <= 1280 }
+            .filter { size -> size.width <= 1280 && size.width >= size.height }
             .reversed()
     }
 }
