@@ -2,6 +2,7 @@ package com.onandor.peripheryapp.webcam.stream
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
@@ -27,7 +28,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class CameraController @Inject constructor(context: Context) {
+class CameraController @Inject constructor(private val context: Context) {
 
     private class HandlerExecutor(private val handler: Handler): Executor {
 
@@ -38,7 +39,8 @@ class CameraController @Inject constructor(context: Context) {
         }
     }
 
-    private val mCameraManager: CameraManager
+    private val mCameraManager: CameraManager =
+        context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private var mCameraThread: HandlerThread? = null
     private var mCameraHandler: Handler? = null
     private var mCamera: CameraDevice? = null
@@ -50,8 +52,6 @@ class CameraController @Inject constructor(context: Context) {
     private val mCameraInfos: MutableList<CameraInfo> = mutableListOf()
 
     init {
-        mCameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
         val cameraIdList = try {
             mCameraManager.cameraIdList
         } catch (e: CameraAccessException) {
@@ -64,24 +64,27 @@ class CameraController @Inject constructor(context: Context) {
         }
     }
 
-    fun start(cameraInfo: CameraInfo, frameRateRange: Range<Int>) = CoroutineScope(Dispatchers.IO).launch {
+    fun start(cameraInfo: CameraInfo, frameRateRange: Range<Int>, targets: List<Surface>) = CoroutineScope(Dispatchers.IO).launch {
+        if (mCaptureSession != null || targets.isEmpty()) {
+            return@launch
+        }
         mCameraThread = HandlerThread("CameraThread").apply { start() }
         mCameraHandler = Handler(mCameraThread!!.looper)
         mCameraInfo = cameraInfo
         mFrameRateRange = frameRateRange
+        mCaptureTargets.addAll(targets)
 
-        if (mCaptureTargets.isEmpty()) {
-            return@launch
-        }
         mCamera = openCamera()
-        // TODO: handle error
-        mCaptureSession = createCaptureSession()
+        mCaptureSession = createCaptureSession() // TODO: handle error
 
         val crb = createCaptureRequestBuilder()
         mCaptureSession!!.setRepeatingRequest(crb.build(), null, mCameraHandler)
+
+        startNotificationService()
     }
 
     fun stop() {
+        stopNotificationService()
         mCaptureTargets.clear()
 
         mCaptureSession?.stopRepeating()
@@ -100,8 +103,15 @@ class CameraController @Inject constructor(context: Context) {
 
     }
 
-    fun addCaptureTargets(targets: List<Surface>) {
+    fun updateCaptureTargets(targets: List<Surface>) {
+        if (mCaptureSession == null || targets.isEmpty()) {
+            return
+        }
+        mCaptureTargets.clear()
         mCaptureTargets.addAll(targets)
+
+        val crb = createCaptureRequestBuilder()
+        mCaptureSession!!.setRepeatingRequest(crb.build(), null, mCameraHandler)
     }
 
     fun getCameraInfos(): List<CameraInfo> {
@@ -166,6 +176,17 @@ class CameraController @Inject constructor(context: Context) {
             }
             set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mFrameRateRange)
         }
+    }
+
+    private fun startNotificationService() {
+        val intent = WebcamNotificationService.buildIntent()
+            .setClass(context, WebcamNotificationService::class.java)
+        context.startForegroundService(intent)
+    }
+
+    private fun stopNotificationService() {
+        val intent = Intent().setClass(context, WebcamNotificationService::class.java)
+        context.stopService(intent)
     }
 
     fun zoom(value: Float) {

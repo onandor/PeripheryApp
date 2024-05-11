@@ -52,6 +52,11 @@
             android:foregroundServiceType="connectedDevice"
             android:exported="false">
         </service>
+        <service
+            android:name=".webcam.stream.WebcamNotificationService"
+            android:foregroundServiceType="camera"
+            android:exported="false">
+        </service>
     </application>
 
 </manifest>

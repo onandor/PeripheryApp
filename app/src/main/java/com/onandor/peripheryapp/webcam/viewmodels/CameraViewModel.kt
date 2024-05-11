@@ -75,11 +75,20 @@ class CameraViewModel @Inject constructor(
     }
 
     fun onPreviewSurfaceCreated(previewSurface: Surface) {
+        if (this.previewSurface != null) {
+            this.previewSurface = previewSurface
+            cameraController.updateCaptureTargets(listOf(previewSurface, encoder.inputSurface!!))
+            return
+        }
         this.previewSurface = previewSurface
-        cameraController.addCaptureTargets(listOf(previewSurface, encoder.inputSurface!!))
-        cameraController.start(camera, frameRateRange)
+        cameraController.start(camera, frameRateRange, listOf(previewSurface, encoder.inputSurface!!))
         encoder.start()
         streamer.startStream()
+    }
+
+    fun onPause() {
+        cameraController.updateCaptureTargets(listOf(encoder.inputSurface!!))
+        this.previewSurface!!.release()
     }
 
     fun onShowControls() {
