@@ -37,7 +37,7 @@ class NewConnectionViewModel @Inject constructor(
     private val navManager: INavigationManager,
     private val streamer: Streamer,
     private val settings: Settings,
-    private val cameraController: CameraController
+    cameraController: CameraController
 ) : ViewModel() {
 
     private val portPattern = Regex("^\\d+\$")
@@ -70,6 +70,22 @@ class NewConnectionViewModel @Inject constructor(
                 cameraInfos = cameraInfos,
                 cameraId = cameraInfos.first().id,
             )
+        }
+        viewModelScope.launch {
+            val cameraId = settings.get(WebcamSettingKeys.CAMERA_ID)
+            if (cameraId.isEmpty()) {
+                return@launch
+            }
+            val resolutionIdx = settings.get(WebcamSettingKeys.RESOLUTION_IDX)
+            val frameRateRangeIdx = settings.get(WebcamSettingKeys.FRAME_RATE_IDX)
+
+            _uiState.update {
+                it.copy(
+                    cameraId = cameraId,
+                    resolutionIdx = resolutionIdx,
+                    frameRateRangeIdx = frameRateRangeIdx
+                )
+            }
         }
     }
 
@@ -159,17 +175,24 @@ class NewConnectionViewModel @Inject constructor(
                 frameRateRangeIdx = 0
             )
         }
+        saveCameraSettings()
     }
 
     fun onResolutionIdxChanged(idx: Int) {
         _uiState.update { it.copy(resolutionIdx = idx) }
+        saveCameraSettings()
     }
 
     fun onFrameRateRangeIdxChanged(idx: Int) {
         _uiState.update { it.copy(frameRateRangeIdx = idx) }
+        saveCameraSettings()
     }
 
-    fun navigateToSettings() {
-        navManager.navigateTo(NavActions.Webcam.settings())
+    private fun saveCameraSettings() {
+        viewModelScope.launch {
+            settings.save(WebcamSettingKeys.CAMERA_ID, uiState.value.cameraId)
+            settings.save(WebcamSettingKeys.RESOLUTION_IDX, uiState.value.resolutionIdx)
+            settings.save(WebcamSettingKeys.FRAME_RATE_IDX, uiState.value.frameRateRangeIdx)
+        }
     }
 }

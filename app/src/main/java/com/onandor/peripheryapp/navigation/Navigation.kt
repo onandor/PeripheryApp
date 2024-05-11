@@ -13,7 +13,6 @@ private object Screens {
     object Webcam {
         const val NEW_CONNECTION_SCREEN = "WEBCAM_newConnectionScreen"
         const val CAMERA_SCREEN = "WEBCAM_cameraScreen"
-        const val SETTINGS_SCREEN = "WEBCAM_settingsScreen"
     }
 }
 
@@ -28,7 +27,6 @@ object NavDestinations {
     object Webcam {
         const val NEW_CONNECTION = Screens.Webcam.NEW_CONNECTION_SCREEN
         const val CAMERA = Screens.Webcam.CAMERA_SCREEN
-        const val SETTINGS = Screens.Webcam.SETTINGS_SCREEN
     }
 }
 
@@ -66,10 +64,6 @@ object NavActions {
         fun camera(navArgs: NavArgs) = object : NavAction {
             override val destination: String = NavDestinations.Webcam.CAMERA
             override val navArgs: NavArgs = navArgs
-        }
-
-        fun settings() = object : NavAction {
-            override val destination: String = NavDestinations.Webcam.SETTINGS
         }
     }
 

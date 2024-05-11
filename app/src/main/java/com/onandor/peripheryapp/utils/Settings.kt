@@ -54,20 +54,18 @@ object WebcamSettingKeys {
         preferenceKey = stringPreferencesKey("webcam_previous_port"),
         defaultValue = ""
     )
-    /*
-    val RESOLUTION = SettingKey(
-        preferenceKey = intPreferencesKey("webcam_resolution"),
-        defaultValue = StreamVideoOutput.Resolutions.LOW
+    val CAMERA_ID = SettingKey(
+        preferenceKey = stringPreferencesKey("webcam_camera_id"),
+        defaultValue = ""
     )
-    val FRAME_RATE = SettingKey(
-        preferenceKey = intPreferencesKey("webcam_frame_rate"),
-        defaultValue = StreamVideoOutput.FrameRates.LOW
+    val RESOLUTION_IDX = SettingKey(
+        preferenceKey = intPreferencesKey("webcam_resolution_idx"),
+        defaultValue = -1
     )
-    val CAMERA = SettingKey(
-        preferenceKey = intPreferencesKey("webcam_camera"),
-        defaultValue = CameraSelection.FRONT.value
+    val FRAME_RATE_IDX = SettingKey(
+        preferenceKey = intPreferencesKey("webcam_frame_rate_idx"),
+        defaultValue = -1
     )
-     */
 }
 
 class Settings @Inject constructor(

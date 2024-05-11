@@ -87,14 +87,6 @@ fun NewConnectionScreen(
                             contentDescription = stringResource(id = R.string.navigate_back)
                         )
                     }
-                },
-                actions = {
-                    IconButton(onClick = viewModel::navigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(id = R.string.webcam_settings)
-                        )
-                    }
                 }
             )
         }
