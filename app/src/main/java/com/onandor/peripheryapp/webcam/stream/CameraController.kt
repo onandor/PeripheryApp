@@ -3,11 +3,13 @@ package com.onandor.peripheryapp.webcam.stream
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.CaptureRequest.Builder
 import android.hardware.camera2.params.DynamicRangeProfiles
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
@@ -39,6 +41,11 @@ class CameraController @Inject constructor(private val context: Context) {
         }
     }
 
+    companion object {
+        private const val DEFAULT_ZOOM = 1f
+        private const val DEFAULT_AE_COMPENSATION = 0
+    }
+
     private val mCameraManager: CameraManager =
         context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private var mCameraThread: HandlerThread? = null
@@ -50,6 +57,9 @@ class CameraController @Inject constructor(private val context: Context) {
 
     private val mCaptureTargets: MutableList<Surface> = mutableListOf()
     private val mCameraInfos: MutableList<CameraInfo> = mutableListOf()
+
+    private var mZoom: Float = DEFAULT_ZOOM
+    private var mAeCompensation: Int = DEFAULT_AE_COMPENSATION
 
     init {
         val cameraIdList = try {
@@ -77,7 +87,7 @@ class CameraController @Inject constructor(private val context: Context) {
         mCamera = openCamera()
         mCaptureSession = createCaptureSession() // TODO: handle error
 
-        val crb = createCaptureRequestBuilder()
+        val crb = createBuilder()
         mCaptureSession!!.setRepeatingRequest(crb.build(), null, mCameraHandler)
 
         startNotificationService()
@@ -86,6 +96,9 @@ class CameraController @Inject constructor(private val context: Context) {
     fun stop() {
         stopNotificationService()
         mCaptureTargets.clear()
+
+        mZoom = DEFAULT_ZOOM
+        mAeCompensation = DEFAULT_AE_COMPENSATION
 
         mCaptureSession?.stopRepeating()
         mCaptureSession?.close()
@@ -100,7 +113,6 @@ class CameraController @Inject constructor(private val context: Context) {
         mCameraThread = null
         mCameraHandler?.looper?.quitSafely()
         mCameraHandler = null
-
     }
 
     fun updateCaptureTargets(targets: List<Surface>) = CoroutineScope(Dispatchers.IO).launch {
@@ -116,8 +128,15 @@ class CameraController @Inject constructor(private val context: Context) {
 
         mCaptureSession = createCaptureSession() // TODO: handle error
 
-        val crb = createCaptureRequestBuilder()
-        mCaptureSession!!.setRepeatingRequest(crb.build(), null, mCameraHandler)
+        val builder = createBuilder()
+        if (mZoom != DEFAULT_ZOOM) {
+            mCameraInfo!!.sensorSize.set(Rect())
+            builder.setZoom(mZoom)
+        }
+        if (mAeCompensation != DEFAULT_AE_COMPENSATION) {
+            builder.setAeCompensation(mAeCompensation)
+        }
+        mCaptureSession!!.setRepeatingRequest(builder.build(), null, mCameraHandler)
     }
 
     fun getCameraInfos(): List<CameraInfo> {
@@ -175,7 +194,7 @@ class CameraController @Inject constructor(private val context: Context) {
         }
     }
 
-    private fun createCaptureRequestBuilder(): CaptureRequest.Builder {
+    private fun createBuilder(): Builder {
         return mCaptureSession!!.device.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
             mCaptureTargets.forEach { surface ->
                 addTarget(surface)
@@ -196,15 +215,26 @@ class CameraController @Inject constructor(private val context: Context) {
     }
 
     fun zoom(value: Float) {
-        val newZoom = mCameraInfo!!.zoomRange.clamp(value)
-        val zoomRequest = createCaptureRequestBuilder().apply {
+        mZoom = mCameraInfo!!.zoomRange.clamp(value)
+        val zoomRequest = createBuilder().setZoom(value).build()
+        mCaptureSession!!.setRepeatingRequest(zoomRequest, null, mCameraHandler)
+    }
+
+    fun adjustExposure(value: Int) {
+        mAeCompensation = mCameraInfo!!.aeRange.clamp(value)
+        val aeCompRequest = createBuilder().setAeCompensation(mAeCompensation).build()
+        mCaptureSession!!.setRepeatingRequest(aeCompRequest, null, mCameraHandler)
+    }
+
+    private fun Builder.setZoom(zoom: Float): Builder {
+        return this.apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                set(CaptureRequest.CONTROL_ZOOM_RATIO, newZoom)
+                set(CaptureRequest.CONTROL_ZOOM_RATIO, zoom)
             } else {
                 val centerX = mCameraInfo!!.sensorSize.width() / 2
                 val centerY = mCameraInfo!!.sensorSize.height() / 2
-                val deltaX = (0.5f * mCameraInfo!!.sensorSize.width() / newZoom).toInt()
-                val deltaY = (0.5f * mCameraInfo!!.sensorSize.height() / newZoom).toInt()
+                val deltaX = (0.5f * mCameraInfo!!.sensorSize.width() / zoom).toInt()
+                val deltaY = (0.5f * mCameraInfo!!.sensorSize.height() / zoom).toInt()
 
                 mCameraInfo!!.cropRegion.set(
                     /* left = */ centerX - deltaX,
@@ -214,15 +244,12 @@ class CameraController @Inject constructor(private val context: Context) {
                 )
                 set(CaptureRequest.SCALER_CROP_REGION, mCameraInfo!!.cropRegion)
             }
-        }.build()
-        mCaptureSession!!.setRepeatingRequest(zoomRequest, null, mCameraHandler)
+        }
     }
 
-    fun adjustExposure(value: Int) {
-        val aeCompensation = mCameraInfo!!.aeRange.clamp(value)
-        val aeCompRequest = createCaptureRequestBuilder().apply {
+    private fun Builder.setAeCompensation(aeCompensation: Int): Builder {
+        return this.apply {
             set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, aeCompensation)
-        }.build()
-        mCaptureSession!!.setRepeatingRequest(aeCompRequest, null, mCameraHandler)
+        }
     }
 }
