@@ -103,12 +103,18 @@ class CameraController @Inject constructor(private val context: Context) {
 
     }
 
-    fun updateCaptureTargets(targets: List<Surface>) {
+    fun updateCaptureTargets(targets: List<Surface>) = CoroutineScope(Dispatchers.IO).launch {
         if (mCaptureSession == null || targets.isEmpty()) {
-            return
+            return@launch
         }
         mCaptureTargets.clear()
         mCaptureTargets.addAll(targets)
+
+        mCaptureSession?.stopRepeating()
+        mCaptureSession?.close()
+        mCaptureSession = null
+
+        mCaptureSession = createCaptureSession() // TODO: handle error
 
         val crb = createCaptureRequestBuilder()
         mCaptureSession!!.setRepeatingRequest(crb.build(), null, mCameraHandler)
