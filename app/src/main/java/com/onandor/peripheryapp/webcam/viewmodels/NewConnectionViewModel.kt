@@ -13,6 +13,7 @@ import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.Streamer
+import com.onandor.peripheryapp.webcam.stream.StreamerType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,6 +67,11 @@ class NewConnectionViewModel @Inject constructor(
         viewModelScope.launch {
             streamer.connectionEventFlow.collect {
                 onConnectionEvent(it)
+            }
+        }
+        viewModelScope.launch {
+            dcStreamer.connectionEventFlow.collect {
+                onDCConnectionEvent(it)
             }
         }
 
@@ -158,7 +164,8 @@ class NewConnectionViewModel @Inject constructor(
                     cameraId = uiState.value.cameraId,
                     resolutionIdx = uiState.value.resolutionIdx,
                     frameRateRangeIdx = uiState.value.frameRateRangeIdx,
-                    bitRate = uiState.value.bitRate
+                    bitRate = uiState.value.bitRate,
+                    streamerType = StreamerType.Custom
                 )
                 navManager.navigateTo(NavActions.Webcam.camera(navArgs))
             }
@@ -170,6 +177,27 @@ class NewConnectionViewModel @Inject constructor(
             }
             Streamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE -> {
                 _uiState.update { it.copy(connectionEvent = event) }
+            }
+        }
+    }
+
+    private fun onDCConnectionEvent(event: DCStreamer.ConnectionEvent) {
+        when (event) {
+            DCStreamer.ConnectionEvent.CLIENT_CONNECTED -> {
+                val navArgs = CameraNavArgs(
+                    cameraId = uiState.value.cameraId,
+                    resolutionIdx = uiState.value.resolutionIdx,
+                    frameRateRangeIdx = uiState.value.frameRateRangeIdx,
+                    bitRate = uiState.value.bitRate,
+                    streamerType = StreamerType.DC
+                )
+                navManager.navigateTo(NavActions.Webcam.camera(navArgs))
+            }
+            DCStreamer.ConnectionEvent.CLIENT_DISCONNECTED -> {
+
+            }
+            DCStreamer.ConnectionEvent.CONNECTION_LOST -> {
+
             }
         }
     }

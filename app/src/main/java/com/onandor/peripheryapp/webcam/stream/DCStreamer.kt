@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -13,6 +15,8 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.LinkedList
 import java.util.Queue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,7 +31,7 @@ class DCStreamer {
         private val outputStream = DataOutputStream(socket.getOutputStream())
         private var inputJob: Job? = null
 
-        fun start() {
+        init {
             createInputJob()
             sendInitialization()
         }
@@ -73,26 +77,26 @@ class DCStreamer {
             }
         }
 
-        fun sendData(bytes: ByteArray) {
-            outputStream.write(bytes)
+        fun sendData(data: ByteArray) {
+            outputStream.write(data)
         }
     }
 
-    companion object {
-        fun Int.toNByteArray(n: Int): ByteArray {
-            val bytes = mutableListOf<Byte>()
-            for (i in n - 1 downTo 0) {
-                bytes.add(shr(n * 8).toByte())
-            }
-            return bytes.toByteArray()
-        }
+    enum class ConnectionEvent {
+        CLIENT_CONNECTED,
+        CLIENT_DISCONNECTED,
+        CONNECTION_LOST
     }
+
+    private val _connectionEventFlow = MutableSharedFlow<ConnectionEvent>()
+    val connectionEventFlow = _connectionEventFlow.asSharedFlow()
 
     private val PORT = 4747
 
     private var serverSocket: ServerSocket? = null
     private val working = AtomicBoolean(true)
     private var client: TcpClient? = null
+    private var batterySocket: Socket? = null
 
     private var sendDataJob: Job? = null
     private var dataQueue: Queue<ByteArray> = LinkedList()
@@ -106,28 +110,37 @@ class DCStreamer {
                 }
                 val socket = serverSocket!!.accept()
                 if (client != null) {
-                    socket.close()
+                    //socket.close()
+                    batterySocket = socket
+                    sendBattery(socket)
                     continue
-                }
-                client = TcpClient(socket)
-                client!!.start()
-                sendDataJob = CoroutineScope(Dispatchers.IO).launch {
-                    sendData()
+                } else {
+                    client = TcpClient(socket)
+                    println("client connected")
+                    sendDataJob = CoroutineScope(Dispatchers.IO).launch {
+                        sendData()
+                    }
+                    sendEvent(ConnectionEvent.CLIENT_CONNECTED)
                 }
             }
         } catch (e1: IOException) {
             e1.printStackTrace()
             try {
-                sendDataJob?.cancel()
-                client?.stop()
-                client = null
+                disconnect()
             } catch (e2: IOException) {
                 e2.printStackTrace()
             }
         }
-        sendDataJob?.cancel()
-        client?.stop()
-        client = null
+        disconnect()
+    }
+
+    private fun sendBattery(socket: Socket) {
+        val dos = socket.getOutputStream()
+        val charList = listOf('\r', '\n', '\r', '\n', '5', '0')
+        charList.forEach { dos.write(it.code) }
+        for (i in 0 until 122) {
+            dos.write('Z'.code)
+        }
     }
 
     private suspend fun sendData() {
@@ -145,14 +158,20 @@ class DCStreamer {
 
                 if (dataAvailable) {
                     try {
-                        client?.sendData(data.size.toNByteArray(4))
+                        val size = ByteBuffer
+                            .allocate(4)
+                            .order(ByteOrder.LITTLE_ENDIAN)
+                            .putInt(data.size)
+                            .array()
+
+                        client?.sendData(size)
                         client?.sendData(data)
                     } catch (e: IOException) {
                         CoroutineScope(Dispatchers.IO).launch {
+                            // TODO
                             //_connectionEventFlow.emit(Streamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE)
                         }
-                        client?.stop()
-                        client = null
+                        disconnect()
                     }
                 }
             }
@@ -180,7 +199,16 @@ class DCStreamer {
         dataQueue.clear()
     }
 
-    private fun onDataReceived(data: ByteArray) {
+    fun disconnect() {
+        sendDataJob?.cancel()
+        sendDataJob = null
+        client?.stop()
+        client = null
+    }
 
+    private fun sendEvent(event: ConnectionEvent) {
+        CoroutineScope(Dispatchers.IO).launch {
+            _connectionEventFlow.emit(event)
+        }
     }
 }
