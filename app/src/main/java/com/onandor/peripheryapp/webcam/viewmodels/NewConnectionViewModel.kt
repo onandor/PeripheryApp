@@ -10,6 +10,7 @@ import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.CameraController
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
+import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.Streamer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +41,8 @@ class NewConnectionViewModel @Inject constructor(
     private val navManager: INavigationManager,
     private val streamer: Streamer,
     private val settings: Settings,
-    cameraController: CameraController
+    cameraController: CameraController,
+    private val dcStreamer: DCStreamer
 ) : ViewModel() {
 
     private val portPattern = Regex("^\\d+\$")
@@ -92,6 +94,7 @@ class NewConnectionViewModel @Inject constructor(
                 )
             }
         }
+        dcStreamer.startServer()
     }
 
     fun onCameraPermissionGranted() {
@@ -125,12 +128,14 @@ class NewConnectionViewModel @Inject constructor(
     }
 
     fun onConnect() {
+        /*
         _uiState.update { it.copy(connecting = true) }
         streamer.connect(uiState.value.address, uiState.value.port.toInt())
             .thenAccept { result ->
                 _uiState.update { it.copy(connecting = false) }
                 onConnectionEvent(result)
             }
+         */
         /*
         val navArgs = CameraNavArgs(
             cameraId = uiState.value.cameraId,
@@ -141,7 +146,6 @@ class NewConnectionViewModel @Inject constructor(
         navManager.navigateTo(NavActions.Webcam.camera(navArgs))
          */
     }
-
 
     private fun onConnectionEvent(event: Streamer.ConnectionEvent) {
         when (event) {
