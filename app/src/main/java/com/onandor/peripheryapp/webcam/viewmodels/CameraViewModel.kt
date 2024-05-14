@@ -11,6 +11,7 @@ import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.webcam.stream.CameraController
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
+import com.onandor.peripheryapp.webcam.stream.DCEncoder
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.Streamer
@@ -61,6 +62,7 @@ class CameraViewModel @Inject constructor(
     private val cameraInfos: List<CameraInfo> = cameraController.getCameraInfos()
 
     private val encoder: Encoder
+    private val dcEncoder: DCEncoder
 
     init {
         val navArgs = navManager.getCurrentNavAction()?.navArgs as CameraNavArgs?
@@ -98,12 +100,15 @@ class CameraViewModel @Inject constructor(
 
         encoder = if (navArgs?.streamerType == StreamerType.DC) {
             Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
-                dcStreamer.queueData(it)
+                //dcStreamer.queueData(it)
             }
         } else {
             Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
                 streamer.queueData(it)
             }
+        }
+        dcEncoder = DCEncoder(resolution.width, resolution.height, frameRateRange.upper) {
+            dcStreamer.queueData(it)
         }
 
         viewModelScope.launch {
@@ -125,7 +130,7 @@ class CameraViewModel @Inject constructor(
             return
         }
         this.previewSurface = previewSurface
-        cameraController.start(camera, frameRateRange, listOf(previewSurface, encoder.inputSurface!!))
+        cameraController.start(camera, frameRateRange, listOf(previewSurface, dcEncoder.inputSurface))
         encoder.start()
         streamer.startStream()
     }

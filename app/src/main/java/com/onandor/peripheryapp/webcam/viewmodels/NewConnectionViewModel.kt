@@ -142,15 +142,14 @@ class NewConnectionViewModel @Inject constructor(
                 onConnectionEvent(result)
             }
          */
-        /*
         val navArgs = CameraNavArgs(
             cameraId = uiState.value.cameraId,
             resolutionIdx = uiState.value.resolutionIdx,
             frameRateRangeIdx = uiState.value.frameRateRangeIdx,
-            bitRate = uiState.value.bitRate
+            bitRate = uiState.value.bitRate,
+            streamerType = StreamerType.Custom
         )
         navManager.navigateTo(NavActions.Webcam.camera(navArgs))
-         */
     }
 
     private fun onConnectionEvent(event: Streamer.ConnectionEvent) {
