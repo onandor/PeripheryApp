@@ -114,7 +114,7 @@ fun NewConnectionScreen(
             NoCameras(Modifier.padding(innerPadding))
         } else if (!uiState.isCameraPermissionGranted) {
             PermissionRequest(
-                // TODO: modifier with innerPadding
+                modifier = Modifier.padding(innerPadding),
                 onCameraPermissionGranted = viewModel::onCameraPermissionGranted
             )
         } else {

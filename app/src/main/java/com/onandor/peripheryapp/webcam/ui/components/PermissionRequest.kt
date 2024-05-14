@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.update
 
 @Composable
 fun PermissionRequest(
+    modifier: Modifier,
     onCameraPermissionGranted: () -> Unit
 ) {
     val context = LocalContext.current
@@ -61,6 +62,7 @@ fun PermissionRequest(
 
     if (!isCameraPermissionGranted) {
         PermissionMissing(
+            modifier = modifier,
             onCameraPermissionGranted = { _isCameraPermissionGranted.update { true } },
             onMicrophonePermissionGranted = { _isMicrophonePermissionGranted.update { true } }
         )
@@ -69,6 +71,7 @@ fun PermissionRequest(
 
 @Composable
 private fun PermissionMissing(
+    modifier: Modifier,
     onCameraPermissionGranted: () -> Unit,
     onMicrophonePermissionGranted: () -> Unit
 ) {
@@ -105,7 +108,7 @@ private fun PermissionMissing(
 
     Surface {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
