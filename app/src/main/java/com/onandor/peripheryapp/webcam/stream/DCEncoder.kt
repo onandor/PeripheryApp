@@ -10,9 +10,8 @@ import android.view.Surface
 class DCEncoder(
     val width: Int,
     val height: Int,
-    private val frameRate: Int,
-    val onDataEncoded: (ByteArray) -> Unit
-) {
+    val onDataReady: (ByteArray) -> Unit
+) : Encoder {
 
     private val mHandlerThread = HandlerThread("DCEncoderThread").apply { start() }
     private val mHandler = Handler(mHandlerThread.looper)
@@ -20,17 +19,24 @@ class DCEncoder(
     private val mImageReader: ImageReader = ImageReader.newInstance(
         width, height, ImageFormat.JPEG, 1)
 
-    val inputSurface: Surface = mImageReader.surface
+    override val inputSurface: Surface = mImageReader.surface
 
     private val mImageListener = ImageReader.OnImageAvailableListener { reader ->
         val image: Image = reader.acquireNextImage()
         val outFrame = ByteArray(image.planes[0].buffer.remaining())
         image.planes[0].buffer[outFrame]
-        onDataEncoded(outFrame)
+        onDataReady(outFrame)
         image.close()
     }
-    
-    init {
+
+    override fun start() {
         mImageReader.setOnImageAvailableListener(mImageListener, mHandler)
+    }
+
+    override fun flush() {}
+
+    override fun release() {
+        inputSurface.release()
+        mImageReader.close()
     }
 }

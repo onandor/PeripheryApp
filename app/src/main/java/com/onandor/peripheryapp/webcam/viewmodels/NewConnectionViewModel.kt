@@ -10,7 +10,7 @@ import com.onandor.peripheryapp.utils.WebcamSettingKeys
 import com.onandor.peripheryapp.webcam.stream.CameraController
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
-import com.onandor.peripheryapp.webcam.stream.Encoder
+import com.onandor.peripheryapp.webcam.stream.ClientEncoder
 import com.onandor.peripheryapp.webcam.stream.ClientStreamer
 import com.onandor.peripheryapp.webcam.stream.StreamerType
 import com.onandor.peripheryapp.webcam.stream.Utils
@@ -27,15 +27,16 @@ data class NewConnectionUiState(
     val port: String = "",
     val connecting: Boolean = false,
     val canConnect: Boolean = false,
-    val connectionEvent: ClientStreamer.ConnectionEvent? = null,
+    val clientStreamerConnEvent: ClientStreamer.ConnectionEvent? = null,
+    val dcStreamerConnEvent: DCStreamer.ConnectionEvent? = null,
     val streamerType: Int = StreamerType.CLIENT,
 
     val cameraInfos: List<CameraInfo> = emptyList(),
     val cameraId: String = "",
     val resolutionIdx: Int = 0,
     val frameRateRangeIdx: Int = 0,
-    val bitRate: Int = Encoder.DEFAULT_BIT_RATE,
-    val bitRates: List<Int> = Encoder.BIT_RATES
+    val bitRate: Int = ClientEncoder.DEFAULT_BIT_RATE,
+    val bitRates: List<Int> = ClientEncoder.BIT_RATES
 )
 
 @HiltViewModel
@@ -133,14 +134,13 @@ class NewConnectionViewModel @Inject constructor(
     }
 
     fun onConnect() {
-        /*
         _uiState.update { it.copy(connecting = true) }
-        streamer.connect(uiState.value.address, uiState.value.port.toInt())
+        clientStreamer.connect(uiState.value.address, uiState.value.port.toInt())
             .thenAccept { result ->
                 _uiState.update { it.copy(connecting = false) }
-                onConnectionEvent(result)
+                onClientConnectionEvent(result)
             }
-         */
+        /*
         val navArgs = CameraNavArgs(
             cameraId = uiState.value.cameraId,
             resolutionIdx = uiState.value.resolutionIdx,
@@ -149,6 +149,7 @@ class NewConnectionViewModel @Inject constructor(
             streamerType = StreamerType.CLIENT
         )
         navManager.navigateTo(NavActions.Webcam.camera(navArgs))
+         */
     }
 
     private fun onClientConnectionEvent(event: ClientStreamer.ConnectionEvent) {
@@ -168,13 +169,13 @@ class NewConnectionViewModel @Inject constructor(
                 navManager.navigateTo(NavActions.Webcam.camera(navArgs))
             }
             ClientStreamer.ConnectionEvent.UNKNOWN_HOST_FAILURE -> {
-                _uiState.update { it.copy(connectionEvent = event) }
+                _uiState.update { it.copy(clientStreamerConnEvent = event) }
             }
             ClientStreamer.ConnectionEvent.TIMEOUT_FAILURE -> {
-                _uiState.update { it.copy(connectionEvent = event) }
+                _uiState.update { it.copy(clientStreamerConnEvent = event) }
             }
             ClientStreamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE -> {
-                _uiState.update { it.copy(connectionEvent = event) }
+                _uiState.update { it.copy(clientStreamerConnEvent = event) }
             }
         }
     }
@@ -197,11 +198,19 @@ class NewConnectionViewModel @Inject constructor(
             DCStreamer.ConnectionEvent.CONNECTION_LOST -> {
 
             }
+            DCStreamer.ConnectionEvent.PORT_IN_USE -> {
+                _uiState.update { it.copy() }
+            }
         }
     }
 
     fun onToastShown() {
-        _uiState.update { it.copy(connectionEvent = null) }
+        _uiState.update {
+            it.copy(
+                clientStreamerConnEvent = null,
+                dcStreamerConnEvent = null
+            )
+        }
     }
 
     fun onCameraIdChanged(id: String) {

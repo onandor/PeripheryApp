@@ -73,4 +73,5 @@
     <string name="webcam_streamer_client">Client</string>
     <string name="webcam_streamer">Streamer</string>
     <string name="webcam_connection">Connection</string>
+    <string name="webcam_port_in_use">Port in use</string>
 </resources>

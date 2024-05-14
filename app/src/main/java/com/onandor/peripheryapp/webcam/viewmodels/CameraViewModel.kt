@@ -12,8 +12,9 @@ import com.onandor.peripheryapp.webcam.stream.CameraController
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.DCEncoder
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
-import com.onandor.peripheryapp.webcam.stream.Encoder
+import com.onandor.peripheryapp.webcam.stream.ClientEncoder
 import com.onandor.peripheryapp.webcam.stream.ClientStreamer
+import com.onandor.peripheryapp.webcam.stream.Encoder
 import com.onandor.peripheryapp.webcam.stream.StreamerType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,21 +62,14 @@ class CameraViewModel @Inject constructor(
     private val cameraInfos: List<CameraInfo> = cameraController.getCameraInfos()
 
     private val encoder: Encoder
-    private val dcEncoder: DCEncoder
 
     init {
-        val navArgs = navManager.getCurrentNavAction()?.navArgs as CameraNavArgs?
-        if (navArgs != null) {
-            camera = cameraInfos.first { it.id == navArgs.cameraId }
-            resolution = camera.resolutions[navArgs.resolutionIdx]
-            frameRateRange = camera.frameRateRanges[navArgs.frameRateRangeIdx]
-            bitRate = navArgs.bitRate
-        } else {
-            camera = cameraInfos.first()
-            resolution = camera.resolutions.first()
-            frameRateRange = camera.frameRateRanges.first()
-            bitRate = Encoder.DEFAULT_BIT_RATE
-        }
+        val navArgs = navManager.getCurrentNavAction()!!.navArgs as CameraNavArgs
+
+        camera = cameraInfos.first { it.id == navArgs.cameraId }
+        resolution = camera.resolutions[navArgs.resolutionIdx]
+        frameRateRange = camera.frameRateRanges[navArgs.frameRateRangeIdx]
+        bitRate = navArgs.bitRate
 
         val compatibleCameras = cameraInfos
             .filter {
@@ -97,26 +91,43 @@ class CameraViewModel @Inject constructor(
             )
         }
 
-        encoder = if (navArgs?.streamerType == StreamerType.DC) {
-            Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
-                //dcStreamer.queueData(it)
-            }
-        } else {
-            Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
+        encoder = if (navArgs.streamerType == StreamerType.CLIENT) {
+            ClientEncoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
                 clientStreamer.queueData(it)
             }
-        }
-        dcEncoder = DCEncoder(resolution.width, resolution.height, frameRateRange.upper) {
-            dcStreamer.queueData(it)
+        } else {
+            DCEncoder(resolution.width, resolution.height) {
+                dcStreamer.queueData(it)
+            }
         }
 
-        viewModelScope.launch {
-            dcStreamer.connectionEventFlow.collect { event ->
-                when (event) {
-                    DCStreamer.ConnectionEvent.CLIENT_DISCONNECTED -> {
-                        navigateBack()
+        collectConnectionEvents(navArgs.streamerType)
+    }
+
+    private fun collectConnectionEvents(streamerType: Int) {
+        if (streamerType == StreamerType.CLIENT) {
+            viewModelScope.launch {
+                clientStreamer.connectionEventFlow.collect { event ->
+                    when (event) {
+                        ClientStreamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE -> {
+                            navigateBack()
+                        }
+                        else -> {}
                     }
-                    else -> { /* TODO */ }
+                }
+            }
+        } else {
+            viewModelScope.launch {
+                dcStreamer.connectionEventFlow.collect { event ->
+                    when (event) {
+                        DCStreamer.ConnectionEvent.CLIENT_DISCONNECTED -> {
+                            navigateBack()
+                        }
+                        DCStreamer.ConnectionEvent.CONNECTION_LOST -> {
+                            navigateBack()
+                        }
+                        else -> { /* TODO */ }
+                    }
                 }
             }
         }
@@ -125,17 +136,17 @@ class CameraViewModel @Inject constructor(
     fun onPreviewSurfaceCreated(previewSurface: Surface) {
         if (this.previewSurface != null) {
             this.previewSurface = previewSurface
-            cameraController.updateCaptureTargets(listOf(previewSurface, encoder.inputSurface!!))
+            cameraController.updateCaptureTargets(listOf(previewSurface, encoder.inputSurface))
             return
         }
         this.previewSurface = previewSurface
-        cameraController.start(camera, frameRateRange, listOf(previewSurface, dcEncoder.inputSurface))
+        cameraController.start(camera, frameRateRange, listOf(previewSurface, encoder.inputSurface))
         encoder.start()
         clientStreamer.startStream()
     }
 
     fun onPause() {
-        cameraController.updateCaptureTargets(listOf(encoder.inputSurface!!))
+        cameraController.updateCaptureTargets(listOf(encoder.inputSurface))
         this.previewSurface!!.release()
     }
 
@@ -179,7 +190,7 @@ class CameraViewModel @Inject constructor(
         encoder.flush()
         cameraController.reset()
         cameraController.start(
-            camera, frameRateRange, listOf(previewSurface!!, encoder.inputSurface!!))
+            camera, frameRateRange, listOf(previewSurface!!, encoder.inputSurface))
     }
 
     private fun roundTo1Decimal(value: Float): Float {

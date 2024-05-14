@@ -46,6 +46,7 @@ import com.onandor.peripheryapp.ui.components.SettingsDropdownMenu
 import com.onandor.peripheryapp.utils.DropdownItem
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.ClientStreamer
+import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.StreamerType
 import com.onandor.peripheryapp.webcam.ui.components.PermissionRequest
 import com.onandor.peripheryapp.webcam.viewmodels.NewConnectionViewModel
@@ -62,8 +63,8 @@ fun NewConnectionScreen(
         viewModel.navigateBack()
     }
 
-    if (uiState.connectionEvent != null) {
-        val toastText = when(uiState.connectionEvent) {
+    if (uiState.clientStreamerConnEvent != null) {
+        val toastText = when(uiState.clientStreamerConnEvent) {
             ClientStreamer.ConnectionEvent.TIMEOUT_FAILURE ->
                 stringResource(R.string.webcam_timeout)
             ClientStreamer.ConnectionEvent.UNKNOWN_HOST_FAILURE ->
@@ -72,7 +73,20 @@ fun NewConnectionScreen(
                 stringResource(R.string.webcam_host_unreachable)
             else -> ""
         }
-        LaunchedEffect(uiState.connectionEvent) {
+        LaunchedEffect(uiState.clientStreamerConnEvent) {
+            Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
+            viewModel.onToastShown()
+        }
+    }
+
+    if (uiState.dcStreamerConnEvent != null) {
+        val toastText = when (uiState.dcStreamerConnEvent) {
+            DCStreamer.ConnectionEvent.PORT_IN_USE -> {
+                stringResource(id = R.string.webcam_port_in_use)
+            }
+            else -> ""
+        }
+        LaunchedEffect(uiState.dcStreamerConnEvent) {
             Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
             viewModel.onToastShown()
         }
