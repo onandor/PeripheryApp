@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.onandor.peripheryapp.kbm.bluetooth.reports.KeyboardReport
 import com.onandor.peripheryapp.kbm.input.KeyMapping
 import com.onandor.peripheryapp.kbm.input.TouchpadController
+import com.onandor.peripheryapp.webcam.stream.StreamerType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -69,6 +70,10 @@ object WebcamSettingKeys {
     val BIT_RATE = SettingKey(
         preferenceKey = intPreferencesKey("webcam_bit_rate"),
         defaultValue = -1
+    )
+    val STREAMER_TYPE = SettingKey(
+        preferenceKey = intPreferencesKey("webcam_streamer_type"),
+        defaultValue = StreamerType.CLIENT
     )
 }
 

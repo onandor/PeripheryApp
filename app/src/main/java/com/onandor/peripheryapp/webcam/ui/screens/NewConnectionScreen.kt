@@ -17,10 +17,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -44,7 +45,8 @@ import com.onandor.peripheryapp.ui.components.SettingItem
 import com.onandor.peripheryapp.ui.components.SettingsDropdownMenu
 import com.onandor.peripheryapp.utils.DropdownItem
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
-import com.onandor.peripheryapp.webcam.stream.Streamer
+import com.onandor.peripheryapp.webcam.stream.ClientStreamer
+import com.onandor.peripheryapp.webcam.stream.StreamerType
 import com.onandor.peripheryapp.webcam.ui.components.PermissionRequest
 import com.onandor.peripheryapp.webcam.viewmodels.NewConnectionViewModel
 
@@ -62,11 +64,11 @@ fun NewConnectionScreen(
 
     if (uiState.connectionEvent != null) {
         val toastText = when(uiState.connectionEvent) {
-            Streamer.ConnectionEvent.TIMEOUT_FAILURE ->
+            ClientStreamer.ConnectionEvent.TIMEOUT_FAILURE ->
                 stringResource(R.string.webcam_timeout)
-            Streamer.ConnectionEvent.UNKNOWN_HOST_FAILURE ->
+            ClientStreamer.ConnectionEvent.UNKNOWN_HOST_FAILURE ->
                 stringResource(R.string.webcam_unknown_host)
-            Streamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE ->
+            ClientStreamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE ->
                 stringResource(R.string.webcam_host_unreachable)
             else -> ""
         }
@@ -79,7 +81,7 @@ fun NewConnectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.webcam_establish_connection)) },
+                title = { Text(stringResource(id = R.string.webcam_new_connection)) },
                 navigationIcon = {
                     IconButton(onClick = viewModel::navigateBack) {
                         Icon(
@@ -102,15 +104,28 @@ fun NewConnectionScreen(
                     .padding(innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ConnectionSettings(
-                    address = uiState.address,
-                    port = uiState.port,
-                    connecting = uiState.connecting,
-                    canConnect = uiState.canConnect,
-                    onAddressChanged = viewModel::onAddressChanged,
-                    onPortChanged = viewModel::onPortChanged,
-                    onConnect = viewModel::onConnect
+                StreamerTypeSelector(
+                    streamerType = uiState.streamerType,
+                    onStreamerTypeChanged = viewModel::onStreamerTypeChanged
                 )
+                HorizontalDivider(modifier = Modifier.padding(start = 75.dp, end = 75.dp, top = 15.dp, bottom = 20.dp))
+                if (uiState.streamerType == StreamerType.CLIENT) {
+                    ClientConnectionSettings(
+                        address = uiState.address,
+                        port = uiState.port,
+                        connecting = uiState.connecting,
+                        canConnect = uiState.canConnect,
+                        onAddressChanged = viewModel::onAddressChanged,
+                        onPortChanged = viewModel::onPortChanged,
+                        onConnect = viewModel::onConnect
+                    )
+                } else {
+                    DCConnectionSettings(
+                        address = uiState.address,
+                        port = uiState.port
+                    )
+                }
+                HorizontalDivider(modifier = Modifier.padding(start = 75.dp, end = 75.dp, top = 20.dp, bottom = 20.dp))
                 CameraSettings(
                     cameraInfos = uiState.cameraInfos,
                     cameraId = uiState.cameraId,
@@ -121,7 +136,8 @@ fun NewConnectionScreen(
                     onFrameRateRangeIdxChanged = viewModel::onFrameRateRangeIdxChanged,
                     bitRate = uiState.bitRate,
                     bitRates = uiState.bitRates,
-                    onBitRateChanged = viewModel::onBitRateChanged
+                    onBitRateChanged = viewModel::onBitRateChanged,
+                    streamerType = uiState.streamerType
                 )
             }
         }
@@ -129,7 +145,87 @@ fun NewConnectionScreen(
 }
 
 @Composable
-fun ConnectionSettings(
+fun StreamerTypeSelector(
+    streamerType: Int,
+    onStreamerTypeChanged: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, end = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val currentStreamerName = when (streamerType) {
+            StreamerType.CLIENT -> stringResource(id = R.string.webcam_streamer_client)
+            StreamerType.DC -> stringResource(id = R.string.webcam_streamer_dc)
+            else -> ""
+        }
+        val items = listOf(
+            DropdownItem(
+                onClick = { onStreamerTypeChanged(StreamerType.CLIENT) },
+                text = { Text(text = stringResource(id = R.string.webcam_streamer_client)) }
+            ),
+            DropdownItem(
+                onClick = { onStreamerTypeChanged(StreamerType.DC) },
+                text = { Text(text = stringResource(id = R.string.webcam_streamer_dc)) }
+            )
+        )
+        Text(
+            text = stringResource(id = R.string.webcam_streamer),
+            fontSize = 20.sp
+        )
+        SettingsDropdownMenu(
+            items = items,
+            textToTheLeft = { Text(text = currentStreamerName) }
+        )
+    }
+}
+
+@Composable
+fun DCConnectionSettings(
+    address: String,
+    port: String
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+            text = stringResource(id = R.string.webcam_connection),
+            fontSize = 20.sp
+        )
+        Card(modifier = Modifier.padding(start = 15.dp, end = 15.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(15.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.webcam_ip_address) + ": " + address,
+                        fontSize = 20.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.webcam_port) + ": " + port,
+                        fontSize = 20.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ClientConnectionSettings(
     address: String,
     port: String,
     connecting: Boolean,
@@ -140,9 +236,14 @@ fun ConnectionSettings(
 ) {
     Column(
         modifier = Modifier
-            .padding(top = 10.dp, start = 20.dp, end = 20.dp)
+            .padding(start = 20.dp, end = 20.dp)
             .fillMaxWidth()
     ) {
+        Text(
+            modifier = Modifier.padding(bottom = 20.dp),
+            text = stringResource(id = R.string.webcam_connection),
+            fontSize = 20.sp
+        )
         Text(stringResource(R.string.webcam_ip_address))
         TextField(
             modifier = Modifier.fillMaxWidth(),
@@ -193,7 +294,8 @@ fun CameraSettings(
     onFrameRateRangeIdxChanged: (Int) -> Unit,
     bitRate: Int,
     bitRates: List<Int>,
-    onBitRateChanged: (Int) -> Unit
+    onBitRateChanged: (Int) -> Unit,
+    streamerType: Int
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -201,7 +303,7 @@ fun CameraSettings(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, top = 20.dp, bottom = 20.dp)
+                .padding(start = 20.dp, bottom = 20.dp)
         ) {
             Text(
                 text = stringResource(id = R.string.webcam_settings_camera_configuration),
@@ -262,20 +364,22 @@ fun CameraSettings(
                 items = resolutionItems
             )
         }
-        SettingItem(text = stringResource(id = R.string.webcam_settings_frame_rate)) {
-            SettingsDropdownMenu(
-                textToTheLeft = {
-                    Text(text = getFrameRateRangeText(
-                        selectedCamera.frameRateRanges[frameRateRangeIdx]))
-                },
-                items = frameRateRangeItems
-            )
-        }
-        SettingItem(text = stringResource(id = R.string.webcam_settings_bit_rate) ) {
-            SettingsDropdownMenu(
-                textToTheLeft = { Text(text = "${bitRate / 1000} Kbps") },
-                items = bitRateItems
-            )
+        if (streamerType == StreamerType.CLIENT) {
+            SettingItem(text = stringResource(id = R.string.webcam_settings_frame_rate)) {
+                SettingsDropdownMenu(
+                    textToTheLeft = {
+                        Text(text = getFrameRateRangeText(
+                            selectedCamera.frameRateRanges[frameRateRangeIdx]))
+                    },
+                    items = frameRateRangeItems
+                )
+            }
+            SettingItem(text = stringResource(id = R.string.webcam_settings_bit_rate) ) {
+                SettingsDropdownMenu(
+                    textToTheLeft = { Text(text = "${bitRate / 1000} Kbps") },
+                    items = bitRateItems
+                )
+            }
         }
     }
 }

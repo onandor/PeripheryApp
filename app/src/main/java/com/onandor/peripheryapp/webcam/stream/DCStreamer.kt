@@ -13,6 +13,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
+import java.net.BindException
 import java.net.ServerSocket
 import java.net.Socket
 import java.nio.ByteBuffer
@@ -88,10 +89,12 @@ class DCStreamer {
         CONNECTION_LOST
     }
 
+    companion object {
+        const val PORT = 7220
+    }
+
     private val _connectionEventFlow = MutableSharedFlow<ConnectionEvent>()
     val connectionEventFlow = _connectionEventFlow.asSharedFlow()
-
-    private val PORT = 4747
 
     private var serverSocket: ServerSocket? = null
     private val working = AtomicBoolean(true)
@@ -123,13 +126,12 @@ class DCStreamer {
                     sendEvent(ConnectionEvent.CLIENT_CONNECTED)
                 }
             }
-        } catch (e1: IOException) {
-            e1.printStackTrace()
-            try {
-                disconnect()
-            } catch (e2: IOException) {
-                e2.printStackTrace()
-            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            disconnect()
+        } catch (e: BindException) {
+            e.printStackTrace() // TODO: address in use
+            disconnect()
         }
         disconnect()
     }
@@ -191,12 +193,16 @@ class DCStreamer {
     }
 
     fun startServer() {
+        working.set(true)
         Thread(runnable).start()
     }
 
     fun stopServer() {
+        disconnect()
         working.set(false)
         dataQueue.clear()
+        serverSocket?.close()
+        serverSocket = null
     }
 
     fun disconnect() {

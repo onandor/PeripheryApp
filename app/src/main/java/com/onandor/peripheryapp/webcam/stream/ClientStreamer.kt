@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture
 import javax.inject.Singleton
 
 @Singleton
-class Streamer {
+class ClientStreamer {
 
     private var address: InetAddress? = null
     private var port: Int = 0
@@ -43,7 +43,7 @@ class Streamer {
         return CompletableFuture.supplyAsync {
             try {
                 address = InetAddress.getByName(ipAddress)
-                this@Streamer.port = port
+                this@ClientStreamer.port = port
 
                 socket = Socket(ipAddress, port)
                 dos = DataOutputStream(socket?.getOutputStream())

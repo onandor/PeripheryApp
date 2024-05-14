@@ -1,6 +1,5 @@
 package com.onandor.peripheryapp.webcam.viewmodels
 
-import android.hardware.camera2.CameraMetadata
 import android.util.Range
 import android.util.Size
 import android.view.Surface
@@ -14,7 +13,7 @@ import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.DCEncoder
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.Encoder
-import com.onandor.peripheryapp.webcam.stream.Streamer
+import com.onandor.peripheryapp.webcam.stream.ClientStreamer
 import com.onandor.peripheryapp.webcam.stream.StreamerType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +39,7 @@ data class CameraUiState(
 @HiltViewModel
 class CameraViewModel @Inject constructor(
     private val navManager: INavigationManager,
-    private val streamer: Streamer,
+    private val clientStreamer: ClientStreamer,
     private val settings: Settings,
     private val cameraController: CameraController,
     private val dcStreamer: DCStreamer
@@ -104,7 +103,7 @@ class CameraViewModel @Inject constructor(
             }
         } else {
             Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
-                streamer.queueData(it)
+                clientStreamer.queueData(it)
             }
         }
         dcEncoder = DCEncoder(resolution.width, resolution.height, frameRateRange.upper) {
@@ -132,7 +131,7 @@ class CameraViewModel @Inject constructor(
         this.previewSurface = previewSurface
         cameraController.start(camera, frameRateRange, listOf(previewSurface, dcEncoder.inputSurface))
         encoder.start()
-        streamer.startStream()
+        clientStreamer.startStream()
     }
 
     fun onPause() {
@@ -197,7 +196,7 @@ class CameraViewModel @Inject constructor(
 
     fun navigateBack() {
         dcStreamer.disconnect()
-        streamer.disconnect() // TODO
+        clientStreamer.disconnect() // TODO
         encoder.release()
         cameraController.stop()
         navManager.navigateBack()
