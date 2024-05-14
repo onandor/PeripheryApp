@@ -67,7 +67,6 @@ class CameraController @Inject constructor(private val context: Context) {
             mCameraManager.cameraIdList
         } catch (e: CameraAccessException) {
             emptyArray<String>()
-            // TODO: error handling
         }
         cameraIdList.forEach { id ->
             val cameraChars = mCameraManager.getCameraCharacteristics(id)

@@ -74,4 +74,5 @@
     <string name="webcam_streamer">Streamer</string>
     <string name="webcam_connection">Connection</string>
     <string name="webcam_port_in_use">Port in use</string>
+    <string name="webcam_no_cameras">Your device doesn\'t have any cameras, or they are in use by an other application.</string>
 </resources>

@@ -36,7 +36,8 @@ data class NewConnectionUiState(
     val resolutionIdx: Int = 0,
     val frameRateRangeIdx: Int = 0,
     val bitRate: Int = ClientEncoder.DEFAULT_BIT_RATE,
-    val bitRates: List<Int> = ClientEncoder.BIT_RATES
+    val bitRates: List<Int> = ClientEncoder.BIT_RATES,
+    val noCameras: Boolean = false
 )
 
 @HiltViewModel
@@ -76,11 +77,15 @@ class NewConnectionViewModel @Inject constructor(
         }
 
         val cameraInfos = cameraController.getCameraInfos()
-        _uiState.update {
-            it.copy(
-                cameraInfos = cameraInfos,
-                cameraId = cameraInfos.first().id,
-            )
+        if (cameraInfos.isNotEmpty()) {
+            _uiState.update {
+                it.copy(
+                    cameraInfos = cameraInfos,
+                    cameraId = cameraInfos.first().id,
+                )
+            }
+        } else {
+            _uiState.update { it.copy(noCameras = true) }
         }
         viewModelScope.launch {
             val cameraId = settings.get(WebcamSettingKeys.CAMERA_ID)

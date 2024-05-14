@@ -207,7 +207,7 @@ class CameraViewModel @Inject constructor(
 
     fun navigateBack() {
         dcStreamer.disconnect()
-        clientStreamer.disconnect() // TODO
+        clientStreamer.disconnect()
         encoder.release()
         cameraController.stop()
         navManager.navigateBack()

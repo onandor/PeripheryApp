@@ -25,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -35,8 +36,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -107,8 +110,11 @@ fun NewConnectionScreen(
             )
         }
     ) { innerPadding ->
-        if (!uiState.isCameraPermissionGranted) {
+        if (uiState.noCameras) {
+            NoCameras(Modifier.padding(innerPadding))
+        } else if (!uiState.isCameraPermissionGranted) {
             PermissionRequest(
+                // TODO: modifier with innerPadding
                 onCameraPermissionGranted = viewModel::onCameraPermissionGranted
             )
         } else {
@@ -154,6 +160,29 @@ fun NewConnectionScreen(
                     streamerType = uiState.streamerType
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun NoCameras(modifier: Modifier) {
+    Surface {
+        Column(
+            modifier = modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                modifier = Modifier.size(120.dp),
+                painter = painterResource(id = R.drawable.ic_videocam_off),
+                contentDescription = ""
+            )
+            Text(
+                modifier = Modifier.padding(30.dp),
+                text = stringResource(id = R.string.webcam_no_cameras),
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
