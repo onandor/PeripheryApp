@@ -42,7 +42,6 @@ class DCStreamer {
 
         init {
             createInputJob()
-            sendInitialization()
         }
 
         private fun createInputJob() {
@@ -69,11 +68,6 @@ class DCStreamer {
             }
         }
 
-        private fun sendInitialization() {
-            val initialBytes = listOf(0x02, 0x80, 0x01, 0xe0, 0x21, 0xf5, 0xe8, 0x7f, 0x30)
-            initialBytes.forEach { outputStream.write(it) }
-        }
-
         fun stop() {
             try {
                 inputStream.close()
@@ -88,7 +82,21 @@ class DCStreamer {
         }
 
         fun sendData(data: ByteArray) {
-            outputStream.write(data)
+            try {
+                if (data.size > 1 && data[0] == 0xFF.toByte() && data[1] == 0xD8.toByte()) {
+                    val size = ByteBuffer
+                        .allocate(4)
+                        .order(ByteOrder.LITTLE_ENDIAN)
+                        .putInt(data.size)
+                        .array()
+
+                    outputStream.write(size)
+                }
+                outputStream.write(data)
+            } catch (e: IOException) {
+                emitEvent(CLIENT_DISCONNECTED)
+                stop()
+            }
         }
 
         private fun emitEvent(event: Int) {
@@ -184,19 +192,7 @@ class DCStreamer {
                 }
 
                 if (dataAvailable) {
-                    try {
-                        val size = ByteBuffer
-                            .allocate(4)
-                            .order(ByteOrder.LITTLE_ENDIAN)
-                            .putInt(data.size)
-                            .array()
-
-                        client?.sendData(size)
-                        client?.sendData(data)
-                    } catch (e: IOException) {
-                        emitEvent(ConnectionEvent.CONNECTION_LOST)
-                        disconnect()
-                    }
+                    client?.sendData(data)
                 }
             }
             if (!dataAvailable) {
