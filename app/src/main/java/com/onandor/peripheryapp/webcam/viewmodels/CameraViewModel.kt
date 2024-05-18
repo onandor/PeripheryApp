@@ -7,18 +7,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
-import com.onandor.peripheryapp.webcam.stream.CameraController
-import com.onandor.peripheryapp.webcam.stream.CameraInfo
-import com.onandor.peripheryapp.webcam.stream.DCEncoder
-import com.onandor.peripheryapp.webcam.stream.DCStreamer
-import com.onandor.peripheryapp.webcam.stream.ClientEncoder
-import com.onandor.peripheryapp.webcam.stream.ClientStreamer
-import com.onandor.peripheryapp.webcam.stream.Encoder
-import com.onandor.peripheryapp.webcam.stream.IStreamer
-import com.onandor.peripheryapp.webcam.stream.StreamerEvent
-import com.onandor.peripheryapp.webcam.stream.StreamerType
-import com.onandor.peripheryapp.webcam.stream.Utils.Companion.to2ByteArray
-import com.onandor.peripheryapp.webcam.tcp.TcpServer
+import com.onandor.peripheryapp.webcam.video.CameraController
+import com.onandor.peripheryapp.webcam.video.CameraInfo
+import com.onandor.peripheryapp.webcam.video.encoders.JpegEncoder
+import com.onandor.peripheryapp.webcam.video.streamers.DCStreamer
+import com.onandor.peripheryapp.webcam.video.encoders.H264Encoder
+import com.onandor.peripheryapp.webcam.video.streamers.ClientStreamer
+import com.onandor.peripheryapp.webcam.video.encoders.Encoder
+import com.onandor.peripheryapp.webcam.video.streamers.IStreamer
+import com.onandor.peripheryapp.webcam.video.streamers.StreamerEvent
+import com.onandor.peripheryapp.webcam.video.streamers.StreamerType
+import com.onandor.peripheryapp.webcam.video.Utils.Companion.to2ByteArray
+import com.onandor.peripheryapp.webcam.network.TcpServer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -96,13 +96,13 @@ class CameraViewModel @Inject constructor(
 
         if (navArgs.streamerType == StreamerType.CLIENT) {
             streamer = ClientStreamer(tcpServer)
-            encoder = ClientEncoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
+            encoder = H264Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
                 streamer.queueFrame(it)
             }
         } else {
             streamer = DCStreamer(tcpServer)
             sendDCStreamerInit(resolution.width, resolution.height)
-            encoder = DCEncoder(resolution.width, resolution.height) {
+            encoder = JpegEncoder(resolution.width, resolution.height) {
                 streamer.queueFrame(it)
             }
         }

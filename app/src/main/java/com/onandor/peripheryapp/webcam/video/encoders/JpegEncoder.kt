@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video.encoders
 
 import android.graphics.ImageFormat
 import android.media.Image
@@ -7,13 +7,13 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
 
-class DCEncoder(
+class JpegEncoder(
     val width: Int,
     val height: Int,
     val onDataReady: (ByteArray) -> Unit
 ) : Encoder {
 
-    private val mHandlerThread = HandlerThread("DCEncoderThread").apply { start() }
+    private val mHandlerThread = HandlerThread("JpegEncoderThread").apply { start() }
     private val mHandler = Handler(mHandlerThread.looper)
 
     private val mImageReader: ImageReader = ImageReader.newInstance(

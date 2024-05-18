@@ -53,7 +53,7 @@
             android:exported="false">
         </service>
         <service
-            android:name=".webcam.stream.WebcamNotificationService"
+            android:name=".webcam.video.WebcamNotificationService"
             android:foregroundServiceType="camera"
             android:exported="false">
         </service>

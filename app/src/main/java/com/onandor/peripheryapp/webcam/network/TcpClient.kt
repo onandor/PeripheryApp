@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.webcam.tcp
+package com.onandor.peripheryapp.webcam.network
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -1,11 +1,10 @@
-package com.onandor.peripheryapp.webcam.tcp
+package com.onandor.peripheryapp.webcam.network
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.BindException
@@ -46,7 +45,6 @@ class TcpServer {
                 synchronized(mClients) {
                     val client = TcpClient(mNextClientId++, socket, this::onClientDisconnected)
                     mClients.add(client)
-                    println("TCP SERVER: client connected: ${client.id}")
                     emitEvent(Event.ClientConnected(client))
                 }
             } catch (e: IOException) {

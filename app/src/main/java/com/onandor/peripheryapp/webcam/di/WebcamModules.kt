@@ -1,10 +1,8 @@
 package com.onandor.peripheryapp.webcam.di
 
 import android.content.Context
-import com.onandor.peripheryapp.webcam.stream.CameraController
-import com.onandor.peripheryapp.webcam.stream.DCStreamer
-import com.onandor.peripheryapp.webcam.stream.ClientStreamer
-import com.onandor.peripheryapp.webcam.tcp.TcpServer
+import com.onandor.peripheryapp.webcam.video.CameraController
+import com.onandor.peripheryapp.webcam.network.TcpServer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

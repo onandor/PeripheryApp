@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import com.onandor.peripheryapp.R
 
 class WebcamNotificationService() : Service() {
 

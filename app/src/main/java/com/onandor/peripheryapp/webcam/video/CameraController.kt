@@ -1,9 +1,8 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.graphics.Rect
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice

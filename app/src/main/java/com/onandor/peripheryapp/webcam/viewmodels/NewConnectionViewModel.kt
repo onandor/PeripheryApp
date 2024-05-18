@@ -7,19 +7,15 @@ import com.onandor.peripheryapp.navigation.NavActions
 import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
 import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.utils.WebcamSettingKeys
-import com.onandor.peripheryapp.webcam.stream.CameraController
-import com.onandor.peripheryapp.webcam.stream.CameraInfo
-import com.onandor.peripheryapp.webcam.stream.DCStreamer
-import com.onandor.peripheryapp.webcam.stream.ClientEncoder
-import com.onandor.peripheryapp.webcam.stream.ClientStreamer
-import com.onandor.peripheryapp.webcam.stream.StreamerEvent
-import com.onandor.peripheryapp.webcam.stream.StreamerType
-import com.onandor.peripheryapp.webcam.stream.Utils
-import com.onandor.peripheryapp.webcam.tcp.TcpServer
+import com.onandor.peripheryapp.webcam.video.CameraController
+import com.onandor.peripheryapp.webcam.video.CameraInfo
+import com.onandor.peripheryapp.webcam.video.encoders.H264Encoder
+import com.onandor.peripheryapp.webcam.video.streamers.StreamerType
+import com.onandor.peripheryapp.webcam.video.Utils
+import com.onandor.peripheryapp.webcam.network.TcpServer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -35,8 +31,8 @@ data class NewConnectionUiState(
     val cameraId: String = "",
     val resolutionIdx: Int = 0,
     val frameRateRangeIdx: Int = 0,
-    val bitRate: Int = ClientEncoder.DEFAULT_BIT_RATE,
-    val bitRates: List<Int> = ClientEncoder.BIT_RATES,
+    val bitRate: Int = H264Encoder.DEFAULT_BIT_RATE,
+    val bitRates: List<Int> = H264Encoder.BIT_RATES,
     val noCameras: Boolean = false
 )
 

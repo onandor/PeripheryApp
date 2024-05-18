@@ -1,7 +1,7 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video.streamers
 
-import com.onandor.peripheryapp.webcam.tcp.TcpClient
-import com.onandor.peripheryapp.webcam.tcp.TcpServer
+import com.onandor.peripheryapp.webcam.network.TcpClient
+import com.onandor.peripheryapp.webcam.network.TcpServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,12 +39,10 @@ class DCStreamer(private val tcpServer: TcpServer): IStreamer {
                     if (mVideoClient == null) {
                         // Initialization bytes are queued first, sending them before sending
                         // frames begins
-                        println("video client connected")
                         event.client.send(mFrameQueue.remove())
                         mVideoClient = event.client
                         mVideoClient!!.readInput(this@DCStreamer::onInput)
                     } else if (mBatteryClient == null) {
-                        println("battery client connected")
                         mBatteryClient = event.client
                         sendBattery()
                     } else {
@@ -52,9 +50,9 @@ class DCStreamer(private val tcpServer: TcpServer): IStreamer {
                     }
                 }
                 is TcpServer.Event.ClientDisconnected -> {
-                    if (event.clientId == mVideoClient!!.id) {
+                    if (event.clientId == mVideoClient?.id) {
                         emitEvent(StreamerEvent.CLIENT_DISCONNECTED)
-                    } else if (event.clientId == mBatteryClient!!.id) {
+                    } else if (event.clientId == mBatteryClient?.id) {
                         mBatteryClient = null
                     }
                 }

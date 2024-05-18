@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video.encoders
 
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
@@ -6,7 +6,7 @@ import android.media.MediaFormat
 import android.view.Surface
 import java.lang.Exception
 
-class ClientEncoder(
+class H264Encoder(
     width: Int,
     height: Int,
     bitRate: Int,

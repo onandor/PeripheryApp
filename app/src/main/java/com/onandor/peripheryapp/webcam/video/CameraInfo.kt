@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video
 
 import android.graphics.Rect
 import android.hardware.camera2.CameraCharacteristics

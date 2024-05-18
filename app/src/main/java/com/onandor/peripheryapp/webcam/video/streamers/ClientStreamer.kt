@@ -1,7 +1,7 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video.streamers
 
-import com.onandor.peripheryapp.webcam.tcp.TcpClient
-import com.onandor.peripheryapp.webcam.tcp.TcpServer
+import com.onandor.peripheryapp.webcam.network.TcpClient
+import com.onandor.peripheryapp.webcam.network.TcpServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

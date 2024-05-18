@@ -1,4 +1,4 @@
-package com.onandor.peripheryapp.webcam.stream
+package com.onandor.peripheryapp.webcam.video.streamers
 
 enum class StreamerEvent {
     CLIENT_DISCONNECTED,
