@@ -52,11 +52,7 @@
     <string name="webcam_new_connection">New connection</string>
     <string name="webcam_ip_address">IP Address</string>
     <string name="webcam_port">Port</string>
-    <string name="webcam_connect">Connect</string>
-    <string name="webcam_connecting">Connecting...</string>
-    <string name="webcam_host_unreachable">Disconnection from host</string>
-    <string name="webcam_unknown_host">Unknown host</string>
-    <string name="webcam_timeout">The connection has timed out</string>
+    <string name="webcam_tcp_server_cannot_start">Cannot start TCP server</string>
     <string name="webcam_settings_resolution">Resolution</string>
     <string name="webcam_settings_frame_rate">Frame rate</string>
     <string name="webcam_settings">Webcam Settings</string>
@@ -75,4 +71,5 @@
     <string name="webcam_connection">Connection</string>
     <string name="webcam_port_in_use">Port in use</string>
     <string name="webcam_no_cameras">Your device doesn\'t have any cameras, or they are in use by an other application.</string>
+    <string name="webcam_streamer_cannot_start">Streaming cannot start because an error occurred</string>
 </resources>

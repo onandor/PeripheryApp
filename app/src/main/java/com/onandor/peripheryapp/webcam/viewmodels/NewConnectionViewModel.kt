@@ -12,11 +12,14 @@ import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.ClientEncoder
 import com.onandor.peripheryapp.webcam.stream.ClientStreamer
+import com.onandor.peripheryapp.webcam.stream.StreamerEvent
 import com.onandor.peripheryapp.webcam.stream.StreamerType
 import com.onandor.peripheryapp.webcam.stream.Utils
+import com.onandor.peripheryapp.webcam.tcp.TcpServer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,10 +28,7 @@ data class NewConnectionUiState(
     val isCameraPermissionGranted: Boolean = false,
     val address: String = "",
     val port: String = "",
-    val connecting: Boolean = false,
-    val canConnect: Boolean = false,
-    val clientStreamerConnEvent: ClientStreamer.ConnectionEvent? = null,
-    val dcStreamerConnEvent: DCStreamer.ConnectionEvent? = null,
+    val tcpServerEvent: TcpServer.Event? = null,
     val streamerType: Int = StreamerType.CLIENT,
 
     val cameraInfos: List<CameraInfo> = emptyList(),
@@ -43,13 +43,10 @@ data class NewConnectionUiState(
 @HiltViewModel
 class NewConnectionViewModel @Inject constructor(
     private val navManager: INavigationManager,
-    private val clientStreamer: ClientStreamer,
     private val settings: Settings,
     cameraController: CameraController,
-    private val dcStreamer: DCStreamer
+    private val tcpServer: TcpServer
 ) : ViewModel() {
-
-    private val portPattern = Regex("^\\d+\$")
 
     private val _uiState = MutableStateFlow(NewConnectionUiState())
     val uiState = _uiState.asStateFlow()
@@ -57,23 +54,18 @@ class NewConnectionViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val streamerType = settings.get(WebcamSettingKeys.STREAMER_TYPE)
-            if (streamerType == StreamerType.CLIENT) {
-                loadClientStreamerValues()
-            } else {
-                loadDCStreamerValues()
-                dcStreamer.startServer()
+            _uiState.update {
+                it.copy(
+                    address = Utils.getIPAddress(),
+                    port = TcpServer.PORT.toString(),
+                    streamerType = streamerType
+                )
             }
         }
 
+        tcpServer.start()
         viewModelScope.launch {
-            clientStreamer.connectionEventFlow.collect {
-                onClientConnectionEvent(it)
-            }
-        }
-        viewModelScope.launch {
-            dcStreamer.connectionEventFlow.collect {
-                onDCConnectionEvent(it)
-            }
+            tcpServer.eventFlow.collect { onTcpServerEvent(it) }
         }
 
         val cameraInfos = cameraController.getCameraInfos()
@@ -112,110 +104,30 @@ class NewConnectionViewModel @Inject constructor(
     }
 
     fun navigateBack() {
-        dcStreamer.stopServer()
+        tcpServer.stop()
         navManager.navigateBack()
     }
 
-    fun onAddressChanged(value: String) {
-        val canConnect = value.isNotEmpty() && uiState.value.port.isNotEmpty()
-        _uiState.update {
-            it.copy(
-                address = value,
-                canConnect = canConnect
-            )
-        }
-    }
-
-    fun onPortChanged(value: String) {
-        val canConnect = uiState.value.address.isNotEmpty() && value.isNotEmpty()
-        if (value.isEmpty() || value.matches(portPattern)) {
-            _uiState.update {
-                it.copy(
-                    port = value,
-                    canConnect = canConnect
-                )
-            }
-        }
-    }
-
-    fun onConnect() {
-        _uiState.update { it.copy(connecting = true) }
-        clientStreamer.connect(uiState.value.address, uiState.value.port.toInt())
-            .thenAccept { result ->
-                _uiState.update { it.copy(connecting = false) }
-                onClientConnectionEvent(result)
-            }
-        /*
-        val navArgs = CameraNavArgs(
-            cameraId = uiState.value.cameraId,
-            resolutionIdx = uiState.value.resolutionIdx,
-            frameRateRangeIdx = uiState.value.frameRateRangeIdx,
-            bitRate = uiState.value.bitRate,
-            streamerType = StreamerType.CLIENT
-        )
-        navManager.navigateTo(NavActions.Webcam.camera(navArgs))
-         */
-    }
-
-    private fun onClientConnectionEvent(event: ClientStreamer.ConnectionEvent) {
+    private fun onTcpServerEvent(event: TcpServer.Event) {
         when (event) {
-            ClientStreamer.ConnectionEvent.CONNECTION_SUCCESS ->  {
-                viewModelScope.launch {
-                    settings.save(WebcamSettingKeys.PREVIOUS_ADDRESS, uiState.value.address)
-                    settings.save(WebcamSettingKeys.PREVIOUS_PORT, uiState.value.port)
-                }
+            is TcpServer.Event.ClientConnected -> {
                 val navArgs = CameraNavArgs(
                     cameraId = uiState.value.cameraId,
                     resolutionIdx = uiState.value.resolutionIdx,
                     frameRateRangeIdx = uiState.value.frameRateRangeIdx,
                     bitRate = uiState.value.bitRate,
-                    streamerType = StreamerType.CLIENT
+                    streamerType = uiState.value.streamerType
                 )
                 navManager.navigateTo(NavActions.Webcam.camera(navArgs))
             }
-            ClientStreamer.ConnectionEvent.UNKNOWN_HOST_FAILURE -> {
-                _uiState.update { it.copy(clientStreamerConnEvent = event) }
-            }
-            ClientStreamer.ConnectionEvent.TIMEOUT_FAILURE -> {
-                _uiState.update { it.copy(clientStreamerConnEvent = event) }
-            }
-            ClientStreamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE -> {
-                _uiState.update { it.copy(clientStreamerConnEvent = event) }
-            }
-        }
-    }
-
-    private fun onDCConnectionEvent(event: DCStreamer.ConnectionEvent) {
-        when (event) {
-            DCStreamer.ConnectionEvent.CLIENT_CONNECTED -> {
-                val navArgs = CameraNavArgs(
-                    cameraId = uiState.value.cameraId,
-                    resolutionIdx = uiState.value.resolutionIdx,
-                    frameRateRangeIdx = uiState.value.frameRateRangeIdx,
-                    bitRate = uiState.value.bitRate,
-                    streamerType = StreamerType.DC
-                )
-                navManager.navigateTo(NavActions.Webcam.camera(navArgs))
-            }
-            DCStreamer.ConnectionEvent.CLIENT_DISCONNECTED -> {
-
-            }
-            DCStreamer.ConnectionEvent.CONNECTION_LOST -> {
-
-            }
-            DCStreamer.ConnectionEvent.PORT_IN_USE -> {
-                _uiState.update { it.copy() }
-            }
+            is TcpServer.Event.ClientDisconnected -> {}
+            TcpServer.Event.ClientCannotConnect -> {}
+            else -> { _uiState.update { it.copy(tcpServerEvent = event) }}
         }
     }
 
     fun onToastShown() {
-        _uiState.update {
-            it.copy(
-                clientStreamerConnEvent = null,
-                dcStreamerConnEvent = null
-            )
-        }
+        _uiState.update { it.copy(tcpServerEvent = null) }
     }
 
     fun onCameraIdChanged(id: String) {
@@ -245,45 +157,8 @@ class NewConnectionViewModel @Inject constructor(
     }
 
     fun onStreamerTypeChanged(type: Int) {
-        if (uiState.value.streamerType == type) {
-            return
-        }
-        if (type == StreamerType.CLIENT) {
-            loadClientStreamerValues()
-            dcStreamer.stopServer()
-        } else {
-            loadDCStreamerValues()
-            dcStreamer.startServer()
-        }
-        viewModelScope.launch {
-            settings.save(WebcamSettingKeys.STREAMER_TYPE, uiState.value.streamerType)
-        }
-    }
-
-    private fun loadClientStreamerValues() {
-        viewModelScope.launch {
-            val previousAddress = settings.get(WebcamSettingKeys.PREVIOUS_ADDRESS)
-            val previousPort = settings.get(WebcamSettingKeys.PREVIOUS_PORT)
-            val canConnect = previousAddress.isNotEmpty() && previousPort.isNotEmpty()
-            _uiState.update {
-                it.copy(
-                    address = previousAddress,
-                    port = previousPort,
-                    canConnect = canConnect,
-                    streamerType = StreamerType.CLIENT
-                )
-            }
-        }
-    }
-
-    private fun loadDCStreamerValues() {
-        _uiState.update {
-            it.copy(
-                address = Utils.getIPAddress(),
-                port = DCStreamer.PORT.toString(),
-                streamerType = StreamerType.DC
-            )
-        }
+        _uiState.update { it.copy(streamerType = type) }
+        viewModelScope.launch { settings.save(WebcamSettingKeys.STREAMER_TYPE, type) }
     }
 
     private fun saveCameraSettings() {

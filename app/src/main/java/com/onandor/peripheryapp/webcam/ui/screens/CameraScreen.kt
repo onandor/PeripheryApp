@@ -10,6 +10,7 @@ import android.hardware.camera2.CameraMetadata
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -84,6 +86,13 @@ fun CameraScreen(
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         onDispose {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+    }
+    
+    if (uiState.streamerCannotStart) {
+        val toastText = stringResource(id = R.string.webcam_streamer_cannot_start)
+        LaunchedEffect(Unit) {
+            Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
         }
     }
 

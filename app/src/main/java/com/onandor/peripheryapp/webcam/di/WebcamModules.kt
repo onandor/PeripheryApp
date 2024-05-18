@@ -4,6 +4,7 @@ import android.content.Context
 import com.onandor.peripheryapp.webcam.stream.CameraController
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.ClientStreamer
+import com.onandor.peripheryapp.webcam.tcp.TcpServer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,11 +18,7 @@ object StreamerModule {
 
     @Singleton
     @Provides
-    fun provideStreamer(): ClientStreamer = ClientStreamer()
-
-    @Singleton
-    @Provides
-    fun provideDCStreamer(): DCStreamer = DCStreamer()
+    fun provideTcpServer(): TcpServer = TcpServer()
 }
 
 @Module

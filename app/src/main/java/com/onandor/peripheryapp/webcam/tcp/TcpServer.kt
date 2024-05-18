@@ -2,17 +2,19 @@ package com.onandor.peripheryapp.webcam.tcp
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.BindException
 import java.net.ServerSocket
-import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Singleton
 
-class TcpServer(val port: Int) {
+@Singleton
+class TcpServer {
 
     sealed interface Event {
         data object PortInUse: Event
@@ -22,13 +24,17 @@ class TcpServer(val port: Int) {
         data class ClientDisconnected(val clientId: Int): Event
     }
 
+    companion object {
+        const val PORT = 7220
+    }
+
     private var mServerSocket: ServerSocket? = null
     private val mRunning = AtomicBoolean(false)
     private val mClients: MutableList<TcpClient> = mutableListOf()
     private var mNextClientId: Int = 0
 
-    private val mServerEventFlow = MutableSharedFlow<Event>()
-    val serverEventFlow = mServerEventFlow.asSharedFlow()
+    private val mEventFlow = MutableSharedFlow<Event>(replay = 10)
+    val eventFlow = mEventFlow.asSharedFlow()
 
     private val listener = Runnable {
         while (mRunning.get()) {
@@ -40,6 +46,7 @@ class TcpServer(val port: Int) {
                 synchronized(mClients) {
                     val client = TcpClient(mNextClientId++, socket, this::onClientDisconnected)
                     mClients.add(client)
+                    println("TCP SERVER: client connected: ${client.id}")
                     emitEvent(Event.ClientConnected(client))
                 }
             } catch (e: IOException) {
@@ -53,7 +60,7 @@ class TcpServer(val port: Int) {
             return
         }
         try {
-            mServerSocket = ServerSocket(port)
+            mServerSocket = ServerSocket(PORT)
             mRunning.set(true)
             Thread(listener).start()
         } catch (e: BindException) {
@@ -65,10 +72,16 @@ class TcpServer(val port: Int) {
 
     fun stop() {
         mRunning.set(false)
-        mClients.forEach { it.close() }
-        mClients.clear()
+        reset()
         mServerSocket?.close()
         mServerSocket = null
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun reset() {
+        mClients.forEach { it.close() }
+        mClients.clear()
+        mEventFlow.resetReplayCache()
     }
 
     fun broadcast(data: ByteArray) {
@@ -76,13 +89,15 @@ class TcpServer(val port: Int) {
     }
 
     private fun onClientDisconnected(id: Int) {
-        mClients.removeIf { it.id == id }
+        synchronized(mClients) {
+            mClients.removeIf { it.id == id }
+        }
         emitEvent(Event.ClientDisconnected(id))
     }
 
     private fun emitEvent(event: Event) {
         CoroutineScope(Dispatchers.IO).launch {
-            mServerEventFlow.emit(event)
+            mEventFlow.emit(event)
         }
     }
 }

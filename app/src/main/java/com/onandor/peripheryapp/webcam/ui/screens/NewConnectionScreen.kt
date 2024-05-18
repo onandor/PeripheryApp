@@ -51,6 +51,7 @@ import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.ClientStreamer
 import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.StreamerType
+import com.onandor.peripheryapp.webcam.tcp.TcpServer
 import com.onandor.peripheryapp.webcam.ui.components.PermissionRequest
 import com.onandor.peripheryapp.webcam.viewmodels.NewConnectionViewModel
 
@@ -65,31 +66,14 @@ fun NewConnectionScreen(
     BackHandler {
         viewModel.navigateBack()
     }
-
-    if (uiState.clientStreamerConnEvent != null) {
-        val toastText = when(uiState.clientStreamerConnEvent) {
-            ClientStreamer.ConnectionEvent.TIMEOUT_FAILURE ->
-                stringResource(R.string.webcam_timeout)
-            ClientStreamer.ConnectionEvent.UNKNOWN_HOST_FAILURE ->
-                stringResource(R.string.webcam_unknown_host)
-            ClientStreamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE ->
-                stringResource(R.string.webcam_host_unreachable)
+    
+    if (uiState.tcpServerEvent != null) {
+        val toastText = when (uiState.tcpServerEvent) {
+            TcpServer.Event.PortInUse -> stringResource(id = R.string.webcam_port_in_use)
+            TcpServer.Event.CannotStart -> stringResource(id = R.string.webcam_tcp_server_cannot_start)
             else -> ""
         }
-        LaunchedEffect(uiState.clientStreamerConnEvent) {
-            Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
-            viewModel.onToastShown()
-        }
-    }
-
-    if (uiState.dcStreamerConnEvent != null) {
-        val toastText = when (uiState.dcStreamerConnEvent) {
-            DCStreamer.ConnectionEvent.PORT_IN_USE -> {
-                stringResource(id = R.string.webcam_port_in_use)
-            }
-            else -> ""
-        }
-        LaunchedEffect(uiState.dcStreamerConnEvent) {
+        LaunchedEffect(uiState.tcpServerEvent) {
             Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
             viewModel.onToastShown()
         }
@@ -129,22 +113,10 @@ fun NewConnectionScreen(
                     onStreamerTypeChanged = viewModel::onStreamerTypeChanged
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 75.dp, end = 75.dp, top = 15.dp, bottom = 20.dp))
-                if (uiState.streamerType == StreamerType.CLIENT) {
-                    ClientConnectionSettings(
-                        address = uiState.address,
-                        port = uiState.port,
-                        connecting = uiState.connecting,
-                        canConnect = uiState.canConnect,
-                        onAddressChanged = viewModel::onAddressChanged,
-                        onPortChanged = viewModel::onPortChanged,
-                        onConnect = viewModel::onConnect
-                    )
-                } else {
-                    DCConnectionSettings(
-                        address = uiState.address,
-                        port = uiState.port
-                    )
-                }
+                DCConnectionSettings(
+                    address = uiState.address,
+                    port = uiState.port
+                )
                 HorizontalDivider(modifier = Modifier.padding(start = 75.dp, end = 75.dp, top = 20.dp, bottom = 20.dp))
                 CameraSettings(
                     cameraInfos = uiState.cameraInfos,
@@ -262,65 +234,6 @@ fun DCConnectionSettings(
                         fontSize = 20.sp
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun ClientConnectionSettings(
-    address: String,
-    port: String,
-    connecting: Boolean,
-    canConnect: Boolean,
-    onAddressChanged: (String) -> Unit,
-    onPortChanged: (String) -> Unit,
-    onConnect: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp)
-            .fillMaxWidth()
-    ) {
-        Text(
-            modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(id = R.string.webcam_connection),
-            fontSize = 20.sp
-        )
-        Text(stringResource(R.string.webcam_ip_address))
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = address,
-            onValueChange = onAddressChanged,
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(stringResource(R.string.webcam_port))
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = port,
-            onValueChange = onPortChanged,
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (connecting) {
-                CircularProgressIndicator(modifier = Modifier
-                    .padding(end = 10.dp)
-                    .size(25.dp))
-                Text(stringResource(R.string.webcam_connecting))
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            Button(
-                onClick = onConnect,
-                enabled = !connecting && canConnect
-            ) {
-                Text(stringResource(id = R.string.webcam_connect))
             }
         }
     }

@@ -30,5 +30,7 @@ class Utils {
                 }
             }
         }
+
+        fun Int.to2ByteArray() : ByteArray = byteArrayOf(shr(8).toByte(), toByte())
     }
 }

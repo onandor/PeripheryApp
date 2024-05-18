@@ -1,5 +1,7 @@
 package com.onandor.peripheryapp.webcam.stream
 
+import com.onandor.peripheryapp.webcam.tcp.TcpClient
+import com.onandor.peripheryapp.webcam.tcp.TcpServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -7,117 +9,88 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import java.io.DataOutputStream
-import java.io.IOException
-import java.net.ConnectException
-import java.net.InetAddress
-import java.net.Socket
-import java.net.UnknownHostException
 import java.util.LinkedList
 import java.util.Queue
-import java.util.concurrent.CompletableFuture
-import javax.inject.Singleton
 
-@Singleton
-class ClientStreamer {
+class ClientStreamer(private val tcpServer: TcpServer): IStreamer {
 
-    private var address: InetAddress? = null
-    private var port: Int = 0
-    private var sendDataJob: Job? = null
-    private var dataQueue: Queue<ByteArray> = LinkedList()
+    private val mServerEventJob: Job
+    private var mClient: TcpClient? = null
+    private var mStopped: Boolean = false
 
-    private var socket: Socket? = null
-    private var dos: DataOutputStream? = null
+    private var mSendFramesJob: Job? = null
+    private val mFrameQueue: Queue<ByteArray> = LinkedList()
 
-    private val _connectionEventFlow = MutableSharedFlow<ConnectionEvent>()
-    val connectionEventFlow = _connectionEventFlow.asSharedFlow()
+    private val mEventFlow = MutableSharedFlow<StreamerEvent>()
+    override val eventFlow = mEventFlow.asSharedFlow()
 
-    enum class ConnectionEvent {
-        CONNECTION_SUCCESS,
-        UNKNOWN_HOST_FAILURE,
-        TIMEOUT_FAILURE,
-        HOST_UNREACHABLE_FAILURE
+    init {
+        mServerEventJob = collectServerEvents()
     }
 
-    fun connect(ipAddress: String, port: Int): CompletableFuture<ConnectionEvent> {
-        return CompletableFuture.supplyAsync {
-            try {
-                address = InetAddress.getByName(ipAddress)
-                this@ClientStreamer.port = port
-
-                socket = Socket(ipAddress, port)
-                dos = DataOutputStream(socket?.getOutputStream())
-                ConnectionEvent.CONNECTION_SUCCESS
-            } catch (e: ConnectException) {
-                ConnectionEvent.TIMEOUT_FAILURE
-            } catch (e: UnknownHostException) {
-                ConnectionEvent.UNKNOWN_HOST_FAILURE
-            }
-        }
-    }
-
-    fun disconnect() {
-        stopStream()
-        dos?.close()
-    }
-
-    fun startStream() {
-        sendDataJob = CoroutineScope(Dispatchers.IO).launch {
-            sendData()
-        }
-    }
-
-    private fun stopStream() {
-        sendDataJob?.cancel()
-        sendDataJob = null
-        dataQueue.clear()
-    }
-
-    private suspend fun sendData() {
-        var dataAvailable: Boolean
-        var data = ByteArray(0)
-        while (true) {
-            synchronized(dataQueue) {
-                if (dataQueue.isEmpty()) {
-                    dataAvailable = false
-                } else {
-                    data = dataQueue.remove()
-                    dataAvailable = true
-                }
-
-                if (dataAvailable) {
-                    try {
-                        dos?.write(data.size.to2ByteArray())
-                        dos?.write(data)
-                    } catch (e: IOException) {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            _connectionEventFlow.emit(ConnectionEvent.HOST_UNREACHABLE_FAILURE)
-                        }
-                        stopStream()
+    private fun collectServerEvents() = CoroutineScope(Dispatchers.IO).launch {
+        tcpServer.eventFlow.collect { event ->
+            when (event) {
+                is TcpServer.Event.ClientConnected -> {
+                    if (mClient == null) {
+                        mClient = event.client
+                        mClient!!.readInput { _: String -> }
+                    } else {
+                        event.client.close()
                     }
                 }
+                is TcpServer.Event.ClientDisconnected -> {
+                    emitEvent(StreamerEvent.CLIENT_DISCONNECTED)
+                }
+                else -> { emitEvent(StreamerEvent.CANNOT_START) }
             }
-            if (!dataAvailable) {
+        }
+    }
+
+    override fun queueFrame(frame: ByteArray) {
+        if (mStopped) {
+            return
+        }
+        synchronized(mFrameQueue) {
+            mFrameQueue.add(frame)
+        }
+    }
+
+    private suspend fun sendFrames() {
+        var frameAvailable: Boolean
+        var frame: ByteArray
+        while (true) {
+            synchronized(mFrameQueue) {
+                if (mFrameQueue.isEmpty()) {
+                    frameAvailable = false
+                } else {
+                    frameAvailable = true
+                    frame = mFrameQueue.remove()
+                    mClient?.send(frame.size.to2ByteArray())
+                    mClient?.send(frame)
+                }
+            }
+            if (!frameAvailable) {
                 delay(10)
             }
         }
     }
 
-    private fun printBytes(bytes: ByteArray) {
-        for (byte in bytes) {
-            for (i in 0 .. 7) {
-                print((byte.toInt() shr i) and 1)
-            }
-            print(" ")
-        }
-        println()
+    override fun start() {
+        mSendFramesJob = CoroutineScope(Dispatchers.IO).launch { sendFrames() }
+    }
+
+    override fun stop() {
+        mStopped = true
+        mServerEventJob.cancel()
+        mSendFramesJob?.cancel()
+        mFrameQueue.clear()
+        tcpServer.reset()
     }
 
     private fun Int.to2ByteArray() : ByteArray = byteArrayOf(shr(8).toByte(), toByte())
 
-    fun queueData(data: ByteArray) {
-        synchronized(dataQueue) {
-            dataQueue.add(data)
-        }
+    private fun emitEvent(event: StreamerEvent) = CoroutineScope(Dispatchers.IO).launch {
+        mEventFlow.emit(event)
     }
 }

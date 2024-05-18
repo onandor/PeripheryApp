@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
-import com.onandor.peripheryapp.utils.Settings
 import com.onandor.peripheryapp.webcam.stream.CameraController
 import com.onandor.peripheryapp.webcam.stream.CameraInfo
 import com.onandor.peripheryapp.webcam.stream.DCEncoder
@@ -15,7 +14,11 @@ import com.onandor.peripheryapp.webcam.stream.DCStreamer
 import com.onandor.peripheryapp.webcam.stream.ClientEncoder
 import com.onandor.peripheryapp.webcam.stream.ClientStreamer
 import com.onandor.peripheryapp.webcam.stream.Encoder
+import com.onandor.peripheryapp.webcam.stream.IStreamer
+import com.onandor.peripheryapp.webcam.stream.StreamerEvent
 import com.onandor.peripheryapp.webcam.stream.StreamerType
+import com.onandor.peripheryapp.webcam.stream.Utils.Companion.to2ByteArray
+import com.onandor.peripheryapp.webcam.tcp.TcpServer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,16 +37,15 @@ data class CameraUiState(
     val aeRange: ClosedFloatingPointRange<Float> = aeCompensation..aeCompensation,
     val aeCompensationEV: Float = CameraController.DEFAULT_AE_COMPENSATION.toFloat(),
     val currentCamera: CameraViewModel.CameraOption = CameraViewModel.CameraOption(),
-    val cameras: List<CameraViewModel.CameraOption> = emptyList()
+    val cameras: List<CameraViewModel.CameraOption> = emptyList(),
+    val streamerCannotStart: Boolean = false
 )
 
 @HiltViewModel
 class CameraViewModel @Inject constructor(
     private val navManager: INavigationManager,
-    private val clientStreamer: ClientStreamer,
-    private val settings: Settings,
     private val cameraController: CameraController,
-    private val dcStreamer: DCStreamer
+    tcpServer: TcpServer
 ): ViewModel() {
 
     data class CameraOption(
@@ -62,6 +64,7 @@ class CameraViewModel @Inject constructor(
     private val cameraInfos: List<CameraInfo> = cameraController.getCameraInfos()
 
     private val encoder: Encoder
+    private val streamer: IStreamer
 
     init {
         val navArgs = navManager.getCurrentNavAction()!!.navArgs as CameraNavArgs
@@ -91,45 +94,43 @@ class CameraViewModel @Inject constructor(
             )
         }
 
-        encoder = if (navArgs.streamerType == StreamerType.CLIENT) {
-            ClientEncoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
-                clientStreamer.queueData(it)
+        if (navArgs.streamerType == StreamerType.CLIENT) {
+            streamer = ClientStreamer(tcpServer)
+            encoder = ClientEncoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
+                streamer.queueFrame(it)
             }
         } else {
-            DCEncoder(resolution.width, resolution.height) {
-                dcStreamer.queueData(it)
+            streamer = DCStreamer(tcpServer)
+            sendDCStreamerInit(resolution.width, resolution.height)
+            encoder = DCEncoder(resolution.width, resolution.height) {
+                streamer.queueFrame(it)
             }
         }
-
-        collectConnectionEvents(navArgs.streamerType)
+        viewModelScope.launch { streamer.eventFlow.collect { onStreamerEvent(it) } }
+        streamer.start()
     }
 
-    private fun collectConnectionEvents(streamerType: Int) {
-        if (streamerType == StreamerType.CLIENT) {
-            viewModelScope.launch {
-                clientStreamer.connectionEventFlow.collect { event ->
-                    when (event) {
-                        ClientStreamer.ConnectionEvent.HOST_UNREACHABLE_FAILURE -> {
-                            navigateBack()
-                        }
-                        else -> {}
-                    }
-                }
-            }
-        } else {
-            viewModelScope.launch {
-                dcStreamer.connectionEventFlow.collect { event ->
-                    when (event) {
-                        DCStreamer.ConnectionEvent.CLIENT_DISCONNECTED -> {
-                            navigateBack()
-                        }
-                        DCStreamer.ConnectionEvent.CONNECTION_LOST -> {
-                            navigateBack()
-                        }
-                        else -> { /* TODO */ }
-                    }
-                }
-            }
+    private fun sendDCStreamerInit(width: Int, height: Int) {
+        val widthBytes = width.to2ByteArray()
+        val heightBytes = height.to2ByteArray()
+        val initialBytes = listOf(
+            widthBytes[0],
+            widthBytes[1],
+            heightBytes[0],
+            heightBytes[1],
+            0x21.toByte(),
+            0xf5.toByte(),
+            0xe8.toByte(),
+            0x7f.toByte(),
+            0x30.toByte()
+        ).toByteArray()
+        streamer.queueFrame(initialBytes)
+    }
+
+    private fun onStreamerEvent(event: StreamerEvent) {
+        when (event) {
+            StreamerEvent.CLIENT_DISCONNECTED -> navigateBack()
+            StreamerEvent.CANNOT_START -> { /* TODO */ }
         }
     }
 
@@ -142,7 +143,6 @@ class CameraViewModel @Inject constructor(
         this.previewSurface = previewSurface
         cameraController.start(camera, frameRateRange, listOf(previewSurface, encoder.inputSurface))
         encoder.start()
-        clientStreamer.startStream()
     }
 
     fun onPause() {
@@ -206,8 +206,7 @@ class CameraViewModel @Inject constructor(
     }
 
     fun navigateBack() {
-        dcStreamer.disconnect()
-        clientStreamer.disconnect()
+        streamer.stop()
         encoder.release()
         cameraController.stop()
         navManager.navigateBack()

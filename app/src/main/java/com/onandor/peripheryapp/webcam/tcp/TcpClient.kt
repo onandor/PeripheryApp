@@ -22,6 +22,7 @@ class TcpClient(
     private val mScanner = Scanner(mInputStream)
     private var mInputJob: Job? = null
 
+    @JvmName("readInputStrings")
     fun readInput(callback: (String) -> Unit) {
         if (mInputJob != null) {
             return
@@ -36,6 +37,7 @@ class TcpClient(
         }
     }
 
+    @JvmName("readInputBytes")
     fun readInput(callback: (Byte) -> Unit) {
         if (mInputJob != null) {
             return
@@ -70,9 +72,9 @@ class TcpClient(
 
     fun close() {
         mInputJob?.cancel()
-        mScanner.close()
         mInputStream.close()
         mOutputStream.close()
+        mScanner.close()
         socket.close()
     }
 }

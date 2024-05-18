@@ -47,14 +47,6 @@ object BtSettingKeys {
 }
 
 object WebcamSettingKeys {
-    val PREVIOUS_ADDRESS = SettingKey(
-        preferenceKey = stringPreferencesKey("webcam_previous_address"),
-        defaultValue = ""
-    )
-    val PREVIOUS_PORT = SettingKey(
-        preferenceKey = stringPreferencesKey("webcam_previous_port"),
-        defaultValue = ""
-    )
     val CAMERA_ID = SettingKey(
         preferenceKey = stringPreferencesKey("webcam_camera_id"),
         defaultValue = ""
