@@ -40,7 +40,9 @@ class ClientStreamer(private val tcpServer: TcpServer): IStreamer {
                     }
                 }
                 is TcpServer.Event.ClientDisconnected -> {
-                    emitEvent(StreamerEvent.CLIENT_DISCONNECTED)
+                    if (mClient?.id == event.clientId) {
+                        emitEvent(StreamerEvent.CLIENT_DISCONNECTED)
+                    }
                 }
                 else -> { emitEvent(StreamerEvent.CANNOT_START) }
             }
