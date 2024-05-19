@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -106,7 +107,9 @@ fun NewConnectionScreen(
                 HorizontalDivider(modifier = Modifier.padding(start = 75.dp, end = 75.dp, top = 15.dp, bottom = 20.dp))
                 ConnectionInformation(
                     address = uiState.address,
-                    port = uiState.port
+                    port = uiState.port,
+                    tcpServerPaused = uiState.tcpServerPaused,
+                    onResumeTcpServer = viewModel::onResumeTcpServer
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 75.dp, end = 75.dp, top = 20.dp, bottom = 20.dp))
                 CameraSettings(
@@ -153,7 +156,7 @@ fun NoCameras(modifier: Modifier) {
 @Composable
 fun StreamerTypeSelector(
     streamerType: Int,
-    onStreamerTypeChanged: (Int) -> Unit,
+    onStreamerTypeChanged: (Int) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -196,7 +199,9 @@ fun StreamerTypeSelector(
 @Composable
 fun ConnectionInformation(
     address: String,
-    port: String
+    port: String,
+    tcpServerPaused: Boolean,
+    onResumeTcpServer: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -230,6 +235,12 @@ fun ConnectionInformation(
                         fontSize = 20.sp
                     )
                 }
+            }
+        }
+        if (tcpServerPaused) {
+            Text(text = "tcp server paused")
+            Button(onClick = onResumeTcpServer) {
+                Text(text = "resume")
             }
         }
     }
