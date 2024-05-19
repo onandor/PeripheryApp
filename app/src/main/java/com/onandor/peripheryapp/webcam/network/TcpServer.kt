@@ -1,7 +1,5 @@
 package com.onandor.peripheryapp.webcam.network
 
-import android.os.Handler
-import android.os.HandlerThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,6 +10,7 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.BindException
 import java.net.ServerSocket
+import java.net.SocketException
 import javax.inject.Singleton
 
 @Singleton
@@ -21,15 +20,9 @@ class TcpServer {
         data object PortInUse: Event
         data object CannotStart: Event
         data object ClientCannotConnect: Event
-        data object Paused: Event
+        data object Stopped: Event
         data class ClientConnected(val client: TcpClient): Event
         data class ClientDisconnected(val clientId: Int): Event
-    }
-
-    private enum class State {
-        LISTENING,
-        PAUSED,
-        STOPPED
     }
 
     companion object {
@@ -39,7 +32,7 @@ class TcpServer {
     private var mServerSocket: ServerSocket? = null
     private val mClients: MutableList<TcpClient> = mutableListOf()
     private var mNextClientId: Int = 0
-    private var mState = State.STOPPED
+    private var mRunning = false
 
     private var mListenerThread: Thread? = null
 
@@ -47,7 +40,7 @@ class TcpServer {
     val eventFlow = mEventFlow.asSharedFlow()
 
     private val mListenerRunnable = Runnable {
-        while (mState == State.LISTENING) {
+        while (mRunning) {
             if (mServerSocket == null) {
                 mListenerThread!!.interrupt()
             }
@@ -62,19 +55,25 @@ class TcpServer {
                     mClients.add(client)
                 }
                 emitEvent(Event.ClientConnected(client))
+            } catch (e: SocketException) {
+                e.printStackTrace()
+                if (e.message != "Socket closed") {
+                    emitEvent(Event.ClientCannotConnect)
+                }
             } catch (e: IOException) {
+                e.printStackTrace()
                 emitEvent(Event.ClientCannotConnect)
             } catch (_: InterruptedException) {}
         }
     }
 
     fun start() {
-        if (mState == State.LISTENING || mState == State.PAUSED) {
+        if (mRunning) {
             return
         }
         try {
             mServerSocket = ServerSocket(PORT)
-            mState = State.LISTENING
+            mRunning = true
             mListenerThread = Thread(mListenerRunnable).apply { start() }
         } catch (e: BindException) {
             emitEvent(Event.PortInUse)
@@ -83,29 +82,22 @@ class TcpServer {
         }
     }
 
-    fun stop() {
-        mState = State.STOPPED
-        reset()
-        mServerSocket?.close()
-        mServerSocket = null
-    }
-
-    fun resume() {
-        mState = State.LISTENING
-        mListenerThread = Thread(mListenerRunnable).apply { start() }
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun reset() {
-        emitEvent(Event.Paused)
-        mState = State.PAUSED
-        mListenerThread!!.interrupt()
+    fun stop() {
+        if (!mRunning) {
+            return
+        }
+        emitEvent(Event.Stopped)
+        mRunning = false
+        mListenerThread?.interrupt()
         mListenerThread = null
         synchronized(mClients) {
             mClients.forEach { it.close() }
             mClients.clear()
         }
         mEventFlow.resetReplayCache()
+        mServerSocket?.close()
+        mServerSocket = null
     }
 
     private fun onClientDisconnected(id: Int) {
@@ -116,7 +108,7 @@ class TcpServer {
     }
 
     private fun emitEvent(event: Event) {
-        if (mState != State.LISTENING) {
+        if (!mRunning) {
             return
         }
         CoroutineScope(Dispatchers.IO).launch {

@@ -87,7 +87,7 @@ class ClientStreamer(private val tcpServer: TcpServer): IStreamer {
         mServerEventJob.cancel()
         mSendFramesJob?.cancel()
         mFrameQueue.clear()
-        tcpServer.reset()
+        tcpServer.stop()
     }
 
     private fun Int.to2ByteArray() : ByteArray = byteArrayOf(shr(8).toByte(), toByte())

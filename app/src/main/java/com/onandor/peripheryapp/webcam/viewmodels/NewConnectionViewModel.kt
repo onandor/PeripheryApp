@@ -26,7 +26,7 @@ data class NewConnectionUiState(
     val port: String = "",
     val tcpServerEvent: TcpServer.Event? = null,
     val streamerType: Int = StreamerType.CLIENT,
-    val tcpServerPaused: Boolean = false,
+    val tcpServerStopped: Boolean = false,
 
     val cameraInfos: List<CameraInfo> = emptyList(),
     val cameraId: String = "",
@@ -119,8 +119,8 @@ class NewConnectionViewModel @Inject constructor(
             }
             is TcpServer.Event.ClientDisconnected -> {}
             TcpServer.Event.ClientCannotConnect -> {}
-            TcpServer.Event.Paused -> {
-                _uiState.update { it.copy(tcpServerPaused = true) }
+            TcpServer.Event.Stopped -> {
+                _uiState.update { it.copy(tcpServerStopped = true) }
             }
             else -> { _uiState.update { it.copy(tcpServerEvent = event) }}
         }
@@ -161,9 +161,9 @@ class NewConnectionViewModel @Inject constructor(
         viewModelScope.launch { settings.save(WebcamSettingKeys.STREAMER_TYPE, type) }
     }
 
-    fun onResumeTcpServer() {
-        tcpServer.resume()
-        _uiState.update { it.copy(tcpServerPaused = false) }
+    fun onStartTcpServer() {
+        tcpServer.start()
+        _uiState.update { it.copy(tcpServerStopped = false) }
     }
 
     private fun saveCameraSettings() {

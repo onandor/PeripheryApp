@@ -26,7 +26,7 @@ class JpegEncoder(
     override val inputSurface: Surface = mImageReader.surface
 
     private val mImageListener = ImageReader.OnImageAvailableListener { reader ->
-        val image: Image = reader.acquireNextImage()
+        val image: Image = reader.acquireNextImage() ?: return@OnImageAvailableListener
         val frame = ByteArray(image.planes[0].buffer.remaining())
         image.planes[0].buffer[frame]
         val compressedFrame = compress(frame)

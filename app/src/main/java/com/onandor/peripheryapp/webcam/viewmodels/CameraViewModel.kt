@@ -18,7 +18,6 @@ import com.onandor.peripheryapp.webcam.video.encoders.Encoder
 import com.onandor.peripheryapp.webcam.video.streamers.IStreamer
 import com.onandor.peripheryapp.webcam.video.streamers.StreamerEvent
 import com.onandor.peripheryapp.webcam.video.streamers.StreamerType
-import com.onandor.peripheryapp.webcam.video.Utils.Companion.to2ByteArray
 import com.onandor.peripheryapp.webcam.network.TcpServer
 import com.onandor.peripheryapp.webcam.video.streamers.IpStreamer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -105,8 +104,7 @@ class CameraViewModel @Inject constructor(
                 }
             }
             StreamerType.DC -> {
-                streamer = DCStreamer(tcpServer)
-                sendDCStreamerInit()
+                streamer = DCStreamer(tcpServer, resolution.width, resolution.height)
                 encoder = JpegEncoder(resolution.width, resolution.height) {
                     streamer.queueFrame(it)
                 }
@@ -123,27 +121,10 @@ class CameraViewModel @Inject constructor(
         streamer.start()
     }
 
-    private fun sendDCStreamerInit() {
-        val widthBytes = resolution.width.to2ByteArray()
-        val heightBytes = resolution.height.to2ByteArray()
-        val initialBytes = listOf(
-            widthBytes[0],
-            widthBytes[1],
-            heightBytes[0],
-            heightBytes[1],
-            0x21.toByte(),
-            0xf5.toByte(),
-            0xe8.toByte(),
-            0x7f.toByte(),
-            0x30.toByte()
-        ).toByteArray()
-        streamer.queueFrame(initialBytes)
-    }
-
     private fun onStreamerEvent(event: StreamerEvent) {
         when (event) {
             StreamerEvent.CLIENT_DISCONNECTED -> navigateBack()
-            StreamerEvent.CANNOT_START -> { /* TODO */ }
+            StreamerEvent.CANNOT_START -> { _uiState.update { it.copy(streamerCannotStart = true) } }
         }
     }
 
@@ -160,7 +141,7 @@ class CameraViewModel @Inject constructor(
 
     fun onPause() {
         cameraController.updateCaptureTargets(listOf(encoder.inputSurface))
-        this.previewSurface!!.release()
+        this.previewSurface?.release()
     }
 
     fun onShowControls() {

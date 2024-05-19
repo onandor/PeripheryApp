@@ -2,6 +2,7 @@ package com.onandor.peripheryapp.webcam.video.streamers
 
 import com.onandor.peripheryapp.webcam.network.TcpClient
 import com.onandor.peripheryapp.webcam.network.TcpServer
+import com.onandor.peripheryapp.webcam.video.Utils.Companion.to2ByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,12 +16,13 @@ import java.nio.ByteOrder
 import java.util.LinkedList
 import java.util.Queue
 
-class DCStreamer(private val tcpServer: TcpServer): IStreamer {
+class DCStreamer(private val tcpServer: TcpServer, width: Int, height: Int): IStreamer {
 
     private val mServerEventJob: Job
     private var mVideoClient: TcpClient? = null
     private var mBatteryClient: TcpClient? = null
     private var mStopped: Boolean = false
+    private val initializationBytes: ByteArray
 
     private var mSendFramesJob: Job? = null
     private val mFrameQueue: Queue<ByteArray> = LinkedList()
@@ -29,6 +31,20 @@ class DCStreamer(private val tcpServer: TcpServer): IStreamer {
     override val eventFlow = mEventFlow.asSharedFlow()
 
     init {
+        val widthBytes = width.to2ByteArray()
+        val heightBytes = height.to2ByteArray()
+        initializationBytes = listOf(
+            widthBytes[0],
+            widthBytes[1],
+            heightBytes[0],
+            heightBytes[1],
+            0x21.toByte(),
+            0xf5.toByte(),
+            0xe8.toByte(),
+            0x7f.toByte(),
+            0x30.toByte()
+        ).toByteArray()
+
         mServerEventJob = collectServerEvents()
     }
 
@@ -39,7 +55,7 @@ class DCStreamer(private val tcpServer: TcpServer): IStreamer {
                     if (mVideoClient == null) {
                         // Initialization bytes are queued first, sending them before sending
                         // frames begins
-                        event.client.send(mFrameQueue.remove())
+                        event.client.send(initializationBytes)
                         mVideoClient = event.client
                         mVideoClient!!.readInput(this@DCStreamer::onInput)
                     } else if (mBatteryClient == null) {
@@ -56,6 +72,7 @@ class DCStreamer(private val tcpServer: TcpServer): IStreamer {
                         mBatteryClient = null
                     }
                 }
+                TcpServer.Event.ClientCannotConnect -> {}
                 else -> { emitEvent(StreamerEvent.CANNOT_START) }
             }
         }
@@ -119,6 +136,6 @@ class DCStreamer(private val tcpServer: TcpServer): IStreamer {
         mServerEventJob.cancel()
         mSendFramesJob?.cancel()
         mFrameQueue.clear()
-        tcpServer.reset()
+        tcpServer.stop()
     }
 }

@@ -74,5 +74,5 @@
     <string name="webcam_streamer_cannot_start">Streaming cannot start because an error occurred</string>
     <string name="webcam_streamer_ip">IP</string>
     <string name="webcam_restart">Restart</string>
-    <string name="webcam_tcp_server_paused">Cannot accept new connections, because the server is paused.</string>
+    <string name="webcam_tcp_server_stopped">Cannot accept new connections, because the server is stopped.</string>
 </resources>

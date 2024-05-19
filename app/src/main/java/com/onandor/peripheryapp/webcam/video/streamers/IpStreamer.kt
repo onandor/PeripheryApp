@@ -169,7 +169,7 @@ class IpStreamer(
         mServerEventJob.cancel()
         mSendFramesJob?.cancel()
         mFrameQueue.clear()
-        tcpServer.reset()
+        tcpServer.stop()
     }
 
     private fun emitEvent(event: StreamerEvent) = CoroutineScope(Dispatchers.IO).launch {
