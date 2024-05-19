@@ -14,7 +14,7 @@ import java.util.LinkedList
 import java.util.Queue
 import kotlin.text.StringBuilder
 
-class WebStreamer(
+class IpStreamer(
     private val tcpServer: TcpServer,
     private val assetLoader: AssetLoader
 ) : IStreamer {
@@ -114,15 +114,15 @@ class WebStreamer(
     }
 
     override fun queueFrame(frame: ByteArray) {
-        TODO("Not yet implemented")
+        println("queueFrame")
     }
 
     override fun start() {
-        TODO("Not yet implemented")
+        println("start")
     }
 
     override fun stop() {
-        TODO("Not yet implemented")
+        println("stop")
     }
 
     private fun emitEvent(event: StreamerEvent) = CoroutineScope(Dispatchers.IO).launch {

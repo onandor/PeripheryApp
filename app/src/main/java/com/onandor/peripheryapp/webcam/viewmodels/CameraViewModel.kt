@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onandor.peripheryapp.navigation.INavigationManager
 import com.onandor.peripheryapp.navigation.navargs.CameraNavArgs
+import com.onandor.peripheryapp.utils.AssetLoader
 import com.onandor.peripheryapp.webcam.video.CameraController
 import com.onandor.peripheryapp.webcam.video.CameraInfo
 import com.onandor.peripheryapp.webcam.video.encoders.JpegEncoder
@@ -19,6 +20,7 @@ import com.onandor.peripheryapp.webcam.video.streamers.StreamerEvent
 import com.onandor.peripheryapp.webcam.video.streamers.StreamerType
 import com.onandor.peripheryapp.webcam.video.Utils.Companion.to2ByteArray
 import com.onandor.peripheryapp.webcam.network.TcpServer
+import com.onandor.peripheryapp.webcam.video.streamers.IpStreamer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,7 +47,8 @@ data class CameraUiState(
 class CameraViewModel @Inject constructor(
     private val navManager: INavigationManager,
     private val cameraController: CameraController,
-    tcpServer: TcpServer
+    tcpServer: TcpServer,
+    assetLoader: AssetLoader
 ): ViewModel() {
 
     data class CameraOption(
@@ -63,8 +66,8 @@ class CameraViewModel @Inject constructor(
     private var previewSurface: Surface? = null
     private val cameraInfos: List<CameraInfo> = cameraController.getCameraInfos()
 
-    private val encoder: Encoder
-    private val streamer: IStreamer
+    private lateinit var encoder: Encoder
+    private lateinit var streamer: IStreamer
 
     init {
         val navArgs = navManager.getCurrentNavAction()!!.navArgs as CameraNavArgs
@@ -94,18 +97,28 @@ class CameraViewModel @Inject constructor(
             )
         }
 
-        if (navArgs.streamerType == StreamerType.CLIENT) {
-            streamer = ClientStreamer(tcpServer)
-            encoder = H264Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
-                streamer.queueFrame(it)
+        when (navArgs.streamerType) {
+            StreamerType.CLIENT -> {
+                streamer = ClientStreamer(tcpServer)
+                encoder = H264Encoder(resolution.width, resolution.height, bitRate, frameRateRange.upper) {
+                    streamer.queueFrame(it)
+                }
             }
-        } else {
-            streamer = DCStreamer(tcpServer)
-            sendDCStreamerInit(resolution.width, resolution.height)
-            encoder = JpegEncoder(resolution.width, resolution.height) {
-                streamer.queueFrame(it)
+            StreamerType.DC -> {
+                streamer = DCStreamer(tcpServer)
+                sendDCStreamerInit(resolution.width, resolution.height)
+                encoder = JpegEncoder(resolution.width, resolution.height) {
+                    streamer.queueFrame(it)
+                }
+            }
+            StreamerType.IP -> {
+                streamer = IpStreamer(tcpServer, assetLoader)
+                encoder = JpegEncoder(resolution.width, resolution.height) {
+                    streamer.queueFrame(it)
+                }
             }
         }
+
         viewModelScope.launch { streamer.eventFlow.collect { onStreamerEvent(it) } }
         streamer.start()
     }

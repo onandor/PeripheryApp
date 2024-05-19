@@ -104,7 +104,7 @@ fun NewConnectionScreen(
                     onStreamerTypeChanged = viewModel::onStreamerTypeChanged
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 75.dp, end = 75.dp, top = 15.dp, bottom = 20.dp))
-                DCConnectionSettings(
+                ConnectionInformation(
                     address = uiState.address,
                     port = uiState.port
                 )
@@ -165,6 +165,7 @@ fun StreamerTypeSelector(
         val currentStreamerName = when (streamerType) {
             StreamerType.CLIENT -> stringResource(id = R.string.webcam_streamer_client)
             StreamerType.DC -> stringResource(id = R.string.webcam_streamer_dc)
+            StreamerType.IP -> stringResource(id = R.string.webcam_streamer_ip)
             else -> ""
         }
         val items = listOf(
@@ -175,6 +176,10 @@ fun StreamerTypeSelector(
             DropdownItem(
                 onClick = { onStreamerTypeChanged(StreamerType.DC) },
                 text = { Text(text = stringResource(id = R.string.webcam_streamer_dc)) }
+            ),
+            DropdownItem(
+                onClick = { onStreamerTypeChanged(StreamerType.IP) },
+                text = { Text(text = stringResource(id = R.string.webcam_streamer_ip)) }
             )
         )
         Text(
@@ -189,7 +194,7 @@ fun StreamerTypeSelector(
 }
 
 @Composable
-fun DCConnectionSettings(
+fun ConnectionInformation(
     address: String,
     port: String
 ) {
