@@ -106,7 +106,7 @@ class CameraViewModel @Inject constructor(
             }
             StreamerType.DC -> {
                 streamer = DCStreamer(tcpServer)
-                sendDCStreamerInit(resolution.width, resolution.height)
+                sendDCStreamerInit()
                 encoder = JpegEncoder(resolution.width, resolution.height) {
                     streamer.queueFrame(it)
                 }
@@ -123,9 +123,9 @@ class CameraViewModel @Inject constructor(
         streamer.start()
     }
 
-    private fun sendDCStreamerInit(width: Int, height: Int) {
-        val widthBytes = width.to2ByteArray()
-        val heightBytes = height.to2ByteArray()
+    private fun sendDCStreamerInit() {
+        val widthBytes = resolution.width.to2ByteArray()
+        val heightBytes = resolution.height.to2ByteArray()
         val initialBytes = listOf(
             widthBytes[0],
             widthBytes[1],

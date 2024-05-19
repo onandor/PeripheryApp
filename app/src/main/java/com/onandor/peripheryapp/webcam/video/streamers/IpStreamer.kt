@@ -151,7 +151,6 @@ class IpStreamer(
                     frameAvailable = true
                     frame = mFrameQueue.remove()
                     val frameHeader = createHttpHeader(frame.size, ContentTypes.JPEG, true)
-                    println(frame.size)
                     mVideoClient!!.send(frameHeader)
                     mVideoClient!!.send(frame)
                 }
