@@ -77,8 +77,10 @@ class TcpServer {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun reset() {
-        mClients.forEach { it.close() }
-        mClients.clear()
+        synchronized(mClients) {
+            mClients.forEach { it.close() }
+            mClients.clear()
+        }
         mEventFlow.resetReplayCache()
     }
 
