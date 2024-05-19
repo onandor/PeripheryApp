@@ -6,10 +6,12 @@ import com.onandor.peripheryapp.webcam.network.TcpServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import java.util.LinkedList
 import java.util.Queue
 import kotlin.text.StringBuilder
@@ -20,6 +22,9 @@ class IpStreamer(
 ) : IStreamer {
 
     companion object {
+
+        private const val FRAME_BOUNDARY = "mjpegframe"
+
         private object Assets {
             const val CANNOT_CONNECT_PAGE = "webcam_cannot_connect.html"
             const val INDEX_PAGE = "webcam_index.html"
@@ -34,6 +39,7 @@ class IpStreamer(
         private object ContentTypes {
             const val HTML = "text/html"
             const val JPEG = "image/jpeg"
+            const val MULTIPART_REPLACE = "multipart/x-mixed-replace; boundary=$FRAME_BOUNDARY"
         }
     }
 
@@ -54,7 +60,6 @@ class IpStreamer(
             when (event) {
                 is TcpServer.Event.ClientConnected -> {
                     if (mVideoClient == null) {
-                        // mClient should be the client that sends the /video request
                         event.client.readInput { client, input: String -> respond(client, input) }
                     } else {
                         sendAsset(event.client, Assets.CANNOT_CONNECT_PAGE, ContentTypes.HTML)
@@ -73,11 +78,16 @@ class IpStreamer(
     private fun respond(client: TcpClient, input: String) {
         when (getRequest(input)) {
             Requests.ROOT -> {
-                mVideoClient = client
-                sendAsset(mVideoClient!!, Assets.INDEX_PAGE, ContentTypes.HTML)
+                if (mVideoClient == null) {
+                    sendAsset(client, Assets.INDEX_PAGE, ContentTypes.HTML)
+                } else {
+                    sendAsset(client, Assets.CANNOT_CONNECT_PAGE, ContentTypes.HTML)
+                }
             }
             Requests.VIDEO -> {
-                sendAsset(client, Assets.TEST_IMAGE, ContentTypes.JPEG)
+                mVideoClient = client
+                val header = createHttpHeader(0, ContentTypes.MULTIPART_REPLACE)
+                mVideoClient!!.send(header)
             }
         }
     }
@@ -100,29 +110,67 @@ class IpStreamer(
         contentType: String
     ) {
         val asset = assetLoader.loadAssetAsByteArray(fileName)
-        client.send(createHtmlHeader(asset.size, contentType))
+        client.send(createHttpHeader(asset.size, contentType))
         client.send(asset)
     }
 
-    private fun createHtmlHeader(size: Int, contentType: String): ByteArray {
-        val headerBuilder = StringBuilder()
-        headerBuilder.appendLine("HTTP/1.1 200 OK")
-        headerBuilder.appendLine("Content-Type: $contentType")
-        headerBuilder.append("Content-Length: $size")
-        headerBuilder.append("\r\n\r\n")
-        return headerBuilder.toString().toByteArray(Charsets.UTF_8)
+    private fun createHttpHeader(
+        size: Int,
+        contentType: String,
+        frameHeader: Boolean = false
+    ): ByteArray {
+        val builder = StringBuilder()
+        if (frameHeader) {
+            builder.appendLine("--$FRAME_BOUNDARY")
+        } else {
+            builder.appendLine("HTTP/1.1 200 OK")
+        }
+        builder.appendLine("Content-Type: $contentType")
+        if (contentType != ContentTypes.MULTIPART_REPLACE) {
+            builder.append("Content-Length: $size")
+        }
+        builder.append("\r\n\r\n")
+        return builder.toString().toByteArray(Charsets.UTF_8)
     }
 
     override fun queueFrame(frame: ByteArray) {
-        println("queueFrame")
+        synchronized(mFrameQueue) {
+            mFrameQueue.add(frame)
+        }
+    }
+
+    private suspend fun sendFrames() {
+        var frameAvailable: Boolean
+        var frame: ByteArray
+        while (true) {
+            yield()
+            synchronized(mFrameQueue) {
+                if (mFrameQueue.isEmpty() || mVideoClient == null) {
+                    frameAvailable = false
+                } else {
+                    frameAvailable = true
+                    frame = mFrameQueue.remove()
+                    val frameHeader = createHttpHeader(frame.size, ContentTypes.JPEG, true)
+                    println(frame.size)
+                    mVideoClient!!.send(frameHeader)
+                    mVideoClient!!.send(frame)
+                }
+            }
+            if (!frameAvailable) {
+                delay(10)
+            }
+        }
     }
 
     override fun start() {
-        println("start")
+        mSendFramesJob = CoroutineScope(Dispatchers.IO).launch { sendFrames() }
     }
 
     override fun stop() {
-        println("stop")
+        mServerEventJob.cancel()
+        mSendFramesJob?.cancel()
+        mFrameQueue.clear()
+        tcpServer.reset()
     }
 
     private fun emitEvent(event: StreamerEvent) = CoroutineScope(Dispatchers.IO).launch {
