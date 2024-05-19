@@ -23,14 +23,14 @@ class TcpClient(
     private var mInputJob: Job? = null
 
     @JvmName("readInputStrings")
-    fun readInput(callback: (String) -> Unit) {
+    fun readInput(callback: (TcpClient, String) -> Unit) {
         if (mInputJob != null) {
             return
         }
         mInputJob = CoroutineScope(Dispatchers.IO).launch {
             while (mScanner.hasNextLine()) {
                 yield()
-                callback(mScanner.nextLine())
+                callback(this@TcpClient, mScanner.nextLine())
             }
             close()
             onDisconnected(id)
@@ -38,14 +38,14 @@ class TcpClient(
     }
 
     @JvmName("readInputBytes")
-    fun readInput(callback: (Byte) -> Unit) {
+    fun readInput(callback: (TcpClient, Byte) -> Unit) {
         if (mInputJob != null) {
             return
         }
         mInputJob = CoroutineScope(Dispatchers.IO).launch {
             while (mScanner.hasNext()) {
                 yield()
-                callback(mScanner.nextByte())
+                callback(this@TcpClient, mScanner.nextByte())
             }
             close()
             onDisconnected(id)
@@ -55,6 +55,7 @@ class TcpClient(
     fun send(data: ByteArray) {
         try {
             mOutputStream.write(data)
+            mOutputStream.flush()
         } catch (e: IOException) {
             close()
             onDisconnected(id)

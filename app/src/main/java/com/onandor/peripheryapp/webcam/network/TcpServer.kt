@@ -42,11 +42,11 @@ class TcpServer {
             }
             try {
                 val socket = mServerSocket!!.accept()
+                val client = TcpClient(mNextClientId++, socket, this::onClientDisconnected)
                 synchronized(mClients) {
-                    val client = TcpClient(mNextClientId++, socket, this::onClientDisconnected)
                     mClients.add(client)
-                    emitEvent(Event.ClientConnected(client))
                 }
+                emitEvent(Event.ClientConnected(client))
             } catch (e: IOException) {
                 emitEvent(Event.ClientCannotConnect)
             }
@@ -80,10 +80,6 @@ class TcpServer {
         mClients.forEach { it.close() }
         mClients.clear()
         mEventFlow.resetReplayCache()
-    }
-
-    fun broadcast(data: ByteArray) {
-        mClients.forEach { it.send(data) }
     }
 
     private fun onClientDisconnected(id: Int) {

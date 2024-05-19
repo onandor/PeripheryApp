@@ -61,7 +61,7 @@ class DCStreamer(private val tcpServer: TcpServer): IStreamer {
         }
     }
 
-    private fun onInput(input: String) { println(input) }
+    private fun onInput(client: TcpClient, input: String) { println(input) }
 
     override fun queueFrame(frame: ByteArray) {
         if (mStopped) {

@@ -34,7 +34,7 @@ class ClientStreamer(private val tcpServer: TcpServer): IStreamer {
                 is TcpServer.Event.ClientConnected -> {
                     if (mClient == null) {
                         mClient = event.client
-                        mClient!!.readInput { _: String -> }
+                        mClient!!.readInput { _,_: String -> }
                     } else {
                         event.client.close()
                     }
