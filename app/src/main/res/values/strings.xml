@@ -73,4 +73,6 @@
     <string name="webcam_no_cameras">Your device doesn\'t have any cameras, or they are in use by an other application.</string>
     <string name="webcam_streamer_cannot_start">Streaming cannot start because an error occurred</string>
     <string name="webcam_streamer_ip">IP</string>
+    <string name="webcam_restart">Restart</string>
+    <string name="webcam_tcp_server_paused">Cannot accept new connections, because the server is paused.</string>
 </resources>

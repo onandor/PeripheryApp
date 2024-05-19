@@ -63,7 +63,6 @@ class TcpServer {
                 }
                 emitEvent(Event.ClientConnected(client))
             } catch (e: IOException) {
-                e.printStackTrace()
                 emitEvent(Event.ClientCannotConnect)
             } catch (_: InterruptedException) {}
         }

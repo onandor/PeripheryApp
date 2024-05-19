@@ -8,18 +8,25 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,10 +37,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -131,7 +140,7 @@ fun NewConnectionScreen(
 }
 
 @Composable
-fun NoCameras(modifier: Modifier) {
+private fun NoCameras(modifier: Modifier) {
     Surface {
         Column(
             modifier = modifier.fillMaxSize(),
@@ -154,7 +163,7 @@ fun NoCameras(modifier: Modifier) {
 }
 
 @Composable
-fun StreamerTypeSelector(
+private fun StreamerTypeSelector(
     streamerType: Int,
     onStreamerTypeChanged: (Int) -> Unit
 ) {
@@ -197,7 +206,7 @@ fun StreamerTypeSelector(
 }
 
 @Composable
-fun ConnectionInformation(
+private fun ConnectionInformation(
     address: String,
     port: String,
     tcpServerPaused: Boolean,
@@ -209,11 +218,11 @@ fun ConnectionInformation(
             text = stringResource(id = R.string.webcam_connection),
             fontSize = 20.sp
         )
-        Card(modifier = Modifier.padding(start = 15.dp, end = 15.dp)) {
+        Card() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(15.dp)
+                    .padding(start = 20.dp, end = 20.dp, top = 15.dp, bottom = 15.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -238,16 +247,43 @@ fun ConnectionInformation(
             }
         }
         if (tcpServerPaused) {
-            Text(text = "tcp server paused")
-            Button(onClick = onResumeTcpServer) {
-                Text(text = "resume")
+            TcpServerPaused(onRestart = onResumeTcpServer)
+        }
+    }
+}
+
+@Composable
+private fun TcpServerPaused(onRestart: () -> Unit) {
+    Card(
+        modifier = Modifier.padding(top = 10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.padding(end = 10.dp),
+                imageVector = Icons.Filled.Warning,
+                contentDescription = null
+            )
+            Text(modifier = Modifier.weight(1f), text = stringResource(id = R.string.webcam_tcp_server_paused))
+            ElevatedButton(
+                modifier = Modifier.padding(start = 5.dp),
+                onClick = onRestart
+            ) {
+                Text(text = stringResource(id = R.string.webcam_restart))
             }
         }
     }
 }
 
 @Composable
-fun CameraSettings(
+private fun CameraSettings(
     cameraInfos: List<CameraInfo>,
     cameraId: String,
     resolutionIdx: Int,
