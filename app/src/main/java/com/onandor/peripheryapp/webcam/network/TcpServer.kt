@@ -56,12 +56,10 @@ class TcpServer {
                 }
                 emitEvent(Event.ClientConnected(client))
             } catch (e: SocketException) {
-                e.printStackTrace()
                 if (e.message != "Socket closed") {
                     emitEvent(Event.ClientCannotConnect)
                 }
             } catch (e: IOException) {
-                e.printStackTrace()
                 emitEvent(Event.ClientCannotConnect)
             } catch (_: InterruptedException) {}
         }

@@ -9,6 +9,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.LinkedList
 import java.util.Queue
 
@@ -68,7 +70,12 @@ class ClientStreamer(private val tcpServer: TcpServer): IStreamer {
                 } else {
                     frameAvailable = true
                     frame = mFrameQueue.remove()
-                    mClient?.send(frame.size.to2ByteArray())
+                    val size = ByteBuffer
+                        .allocate(4)
+                        .order(ByteOrder.LITTLE_ENDIAN)
+                        .putInt(frame.size)
+                        .array()
+                    mClient?.send(size)
                     mClient?.send(frame)
                 }
             }
@@ -89,8 +96,6 @@ class ClientStreamer(private val tcpServer: TcpServer): IStreamer {
         mFrameQueue.clear()
         tcpServer.stop()
     }
-
-    private fun Int.to2ByteArray() : ByteArray = byteArrayOf(shr(8).toByte(), toByte())
 
     private fun emitEvent(event: StreamerEvent) = CoroutineScope(Dispatchers.IO).launch {
         mEventFlow.emit(event)
