@@ -6,16 +6,14 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraMetadata
 import android.util.Size
 import android.view.Surface
 import android.view.SurfaceHolder
-import android.view.SurfaceView
-import android.view.TextureView
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -23,9 +21,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,7 +48,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -121,14 +119,21 @@ fun CameraScreen(
                     )
                 }
                 if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    val aspectRatio = uiState.resolution.width.toFloat() / uiState.resolution.height.toFloat()
-                    CameraSurfaceView(
+                    Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .aspectRatio(aspectRatio),
-                        resolution = uiState.resolution,
-                        onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
-                    )
+                            .weight(1f)
+                            .wrapContentWidth()
+                    ) {
+                        val aspectRatio = uiState.resolution.width.toFloat() / uiState.resolution.height.toFloat()
+                        CameraSurfaceView(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(aspectRatio),
+                            resolution = uiState.resolution,
+                            onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
+                        )
+                    }
                 }
                 IconButton(onClick = viewModel::onShowControls) {
                     Icon(
