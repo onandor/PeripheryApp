@@ -30,7 +30,7 @@ import java.text.DecimalFormat
 import javax.inject.Inject
 
 data class CameraUiState(
-    val previewAspectRatio: Float = 1f,
+    val resolution: Size = Size(0, 0),
     val showControls: Boolean = false,
     val zoom: Float = CameraController.DEFAULT_ZOOM,
     val zoomRange: ClosedFloatingPointRange<Float> = zoom..zoom,
@@ -88,7 +88,7 @@ class CameraViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                previewAspectRatio = resolution.width.toFloat() / resolution.height.toFloat(),
+                resolution = resolution,
                 zoomRange = camera.zoomRange.lower..camera.zoomRange.upper,
                 aeRange = camera.aeRange.lower.toFloat()..camera.aeRange.upper.toFloat(),
                 currentCamera = compatibleCameras.first { option -> option.id == camera.id },

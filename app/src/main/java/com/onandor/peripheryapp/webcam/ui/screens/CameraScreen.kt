@@ -6,10 +6,13 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraMetadata
+import android.util.Size
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.TextureView
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +58,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.onandor.peripheryapp.R
 import com.onandor.peripheryapp.ui.components.SettingsDropdownMenu
 import com.onandor.peripheryapp.utils.DropdownItem
+import com.onandor.peripheryapp.webcam.ui.components.AutoFitSurfaceView
 import com.onandor.peripheryapp.webcam.viewmodels.CameraViewModel
 import kotlinx.coroutines.launch
 
@@ -117,10 +121,12 @@ fun CameraScreen(
                     )
                 }
                 if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    val aspectRatio = uiState.resolution.width.toFloat() / uiState.resolution.height.toFloat()
                     CameraSurfaceView(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .aspectRatio(uiState.previewAspectRatio),
+                            .aspectRatio(aspectRatio),
+                        resolution = uiState.resolution,
                         onPreviewSurfaceCreated = viewModel::onPreviewSurfaceCreated
                     )
                 }
@@ -152,14 +158,16 @@ fun CameraScreen(
 @Composable
 fun CameraSurfaceView(
     modifier: Modifier = Modifier,
+    resolution: Size,
     onPreviewSurfaceCreated: (Surface) -> Unit
 ) {
     AndroidView(
         modifier = modifier,
         factory = {
-            SurfaceView(it).apply {
+            AutoFitSurfaceView(it).apply {
                 this.holder.addCallback(object : SurfaceHolder.Callback {
                     override fun surfaceCreated(holder: SurfaceHolder) {
+                        setAspectRatio(resolution.width, resolution.height)
                         onPreviewSurfaceCreated(holder.surface)
                     }
 
