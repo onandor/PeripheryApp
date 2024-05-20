@@ -40,7 +40,7 @@
     <string name="main_bluetooth_kbm_title">Bluetooth keyboard\nand mouse</string>
     <string name="main_bluetooth_kbm_desc">Connect to any kind of device using Bluetooth and use your Android device as a keyboard and a mouse.</string>
     <string name="main_wifi_webcam_title">WiFi webcam</string>
-    <string name="main_wifi_webcam_desc">Stream video and audio from your Android device through WiFi to any machine running Windows.</string>
+    <string name="main_wifi_webcam_desc">Stream video from your Android device through WiFi to a dedicated client or a web browser.</string>
     <string name="permission_request_bt_turned_off">Bluetooth is turned off. Turn it on to access the functionalities of the app.</string>
     <string name="permission_request_turn_on">Turn On</string>
     <string name="permission_request_permissions_denied">Bluetooth and/or location permissions are denied. Grant them in order to access the functionalities of the app.</string>
